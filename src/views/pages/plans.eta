@@ -1,0 +1,35 @@
+<section class="section">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow blue">Managed portfolios</span>
+      <h2>Investment plans</h2>
+      <p class="lede">Fixed-term plans with returns that accrue per period and post to your statement as they're earned.</p>
+    </div>
+    <div class="grid g4">
+      <% it.plans.forEach(function(p,i){ %>
+        <div class="card plan <%= i===1?'featured':'' %>">
+          <div class="plan-head">
+            <% if (p.badge) { %><span class="plan-tag"><%= p.badge %></span><% } %>
+            <h3><%= p.name %></h3>
+            <div class="plan-rate"><b><%= Number(p.roiPercent).toFixed(Number(p.roiPercent)%1?1:0) %>%</b><small>per <%= p.periodHours===24?'day':p.periodHours+'h' %></small></div>
+            <div class="small muted" style="margin-top:6px"><%= p.durationPeriods %> periods · <%= Math.round(p.durationPeriods*p.periodHours/24) %> days</div>
+          </div>
+          <ul class="plan-feats">
+            <% (p.features||[]).forEach(function(f){ %>
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><%= f %></li>
+            <% }) %>
+          </ul>
+          <div class="plan-range">
+            <span class="muted">Min <b><%= it.usd(p.minAmount,0) %></b></span>
+            <span class="muted">Max <b><%= it.usd(p.maxAmount,0) %></b></span>
+          </div>
+          <div class="plan-foot"><a class="btn <%= i===1?'btn-primary':'btn-quiet' %> btn-block" href="/dashboard/invest?plan=<%= p.slug %>">Choose <%= p.name %></a></div>
+        </div>
+      <% }) %>
+    </div>
+    <p class="risk center" style="margin:26px auto 0">
+      Advertised rates are targets, not guarantees. Capital placed in a plan is at risk and returns
+      may be lower than shown, including a total loss of principal.
+    </p>
+  </div>
+</section>

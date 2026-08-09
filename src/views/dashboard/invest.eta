@@ -1,0 +1,70 @@
+<div class="page-head">
+  <div><h1>Investment plans</h1>
+    <p class="small" style="margin:4px 0 0">Returns accrue per period and post to your statement as they're earned.</p></div>
+  <span class="small muted num"><%= it.usd(it.bal.available) %> available</span>
+</div>
+
+<% if (it.ok) { %><div class="notice notice-ok">Plan opened. Your first accrual posts at the end of the current period.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="grid g4" style="margin-bottom:30px">
+  <% it.plans.forEach(function(p){ %>
+    <div class="card plan <%= it.preset === p.slug ? 'featured' : '' %>">
+      <div class="plan-head">
+        <% if (p.badge) { %><span class="plan-tag"><%= p.badge %></span><% } %>
+        <h3><%= p.name %></h3>
+        <div class="plan-rate">
+          <b><%= Number(p.roiPercent).toFixed(Number(p.roiPercent) % 1 ? 1 : 0) %>%</b>
+          <small>per <%= p.periodHours === 24 ? 'day' : p.periodHours + 'h' %></small>
+        </div>
+        <div class="small muted" style="margin-top:6px"><%= p.durationPeriods %> periods · <%= Math.round(p.durationPeriods*p.periodHours/24) %> days</div>
+      </div>
+      <ul class="plan-feats">
+        <% (p.features||[]).forEach(function(f){ %>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><%= f %></li>
+        <% }) %>
+      </ul>
+      <div class="plan-range">
+        <span class="muted">Min <b><%= it.usd(p.minAmount,0) %></b></span>
+        <span class="muted">Max <b><%= it.usd(p.maxAmount,0) %></b></span>
+      </div>
+      <div class="plan-foot">
+        <form method="post" action="/dashboard/invest">
+          <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+          <input type="hidden" name="planId" value="<%= p.id %>">
+          <div class="field" style="margin-bottom:10px">
+            <input class="input num" name="amount" type="number" step="0.01"
+                   min="<%= p.minAmount %>" max="<%= p.maxAmount %>"
+                   placeholder="<%= Number(p.minAmount).toFixed(0) %>" required aria-label="Amount for <%= p.name %>">
+          </div>
+          <button class="btn <%= it.preset === p.slug ? 'btn-primary' : 'btn-quiet' %> btn-block btn-sm">Open plan</button>
+        </form>
+      </div>
+    </div>
+  <% }) %>
+</div>
+
+<div class="card-head"><h3 style="font-family:var(--ff-display)">Your plans</h3></div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Plan</th><th class="num">Principal</th><th class="num">Accrued</th><th>Progress</th><th>Matures</th><th>Status</th></tr></thead>
+    <tbody>
+      <% if (!it.mine.length) { %>
+        <tr><td colspan="6"><div class="empty"><h4>No plans open</h4><p class="small">Pick a plan above to put idle cash on a fixed term.</p></div></td></tr>
+      <% } %>
+      <% it.mine.forEach(function(i){ %>
+        <tr>
+          <td><b><%= i.plan_name %></b><div class="small muted num"><%= Number(i.roi).toFixed(2) %>% per period</div></td>
+          <td class="num"><%= it.usd(i.principal) %></td>
+          <td class="num up"><%= it.signedUsd(i.accrued) %></td>
+          <td style="min-width:130px">
+            <div class="small muted num"><%= i.periods_paid %>/<%= i.duration_periods %></div>
+            <div class="meter"><i style="width:<%= Math.min(100,(i.periods_paid/i.duration_periods)*100) %>%"></i></div>
+          </td>
+          <td class="small muted"><%= it.dt(i.matures_at) %></td>
+          <td><span class="badge <%= i.status==='active'?'badge-live':'badge-idle' %>"><%= i.status %></span></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

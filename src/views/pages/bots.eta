@@ -1,0 +1,12 @@
+<section class="section"><div class="wrap">
+  <div class="center" style="margin-bottom:38px">
+    <span class="eyebrow">Automation</span><h2>Rule-based strategies</h2>
+    <p class="lede">Systems that trade a defined allocation to a defined rule set, with every fill written to your statement.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card"><h3>Defined rules</h3><p class="small">Each strategy states its entry condition, exit condition and maximum exposure before you allocate to it.</p></div>
+    <div class="card"><h3>Capped exposure</h3><p class="small">A strategy can only ever trade the amount you allocated. It cannot reach the rest of your balance.</p></div>
+    <div class="card"><h3>Stop anytime</h3><p class="small">Stopping closes open positions at their current value and returns your allocation plus realised P&amp;L.</p></div>
+  </div>
+  <p class="risk center" style="margin:30px auto 0">Automation removes hesitation, not risk. A strategy that performed well in one market regime can lose steadily in another.</p>
+</div></section>

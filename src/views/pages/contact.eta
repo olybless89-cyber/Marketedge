@@ -1,0 +1,21 @@
+<section class="section"><div class="wrap">
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:34px;align-items:start">
+    <div>
+      <span class="eyebrow blue">Contact</span><h1>Talk to us</h1>
+      <p class="lede">Support is staffed around the clock. Account and funding questions are usually answered within the hour.</p>
+      <dl class="kv" style="margin-top:24px;max-width:340px">
+        <dt>Support</dt><dd style="font-family:var(--ff-body)">support@<%= it.domain || 'rydoninv.com' %></dd>
+        <dt>Compliance</dt><dd style="font-family:var(--ff-body)">compliance@<%= it.domain || 'rydoninv.com' %></dd>
+        <dt>Hours</dt><dd style="font-family:var(--ff-body)">24 / 7</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Send a message</h3></div>
+      <div class="field"><label for="n">Name</label><input class="input" id="n" placeholder="Your name"></div>
+      <div class="field"><label for="e">Email</label><input class="input" id="e" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label for="m">Message</label><textarea class="input" id="m" rows="5" placeholder="How can we help?"></textarea></div>
+      <button class="btn btn-primary btn-block">Send message</button>
+      <p class="hint">Wire this form to your inbox in src/routes/public.js before going live.</p>
+    </div>
+  </div>
+</div></section>

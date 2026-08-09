@@ -1,0 +1,11 @@
+<div class="ticker-track">
+  <% for (let i = 0; i < 2; i++) { %>
+    <% it.prices.forEach(function(p){ %>
+      <span class="tick" aria-hidden="<%= i ? 'true' : 'false' %>">
+        <b><%= p.symbol %></b>
+        <span class="price num"><%= it.usd(p.price, p.price < 5 ? 4 : 2) %></span>
+        <span class="num <%= it.dir(p.change) %>"><%= it.pct(p.change) %></span>
+      </span>
+    <% }) %>
+  <% } %>
+</div>

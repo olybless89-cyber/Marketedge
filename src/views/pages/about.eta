@@ -1,0 +1,7 @@
+<section class="section"><div class="wrap" style="max-width:760px">
+  <span class="eyebrow blue">Company</span><h1>About us</h1>
+  <p class="lede">We build trading infrastructure that shows its working. Every number a client sees on this platform is derived from a row that was actually written — a fill, a transfer, a payout — and can be traced back to it in the account statement.</p>
+  <p>That constraint shapes the product. Trader performance is aggregated from executed positions rather than entered by staff. Balances are the sum of a ledger rather than a field that can be edited. When a figure looks good, it is because the underlying activity was good.</p>
+  <h3 style="margin-top:32px">What we offer</h3>
+  <p>Forex, cryptocurrency, shares, indices and energies from a single margin account, with copy trading and rule-based automation for clients who prefer not to trade manually.</p>
+</div></section>

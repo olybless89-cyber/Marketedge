@@ -1,0 +1,25 @@
+<section class="section">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow">Asset classes</span><h2>Markets</h2>
+      <p class="lede">Five asset classes, one account, one margin pool.</p>
+    </div>
+    <div class="grid g4" style="margin-bottom:34px">
+      <% it.assets.forEach(function(a){ %>
+        <a class="card asset" href="/markets/<%= a.slug %>" style="--tint:<%= a.tint %>">
+          <div class="ico"><%~ a.icon %></div>
+          <h3><%= a.name %></h3><p class="small"><%= a.blurb %></p>
+          <span class="go">Explore <%= a.name %> →</span>
+        </a>
+      <% }) %>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;height:520px">
+      <div class="tradingview-widget-container" style="height:100%">
+        <div class="tradingview-widget-container__widget" style="height:100%"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js" async>
+        {"width":"100%","height":"100%","defaultColumn":"overview","defaultScreen":"most_capitalized","market":"forex","showToolbar":true,"colorTheme":"dark","isTransparent":true,"locale":"en"}
+        </script>
+      </div>
+    </div>
+  </div>
+</section>

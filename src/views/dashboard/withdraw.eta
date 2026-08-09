@@ -1,0 +1,53 @@
+<div class="page-head"><h1>Withdraw</h1></div>
+<% if (it.sent) { %><div class="notice notice-ok">Withdrawal requested. The amount is held while we review it.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="grid" style="grid-template-columns:.9fr 1.1fr;gap:20px">
+  <div class="card">
+    <div class="card-head"><h3>Request a withdrawal</h3>
+      <span class="small muted num"><%= it.usd(it.bal.available) %> available</span></div>
+    <form method="post" action="/dashboard/withdraw">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="field">
+        <label for="m">Method</label>
+        <select class="input" id="m" name="method">
+          <option value="usdt_trc20">USDT — TRC20</option>
+          <option value="btc">Bitcoin</option>
+          <option value="bank">Bank transfer</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ad">Destination address or account</label>
+        <input class="input" id="ad" name="address" required placeholder="TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE">
+        <div class="hint">Double-check this. Transfers to a wrong address cannot be reversed.</div>
+      </div>
+      <div class="field">
+        <label for="a">Amount (USD)</label>
+        <input class="input num" id="a" name="amount" type="number" min="10" step="0.01" max="<%= it.bal.available %>" required>
+      </div>
+      <button class="btn btn-primary btn-block">Request withdrawal</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Withdrawal history</h3></div>
+    <div class="table-wrap" style="border:0">
+      <table>
+        <thead><tr><th>Date</th><th>Destination</th><th class="num">Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          <% if (!it.rows.length) { %>
+            <tr><td colspan="4"><div class="empty"><h4>No withdrawals yet</h4></div></td></tr>
+          <% } %>
+          <% it.rows.forEach(function(r){ %>
+            <tr>
+              <td class="small muted"><%= it.ago(r.createdAt) %></td>
+              <td class="small num" style="max-width:180px;overflow:hidden;text-overflow:ellipsis"><%= r.address || '—' %></td>
+              <td class="num"><%= it.usd(r.amount) %></td>
+              <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<div class="page-head"><h1>Notifications</h1></div>
+<div style="display:grid;gap:11px;max-width:760px">
+  <% if (!it.rows.length) { %>
+    <div class="card empty"><h4>Nothing to read</h4><p class="small">Account activity and platform notices land here.</p></div>
+  <% } %>
+  <% it.rows.forEach(function(n){ %>
+    <div class="card" style="padding:16px 18px">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+        <b style="font-size:.94rem"><%= n.title %></b>
+        <span class="small muted" style="white-space:nowrap"><%= it.ago(n.created_at) %></span>
+      </div>
+      <% if (n.body) { %><p class="small" style="margin:6px 0 0"><%= n.body %></p><% } %>
+    </div>
+  <% }) %>
+</div>

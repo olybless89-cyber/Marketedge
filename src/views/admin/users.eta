@@ -1,0 +1,50 @@
+<div class="page-head"><h1>Users</h1>
+  <form method="get" style="display:flex;gap:8px">
+    <input class="input" name="q" value="<%= it.q %>" placeholder="Search name or email" style="width:240px">
+    <button class="btn btn-quiet btn-sm">Search</button>
+  </form>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Client</th><th>Country</th><th class="num">Deposited</th><th class="num">Balance</th><th>Joined</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!it.rows.length) { %><tr><td colspan="7"><div class="empty"><h4>No users match</h4></div></td></tr><% } %>
+      <% it.rows.forEach(function(u){ %>
+        <tr>
+          <td><b><%= u.first_name %> <%= u.last_name %></b>
+            <div class="small muted"><%= u.email %><%= u.role==='admin' ? ' · admin' : '' %></div></td>
+          <td class="small"><%= u.country || '—' %></td>
+          <td class="num"><%= it.usd(u.deposited) %></td>
+          <td class="num"><%= it.usd(u.balance) %></td>
+          <td class="small muted"><%= it.ago(u.created_at) %></td>
+          <td><span class="badge <%= u.status==='active'?'badge-live':'badge-warn' %>"><%= u.status %></span></td>
+          <td style="text-align:right">
+            <form method="post" action="/admin/users/<%= u.id %>/status" style="display:inline">
+              <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+              <input type="hidden" name="status" value="<%= u.status==='active'?'suspended':'active' %>">
+              <button class="btn <%= u.status==='active'?'btn-danger':'btn-quiet' %> btn-sm"
+                      data-confirm="<%= u.status==='active'?'Suspend':'Reactivate' %> <%= u.first_name %>?">
+                <%= u.status==='active'?'Suspend':'Reactivate' %>
+              </button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:22px;max-width:520px">
+  <div class="card-head"><h3>Adjust a balance</h3></div>
+  <p class="small">Adjustments write a line to the client's statement with your email attached. There is no silent edit.</p>
+  <form method="post" action="/admin/users/0/adjust" onsubmit="this.action='/admin/users/'+this.userId.value+'/adjust'">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <div class="row2">
+      <div class="field"><label for="ui">User ID</label><input class="input num" id="ui" name="userId" type="number" required></div>
+      <div class="field"><label for="am">Amount (+/−)</label><input class="input num" id="am" name="amount" type="number" step="0.01" required></div>
+    </div>
+    <div class="field"><label for="mm">Reason</label><input class="input" id="mm" name="memo" required placeholder="Goodwill credit, ticket #1204"></div>
+    <button class="btn btn-quiet btn-block btn-sm">Post adjustment</button>
+  </form>
+</div>

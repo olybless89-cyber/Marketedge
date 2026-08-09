@@ -1,0 +1,14 @@
+<section class="section"><div class="wrap">
+  <div class="center" style="margin-bottom:38px">
+    <span class="eyebrow">Education</span><h2>Learn before you risk</h2>
+    <p class="lede">Short, practical material on the mechanics that actually decide whether an account survives.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card"><h3>Position sizing</h3><p class="small">Why the size of a trade matters more than the direction, and how to fix a size before you enter.</p></div>
+    <div class="card"><h3>Reading a track record</h3><p class="small">What win rate hides, why return on volume beats return on equity, and which numbers can be gamed.</p></div>
+    <div class="card"><h3>Leverage and margin</h3><p class="small">How margin is calculated, when a position gets closed out, and what that costs.</p></div>
+    <div class="card"><h3>Risk of ruin</h3><p class="small">The arithmetic of drawdown: why a 50% loss needs a 100% gain to recover.</p></div>
+    <div class="card"><h3>Order types</h3><p class="small">Market, limit, stop and trailing stop — and the situations each one is wrong for.</p></div>
+    <div class="card"><h3>Correlation</h3><p class="small">Why five positions can be one position, and how to spot it before it costs you.</p></div>
+  </div>
+</div></section>

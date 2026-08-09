@@ -1,0 +1,25 @@
+<div class="card">
+  <h2 style="font-size:1.5rem">Log in</h2>
+  <p class="small">Welcome back. Your open positions kept running while you were away.</p>
+
+  <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+  <form method="post" action="/login">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <input type="hidden" name="next" value="<%= it.next || '' %>">
+    <div class="field">
+      <label for="email">Email</label>
+      <input class="input" id="email" name="email" type="email" required autocomplete="email"
+             autofocus value="<%= it.email || '' %>">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input class="input" id="password" name="password" type="password" required autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Log in</button>
+  </form>
+
+  <p class="small center" style="margin:18px 0 0">
+    No account yet? <a href="/register" style="color:var(--blue-hi);font-weight:600">Open one</a>
+  </p>
+</div>

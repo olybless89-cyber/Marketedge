@@ -1,0 +1,154 @@
+<div class="page-head">
+  <div>
+    <h1>Welcome back, <%= it.user.firstName %></h1>
+    <p class="small" style="margin:4px 0 0">Here's where your account stands right now.</p>
+  </div>
+  <div style="display:flex;gap:9px">
+    <a class="btn btn-quiet btn-sm" href="/dashboard/deposit">Deposit</a>
+    <a class="btn btn-primary btn-sm" href="/dashboard/invest">Invest</a>
+  </div>
+</div>
+
+<div class="grid g4" style="margin-bottom:22px">
+  <div class="stat">
+    <div class="stat-k">Total equity</div>
+    <div class="stat-v"><%= it.usd(it.pf.equity) %></div>
+    <div class="stat-sub">Cash, locked capital and accrued returns</div>
+  </div>
+  <div class="stat">
+    <div class="stat-k">Available</div>
+    <div class="stat-v"><%= it.usd(it.pf.available) %></div>
+    <div class="stat-sub">Free to invest or withdraw</div>
+  </div>
+  <div class="stat">
+    <div class="stat-k">Realised P&amp;L</div>
+    <div class="stat-v <%= it.dir(it.pf.realised) %>"><%= it.signedUsd(it.pf.realised) %></div>
+    <div class="stat-sub"><%= it.pf.closedTrades %> closed trades · <%= it.pf.winRate.toFixed(1) %>% win rate</div>
+  </div>
+  <div class="stat">
+    <div class="stat-k">In strategies</div>
+    <div class="stat-v"><%= it.usd(it.pf.staked + it.pf.exposure) %></div>
+    <div class="stat-sub"><%= it.pf.activePlans %> plans · <%= it.pf.openTrades %> open positions</div>
+  </div>
+</div>
+
+<% if (it.pf.pending > 0) { %>
+  <div class="notice notice-warn">
+    <%= it.usd(it.pf.pending) %> is awaiting review. It posts to your balance once confirmed.
+  </div>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1.35fr .65fr;gap:20px;margin-bottom:22px">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="card-head" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--line-soft)">
+      <h3>Portfolio chart</h3>
+      <span class="badge badge-live">Live</span>
+    </div>
+    <div style="height:340px">
+      <div class="tradingview-widget-container" style="height:100%">
+        <div class="tradingview-widget-container__widget" style="height:100%"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+        {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0D1626","gridColor":"rgba(30,47,77,0.5)","hide_top_toolbar":false,"hide_side_toolbar":true,"allow_symbol_change":true,"support_host":"https://www.tradingview.com"}
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Active plans</h3><a class="small" style="color:var(--blue-hi)" href="/dashboard/invest">Manage</a></div>
+    <% if (it.invs.length) { %>
+      <div style="display:grid;gap:13px">
+        <% it.invs.forEach(function(i){
+             const pctDone = Math.min(100, (i.periods_paid / i.duration_periods) * 100 || 0); %>
+          <div style="padding-bottom:13px;border-bottom:1px solid var(--line-soft)">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+              <b style="font-size:.92rem"><%= i.plan_name %></b>
+              <span class="num small up"><%= it.signedUsd(i.accrued) %></span>
+            </div>
+            <div class="small muted" style="display:flex;justify-content:space-between;margin:5px 0 4px">
+              <span class="num"><%= it.usd(i.principal) %> principal</span>
+              <span class="num"><%= i.periods_paid %>/<%= i.duration_periods %></span>
+            </div>
+            <div class="meter"><i style="width:<%= pctDone %>%"></i></div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="empty" style="padding:30px 8px">
+        <h4>No active plans</h4>
+        <p class="small">Put idle cash to work on a fixed term.</p>
+        <a class="btn btn-quiet btn-sm" href="/dashboard/invest">Browse plans</a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="card-head"><h3 style="font-family:var(--ff-display)">Strategies you're copying</h3>
+  <a class="small" style="color:var(--blue-hi)" href="/dashboard/copy">Manage copy trading</a></div>
+
+<% if (it.copies.length) { %>
+  <div class="grid g3" style="margin-bottom:26px"
+       hx-get="/dashboard/partials/copies" hx-trigger="every 30s" hx-swap="innerHTML">
+    <% it.copies.forEach(function(t){ %>
+      <div class="card">
+        <div class="trader-head">
+          <div class="avatar"><%= it.initials(t.displayName.split(' ')[0], t.displayName.split(' ')[1]) %></div>
+          <div style="min-width:0;flex:1">
+            <h3><%= t.displayName %></h3>
+            <div class="role"><%= t.strategy %></div>
+          </div>
+          <span class="badge <%= t.openTrades ? 'badge-live' : 'badge-idle' %>"><%= t.openTrades ? 'In market' : 'Flat' %></span>
+        </div>
+        <dl class="kv">
+          <dt>Allocated</dt><dd><%= it.usd(t.allocation) %></dd>
+          <dt>Current value</dt><dd data-watch><%= it.usd(t.currentValue) %></dd>
+          <dt>P&amp;L</dt><dd class="<%= it.dir(t.pnl) %>" data-watch><%= it.signedUsd(t.pnl) %></dd>
+          <dt>Return</dt><dd class="<%= it.dir(t.roi) %>"><%= it.pct(t.roi) %></dd>
+        </dl>
+        <div style="margin-top:13px">
+          <div class="small muted" style="display:flex;justify-content:space-between">
+            <span><%= t.trades %> trades</span><span><%= t.winRate.toFixed(1) %>% win rate</span>
+          </div>
+          <div class="meter"><i style="width:<%= t.winRate %>%"></i></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:15px">
+          <a class="btn btn-quiet btn-sm" style="flex:1" href="/copy-trading/<%= t.slug %>">Record</a>
+          <form method="post" action="/dashboard/copy/stop" style="flex:none">
+            <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+            <input type="hidden" name="followId" value="<%= t.followId %>">
+            <button class="btn btn-danger btn-sm" data-confirm="Stop copying <%= t.displayName %>? Open positions close at their current value.">Stop</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="card empty" style="margin-bottom:26px">
+    <h4>You're not copying anyone yet</h4>
+    <p class="small">Browse published records and allocate what you're comfortable risking.</p>
+    <a class="btn btn-primary btn-sm" href="/dashboard/copy">Find a strategy</a>
+  </div>
+<% } %>
+
+<div class="card-head"><h3 style="font-family:var(--ff-display)">Recent activity</h3>
+  <a class="small" style="color:var(--blue-hi)" href="/dashboard/statement">Full statement</a></div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Date</th><th>Activity</th><th>Reference</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+      <% if (!it.recent.length) { %>
+        <tr><td colspan="4"><div class="empty"><h4>Nothing here yet</h4>
+          <p class="small">Deposits, trades and payouts appear as they happen.</p></div></td></tr>
+      <% } %>
+      <% it.recent.forEach(function(r){ %>
+        <tr>
+          <td class="small muted"><%= it.ago(r.createdAt) %></td>
+          <td><%= r.kind.replace(/_/g, ' ').replace(/^./, s => s.toUpperCase()) %></td>
+          <td class="small muted"><%= r.memo || '—' %></td>
+          <td class="num <%= it.dir(r.amount) %>"><%= it.signedUsd(r.amount) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

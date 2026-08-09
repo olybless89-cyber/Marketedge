@@ -1,0 +1,18 @@
+<section class="section">
+  <div class="wrap">
+    <div style="max-width:62ch;margin-bottom:30px">
+      <span class="eyebrow" style="color:<%= it.m.tint %>;background:color-mix(in srgb,<%= it.m.tint %> 12%,transparent);border-color:color-mix(in srgb,<%= it.m.tint %> 28%,transparent)">Asset class</span>
+      <h1><%= it.m.name %></h1>
+      <p class="lede"><%= it.m.blurb %></p>
+      <a class="btn btn-primary" href="/register" style="margin-top:14px">Trade <%= it.m.name %></a>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;height:540px">
+      <div class="tradingview-widget-container" style="height:100%">
+        <div class="tradingview-widget-container__widget" style="height:100%"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+        {"autosize":true,"symbol":"<%= it.tvSymbol %>","interval":"D","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0D1626","gridColor":"rgba(30,47,77,0.5)","withdateranges":true,"allow_symbol_change":true,"details":true,"support_host":"https://www.tradingview.com"}
+        </script>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,75 @@
+<div class="page-head">
+  <div><h1>Copy trading</h1>
+    <p class="small" style="margin:4px 0 0">Every record below is calculated from executed positions. Nothing is a headline figure.</p></div>
+  <span class="small muted num"><%= it.usd(it.bal.available) %> available</span>
+</div>
+
+<% if (it.ok) { %><div class="notice notice-ok"><%= it.ok === 'stopped' ? 'Copying stopped. Your allocation and P&L are back in your balance.' : 'Now copying. Positions mirror as the trader opens them.' %></div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<% if (it.mine.length) { %>
+  <div class="card-head"><h3 style="font-family:var(--ff-display)">Active</h3></div>
+  <div class="grid g3" style="margin-bottom:30px">
+    <% it.mine.forEach(function(t){ %>
+      <div class="card">
+        <div class="trader-head">
+          <div class="avatar"><%= it.initials(t.displayName.split(' ')[0], t.displayName.split(' ')[1]) %></div>
+          <div style="min-width:0;flex:1"><h3><%= t.displayName %></h3><div class="role"><%= t.strategy %></div></div>
+          <span class="badge <%= t.openTrades ? 'badge-live' : 'badge-idle' %>"><%= t.openTrades ? 'In market' : 'Flat' %></span>
+        </div>
+        <dl class="kv">
+          <dt>Allocated</dt><dd><%= it.usd(t.allocation) %></dd>
+          <dt>Current value</dt><dd><%= it.usd(t.currentValue) %></dd>
+          <dt>P&amp;L</dt><dd class="<%= it.dir(t.pnl) %>"><%= it.signedUsd(t.pnl) %></dd>
+          <dt>Return</dt><dd class="<%= it.dir(t.roi) %>"><%= it.pct(t.roi) %></dd>
+          <dt>Trades</dt><dd><%= t.trades %></dd>
+          <dt>Win rate</dt><dd><%= t.winRate.toFixed(1) %>%</dd>
+        </dl>
+        <div style="display:flex;gap:8px;margin-top:15px">
+          <a class="btn btn-quiet btn-sm" style="flex:1" href="/copy-trading/<%= t.slug %>">Full record</a>
+          <form method="post" action="/dashboard/copy/stop">
+            <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+            <input type="hidden" name="followId" value="<%= t.followId %>">
+            <button class="btn btn-danger btn-sm" data-confirm="Stop copying <%= t.displayName %>?">Stop</button>
+          </form>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<div class="card-head"><h3 style="font-family:var(--ff-display)">Available strategies</h3></div>
+<div class="grid g3">
+  <% if (!it.all.length) { %>
+    <div class="card empty" style="grid-column:1/-1"><h4>No other strategies right now</h4>
+      <p class="small">New traders appear here once they've published a record.</p></div>
+  <% } %>
+  <% it.all.forEach(function(t){ %>
+    <div class="card">
+      <div class="trader-head">
+        <div class="avatar"><%= it.initials(t.displayName.split(' ')[0], t.displayName.split(' ')[1]) %></div>
+        <div style="min-width:0;flex:1"><h3><%= t.displayName %></h3><div class="role"><%= t.strategy %></div></div>
+      </div>
+      <dl class="kv">
+        <dt>Return on volume</dt><dd class="<%= it.dir(t.roi) %>"><%= it.pct(t.roi) %></dd>
+        <dt>Closed trades</dt><dd><%= t.closedTrades %></dd>
+        <dt>Win rate</dt><dd><%= t.winRate.toFixed(1) %>%</dd>
+        <dt>Copying now</dt><dd><%= t.followers %></dd>
+        <dt>Last trade</dt><dd style="font-family:var(--ff-body)"><%= it.ago(t.lastTradeAt) %></dd>
+      </dl>
+      <div style="margin-top:13px">
+        <div class="small muted" style="display:flex;justify-content:space-between"><span>Risk</span><span class="num"><%= t.riskScore %>/10</span></div>
+        <div class="meter"><i style="width:<%= t.riskScore*10 %>%"></i></div>
+      </div>
+      <form method="post" action="/dashboard/copy/follow" style="margin-top:15px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <input type="hidden" name="traderId" value="<%= t.id %>">
+        <div class="field" style="margin-bottom:9px">
+          <input class="input num" name="allocation" type="number" step="0.01" min="<%= t.minCopy %>"
+                 placeholder="Min <%= Number(t.minCopy).toFixed(0) %>" required aria-label="Amount to allocate to <%= t.displayName %>">
+        </div>
+        <button class="btn btn-primary btn-block btn-sm">Copy this trader</button>
+      </form>
+    </div>
+  <% }) %>
+</div>

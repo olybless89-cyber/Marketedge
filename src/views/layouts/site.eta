@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= it.title ? it.title + ' — ' + it.brand.name : it.brand.name + ' — Trade global markets with confidence' %></title>
+<meta name="description" content="<%= it.desc || 'Trade forex, crypto, indices, shares and commodities with live pricing, copy trading and automated strategies.' %>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+<link rel="icon" href="/img/mark.svg" type="image/svg+xml">
+<meta property="og:title" content="<%= it.brand.name %> — Trade global markets with confidence">
+<meta property="og:type" content="website">
+<script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="/">
+      <svg class="logo-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="#2F6BFF"/>
+        <path d="M8 22L13 13l4 5 3-4 4 8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <%= it.brand.name %>
+    </a>
+
+    <nav class="nav-links" id="navlinks">
+      <a href="/markets" <%= it.path?.startsWith('/markets') ? 'aria-current=page' : '' %>>Markets</a>
+      <a href="/copy-trading" <%= it.path === '/copy-trading' ? 'aria-current=page' : '' %>>Copy trading</a>
+      <a href="/plans" <%= it.path === '/plans' ? 'aria-current=page' : '' %>>Plans</a>
+      <a href="/bots" <%= it.path === '/bots' ? 'aria-current=page' : '' %>>Automation</a>
+      <a href="/education" <%= it.path === '/education' ? 'aria-current=page' : '' %>>Education</a>
+      <a href="/contact" <%= it.path === '/contact' ? 'aria-current=page' : '' %>>Contact</a>
+    </nav>
+
+    <div class="nav-right">
+      <% if (it.user) { %>
+        <a class="btn btn-primary btn-sm" href="/dashboard">Open dashboard</a>
+      <% } else { %>
+        <a class="btn btn-ghost btn-sm" href="/login">Log in</a>
+        <a class="btn btn-primary btn-sm" href="/register">Open account</a>
+      <% } %>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false" onclick="const n=document.getElementById('navlinks');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="ticker" hx-get="/partials/ticker" hx-trigger="every 15s" hx-swap="innerHTML">
+  <%~ it.tickerHtml || '' %>
+</div>
+
+<%~ it.body %>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="logo" href="/" style="margin-bottom:14px">
+          <svg class="logo-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="8" fill="#2F6BFF"/>
+            <path d="M8 22L13 13l4 5 3-4 4 8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <%= it.brand.name %>
+        </a>
+        <p class="small" style="max-width:38ch">Multi-asset trading, copy portfolios and automated strategies in one account.</p>
+      </div>
+      <div>
+        <h4>Trade</h4>
+        <ul>
+          <li><a href="/markets/forex">Forex</a></li>
+          <li><a href="/markets/crypto">Cryptocurrency</a></li>
+          <li><a href="/markets/shares">Shares</a></li>
+          <li><a href="/markets/indices">Indices</a></li>
+          <li><a href="/markets/energies">Energies</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="/copy-trading">Copy trading</a></li>
+          <li><a href="/bots">Automated strategies</a></li>
+          <li><a href="/plans">Investment plans</a></li>
+          <li><a href="/education">Education</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/legal/terms">Terms</a></li>
+          <li><a href="/legal/privacy">Privacy</a></li>
+          <li><a href="/legal/risk">Risk disclosure</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot-base">
+      <p class="risk">
+        Trading leveraged products carries a high level of risk and can result in the loss of all
+        capital. Past performance of any trader, strategy or automated system shown on this site is
+        not a reliable indicator of future results. Only trade with money you can afford to lose,
+        and seek independent advice if you are unsure.
+      </p>
+      <p style="margin-top:14px">© <%= it.brand.year %> <%= it.brand.name %>. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/js/app.js" defer></script>
+</body>
+</html>

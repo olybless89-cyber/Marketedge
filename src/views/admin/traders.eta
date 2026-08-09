@@ -1,0 +1,48 @@
+<div class="page-head"><div><h1>Traders</h1>
+  <p class="small" style="margin:4px 0 0">You set identity and risk band. Performance figures are computed from executed trades and cannot be edited here.</p></div></div>
+<% if (it.ok) { %><div class="notice notice-ok">Trader created. Their record fills in as trades are executed.</div><% } %>
+
+<div class="grid" style="grid-template-columns:1.3fr .7fr;gap:20px">
+  <div class="table-wrap" style="height:fit-content">
+    <table>
+      <thead><tr><th>Trader</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">Net P&amp;L</th><th class="num">Followers</th><th></th></tr></thead>
+      <tbody>
+        <% if (!it.rows.length) { %><tr><td colspan="6"><div class="empty"><h4>No traders yet</h4></div></td></tr><% } %>
+        <% it.rows.forEach(function(t){ %>
+          <tr>
+            <td><b><%= t.displayName %></b><div class="small muted"><%= t.strategy %> · risk <%= t.riskScore %>/10</div></td>
+            <td class="num"><%= t.closedTrades %></td>
+            <td class="num"><%= t.winRate.toFixed(1) %>%</td>
+            <td class="num <%= it.dir(t.totalPnl) %>"><%= it.signedUsd(t.totalPnl) %></td>
+            <td class="num"><%= t.followers %></td>
+            <td style="text-align:right">
+              <form method="post" action="/admin/traders/<%= t.id %>/toggle">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                <button class="btn btn-quiet btn-sm">Hide</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Add a trader</h3></div>
+    <form method="post" action="/admin/traders">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="field"><label for="dn">Display name</label><input class="input" id="dn" name="displayName" required></div>
+      <div class="field"><label for="st">Strategy</label>
+        <select class="input" id="st" name="strategy">
+          <option>Swing Trader</option><option>Scalper</option><option>Stock Market Pro</option>
+          <option>Forex Master</option><option>Fixed Income</option><option>Discretionary</option>
+        </select></div>
+      <div class="field"><label for="bo">Short bio</label><textarea class="input" id="bo" name="bio" rows="3"></textarea></div>
+      <div class="row2">
+        <div class="field"><label for="mc">Minimum copy</label><input class="input num" id="mc" name="minCopy" type="number" value="100"></div>
+        <div class="field"><label for="rs">Risk (1–10)</label><input class="input num" id="rs" name="riskScore" type="number" min="1" max="10" value="5"></div>
+      </div>
+      <button class="btn btn-primary btn-block btn-sm">Create trader</button>
+    </form>
+  </div>
+</div>

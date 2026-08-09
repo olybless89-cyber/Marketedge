@@ -1,0 +1,270 @@
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow blue">Multi-asset trading platform</span>
+      <h1>Trade global markets<span>with confidence</span></h1>
+      <p class="lede">
+        Forex, cryptocurrency, shares, indices and commodities in a single account —
+        with live pricing, transparent spreads and execution you can audit.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/register">Open an account</a>
+        <a class="btn btn-ghost" href="/markets">
+          Browse markets
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+
+      <!-- Every figure below is a count over real rows. If it is zero, it shows zero. -->
+      <div class="hero-proof">
+        <div><span>Instruments priced</span><b class="num"><%= it.stats.instruments %></b></div>
+        <div><span>Strategies to copy</span><b class="num"><%= it.stats.strategies %></b></div>
+        <div><span>Trades executed</span><b class="num"><%= it.compact(it.stats.trades) %></b></div>
+      </div>
+    </div>
+
+    <div class="chart-shell">
+      <div class="chart-bar">
+        <span class="dot pulse"></span>
+        <b>LIVE</b>
+        <span class="muted num" id="clock"></span>
+        <span style="margin-left:auto" class="pill">BTC/USD · 1D</span>
+      </div>
+      <!-- TradingView carries the candles; our own price table carries the maths. -->
+      <div class="tv-widget" style="height:432px">
+        <div class="tradingview-widget-container" style="height:100%">
+          <div class="tradingview-widget-container__widget" style="height:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"D","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0D1626","gridColor":"rgba(30,47,77,0.5)","hide_side_toolbar":true,"allow_symbol_change":true,"studies":["STD;RSI"],"support_host":"https://www.tradingview.com"}
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Asset classes ─────────────────────────────────────────────── -->
+<section class="section" id="markets">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow">Asset classes</span>
+      <h2>Five markets, one account</h2>
+      <p class="lede">Access global markets with competitive conditions and no separate wallets to manage.</p>
+    </div>
+
+    <div class="grid g4">
+      <% it.assets.forEach(function(a){ %>
+        <a class="card asset" href="/markets/<%= a.slug %>" style="--tint:<%= a.tint %>">
+          <div class="ico"><%~ a.icon %></div>
+          <h3><%= a.name %></h3>
+          <p class="small"><%= a.blurb %></p>
+          <span class="go">Explore <%= a.name %>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<!-- ── Market intelligence: split layout, breaks the card rhythm ──── -->
+<section class="section" style="background:var(--bg-elev);border-block:1px solid var(--line-soft)">
+  <div class="wrap">
+    <div class="grid" style="grid-template-columns:1.15fr .85fr;gap:34px;align-items:start">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-head" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--line-soft)">
+          <h3>Live market overview</h3>
+          <span class="badge badge-live">Streaming</span>
+        </div>
+        <div style="height:452px">
+          <div class="tradingview-widget-container" style="height:100%">
+            <div class="tradingview-widget-container__widget" style="height:100%"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+            {"colorTheme":"dark","dateRange":"12M","showChart":true,"locale":"en","isTransparent":true,"showSymbolLogo":true,"width":"100%","height":"100%","tabs":[{"title":"Indices","symbols":[{"s":"FOREXCOM:SPXUSD","d":"S&P 500"},{"s":"FOREXCOM:NSXUSD","d":"US 100"},{"s":"FOREXCOM:DJI","d":"Dow 30"},{"s":"INDEX:NKY","d":"Nikkei 225"}]},{"title":"Forex","symbols":[{"s":"FX:EURUSD"},{"s":"FX:GBPUSD"},{"s":"FX:USDJPY"},{"s":"FX:USDNGN","d":"USD/NGN"}]},{"title":"Crypto","symbols":[{"s":"BITSTAMP:BTCUSD"},{"s":"BITSTAMP:ETHUSD"},{"s":"BINANCE:SOLUSDT"}]}]}
+            </script>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="eyebrow">Market intelligence</span>
+        <h2 style="font-size:clamp(1.5rem,2.6vw,2.1rem)">Read the market before you commit to it</h2>
+        <div style="display:grid;gap:14px;margin-top:22px">
+          <% it.intel.forEach(function(x){ %>
+            <div class="card" style="padding:18px">
+              <div style="display:flex;gap:13px;align-items:flex-start">
+                <div class="ico" style="--tint:<%= x.tint %>;width:38px;height:38px;margin:0;border-radius:10px;background:color-mix(in srgb,var(--tint) 16%,transparent);color:var(--tint);display:grid;place-items:center;flex:none">
+                  <%~ x.icon %>
+                </div>
+                <div>
+                  <h3 style="font-size:.98rem;margin-bottom:5px"><%= x.title %></h3>
+                  <p class="small" style="margin:0"><%= x.body %></p>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Crypto ────────────────────────────────────────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow">Popular asset class</span>
+      <h2>Cryptocurrency trading</h2>
+      <p class="lede">The most traded digital assets, with live pricing from our own feed.</p>
+    </div>
+
+    <div class="grid g4">
+      <% it.coins.forEach(function(c){ %>
+        <div class="card coin">
+          <div class="coin-top" style="--grad:<%= c.grad %>"><span><%= c.ticker %></span></div>
+          <div class="coin-body">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+              <h3><%= c.name %></h3>
+              <span class="num small <%= it.dir(c.change) %>"><%= it.pct(c.change) %></span>
+            </div>
+            <div class="num" style="font-size:1.28rem;font-weight:600;margin-bottom:9px">
+              <%= c.price ? it.usd(c.price, c.price < 5 ? 4 : 2) : '—' %>
+            </div>
+            <p><%= c.blurb %></p>
+          </div>
+          <div class="coin-foot">
+            <a class="go" style="color:var(--blue-hi);font-weight:600;font-size:.88rem" href="/markets/crypto/<%= c.ticker.toLowerCase() %>">Trade now →</a>
+            <span class="pill"><%= c.ticker %>/USD</span>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<!-- ── Copy trading: real traders, real numbers ───────────────────── -->
+<section class="section" style="background:var(--bg-elev);border-block:1px solid var(--line-soft)">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow">Social trading</span>
+      <h2>Copy professional traders</h2>
+      <p class="lede">
+        Every figure below is calculated from that trader's executed positions — win rate over
+        closed trades, return over volume traded. Nothing here is a headline number.
+      </p>
+    </div>
+
+    <% if (it.traders.length) { %>
+      <div class="grid g4">
+        <% it.traders.slice(0,4).forEach(function(t){ %>
+          <div class="card">
+            <div class="trader-head">
+              <% if (t.avatarUrl) { %>
+                <img class="avatar" src="<%= t.avatarUrl %>" alt="" loading="lazy"
+                     onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'avatar',textContent:'<%= it.initials(t.displayName) %>'}))">
+              <% } else { %>
+                <div class="avatar"><%= it.initials(t.displayName.split(' ')[0], t.displayName.split(' ')[1]) %></div>
+              <% } %>
+              <div style="min-width:0">
+                <h3><%= t.displayName %></h3>
+                <div class="role"><%= t.strategy %></div>
+              </div>
+            </div>
+
+            <dl class="kv">
+              <dt>Return on volume</dt>
+              <dd class="<%= it.dir(t.roi) %>"><%= it.pct(t.roi) %></dd>
+              <dt>Closed trades</dt>
+              <dd><%= t.closedTrades %></dd>
+              <dt>Win rate</dt>
+              <dd><%= t.winRate.toFixed(1) %>%</dd>
+              <dt>Copying now</dt>
+              <dd><%= t.followers %></dd>
+              <dt>Minimum</dt>
+              <dd><%= it.usd(t.minCopy, 0) %></dd>
+            </dl>
+
+            <div style="margin-top:14px">
+              <div class="small muted" style="display:flex;justify-content:space-between">
+                <span>Risk</span><span class="num"><%= t.riskScore %>/10</span>
+              </div>
+              <div class="meter"><i style="width:<%= t.riskScore * 10 %>%"></i></div>
+            </div>
+
+            <a class="btn btn-quiet btn-block btn-sm" style="margin-top:16px" href="/copy-trading/<%= t.slug %>">View record</a>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="card empty">
+        <h4>No strategies published yet</h4>
+        <p class="small">Traders appear here once they have executed positions on the platform.</p>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<!-- ── Plans ─────────────────────────────────────────────────────── -->
+<section class="section" id="plans">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow blue">Managed portfolios</span>
+      <h2>Investment plans</h2>
+      <p class="lede">Choose a plan that matches your horizon. Returns accrue per period and are visible in your ledger as they post.</p>
+    </div>
+
+    <div class="grid g4">
+      <% it.plans.forEach(function(p, i){ %>
+        <div class="card plan <%= p.featured ? 'featured' : '' %>">
+          <div class="plan-head">
+            <% if (p.badge) { %><span class="plan-tag"><%= p.badge %></span><% } %>
+            <h3><%= p.name %></h3>
+            <div class="plan-rate">
+              <b><%= Number(p.roiPercent).toFixed(Number(p.roiPercent) % 1 ? 1 : 0) %>%</b>
+              <small>per <%= p.periodHours === 24 ? 'day' : p.periodHours + 'h' %></small>
+            </div>
+            <div class="small muted" style="margin-top:6px">
+              <%= p.durationPeriods %> periods · matures in <%= Math.round(p.durationPeriods * p.periodHours / 24) %> days
+            </div>
+          </div>
+
+          <ul class="plan-feats">
+            <% (p.features || []).forEach(function(f){ %>
+              <li>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>
+                <%= f %>
+              </li>
+            <% }) %>
+          </ul>
+
+          <div class="plan-range">
+            <span class="muted">Min <b><%= it.usd(p.minAmount, 0) %></b></span>
+            <span class="muted">Max <b><%= it.usd(p.maxAmount, 0) %></b></span>
+          </div>
+          <div class="plan-foot">
+            <a class="btn <%= p.featured ? 'btn-primary' : 'btn-quiet' %> btn-block" href="/dashboard/invest?plan=<%= p.slug %>">Choose <%= p.name %></a>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <p class="risk center" style="margin:26px auto 0">
+      Advertised rates are targets, not guarantees. Capital placed in a plan is at risk and
+      returns may be lower than shown, including a total loss of principal.
+    </p>
+  </div>
+</section>
+
+<!-- ── Closing CTA ───────────────────────────────────────────────── -->
+<section class="section">
+  <div class="wrap">
+    <div class="card" style="text-align:center;padding:clamp(32px,6vw,64px);background:linear-gradient(140deg,rgba(47,107,255,.14),var(--bg-elev) 62%)">
+      <h2>Open an account in under two minutes</h2>
+      <p class="lede center">Fund it when you're ready. There's no minimum to look around.</p>
+      <div class="hero-cta" style="justify-content:center">
+        <a class="btn btn-primary" href="/register">Create account</a>
+        <a class="btn btn-ghost" href="/contact">Talk to us</a>
+      </div>
+    </div>
+  </div>
+</section>

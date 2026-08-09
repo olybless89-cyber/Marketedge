@@ -1,0 +1,51 @@
+<section class="section">
+  <div class="wrap">
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:30px">
+      <div class="avatar avatar-lg"><%= it.initials(it.t.displayName.split(' ')[0], it.t.displayName.split(' ')[1]) %></div>
+      <div style="flex:1;min-width:240px">
+        <h1 style="font-size:clamp(1.7rem,3.4vw,2.4rem);margin-bottom:6px"><%= it.t.displayName %></h1>
+        <p class="muted" style="margin:0"><%= it.t.strategy %> · trading <%= it.t.activeDays %> days on the platform</p>
+      </div>
+      <a class="btn btn-primary" href="/dashboard/copy">Copy this trader</a>
+    </div>
+
+    <% if (it.t.bio) { %><p class="lede" style="margin-bottom:26px"><%= it.t.bio %></p><% } %>
+
+    <div class="grid g4" style="margin-bottom:26px">
+      <div class="stat"><div class="stat-k">Return on volume</div><div class="stat-v <%= it.dir(it.t.roi) %>"><%= it.pct(it.t.roi) %></div><div class="stat-sub">Net P&amp;L ÷ volume traded</div></div>
+      <div class="stat"><div class="stat-k">Win rate</div><div class="stat-v"><%= it.t.winRate.toFixed(1) %>%</div><div class="stat-sub"><%= it.t.closedTrades %> closed trades</div></div>
+      <div class="stat"><div class="stat-k">Net P&amp;L</div><div class="stat-v <%= it.dir(it.t.totalPnl) %>"><%= it.signedUsd(it.t.totalPnl) %></div><div class="stat-sub">All closed positions</div></div>
+      <div class="stat"><div class="stat-k">Copying now</div><div class="stat-v"><%= it.t.followers %></div><div class="stat-sub"><%= it.usd(it.t.aum,0) %> allocated</div></div>
+    </div>
+
+    <div class="card-head"><h3 style="font-family:var(--ff-display)">Trade history</h3>
+      <span class="small muted">Last <%= it.trades.length %> closed positions</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Closed</th><th>Symbol</th><th>Side</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">Size</th><th class="num">P&amp;L</th></tr></thead>
+        <tbody>
+          <% if (!it.trades.length) { %>
+            <tr><td colspan="7"><div class="empty"><h4>No closed trades yet</h4>
+              <p class="small">This record starts filling as soon as the first position closes.</p></div></td></tr>
+          <% } %>
+          <% it.trades.forEach(function(t){ %>
+            <tr>
+              <td class="small muted"><%= it.dt(t.closedAt) %></td>
+              <td><b><%= t.symbol %></b></td>
+              <td><span class="badge <%= t.side==='buy'?'badge-live':'badge-warn' %>"><%= t.side.toUpperCase() %></span></td>
+              <td class="num"><%= it.num(t.entryPrice, 2) %></td>
+              <td class="num"><%= it.num(t.exitPrice, 2) %></td>
+              <td class="num"><%= it.usd(t.sizeUsd, 0) %></td>
+              <td class="num <%= it.dir(t.pnl) %>"><%= it.signedUsd(t.pnl) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="risk" style="margin-top:22px">
+      This record shows what has already happened. It says nothing about what will happen next.
+      Copying allocates your own capital and you can lose all of it.
+    </p>
+  </div>
+</section>

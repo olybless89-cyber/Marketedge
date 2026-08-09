@@ -1,0 +1,50 @@
+<div class="page-head">
+  <div><h1><%= it.type === 'deposit' ? 'Deposits' : 'Withdrawals' %></h1>
+    <p class="small" style="margin:4px 0 0">
+      <%= it.type === 'deposit'
+          ? 'Approving a deposit is the only action that creates money in the system.'
+          : 'Requested amounts are already held. Approving settles; declining returns the funds.' %>
+    </p></div>
+</div>
+
+<div class="tabs">
+  <% ['pending','approved','rejected','all'].forEach(function(s){ %>
+    <a href="/admin/<%= it.type %>s?status=<%= s %>" <%= it.status===s?'aria-current=page':'' %>><%= s.replace(/^./,x=>x.toUpperCase()) %></a>
+  <% }) %>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Date</th><th>Client</th><th>Method</th><th>Destination</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!it.rows.length) { %>
+        <tr><td colspan="7"><div class="empty"><h4>Nothing in this view</h4></div></td></tr>
+      <% } %>
+      <% it.rows.forEach(function(t){ %>
+        <tr>
+          <td class="small muted"><%= it.dt(t.created_at) %></td>
+          <td><b><%= t.first_name %> <%= t.last_name %></b><div class="small muted"><%= t.email %></div></td>
+          <td class="small"><%= t.method.replace('_',' ').toUpperCase() %></td>
+          <td class="small num" style="max-width:170px;overflow:hidden;text-overflow:ellipsis"><%= t.address || '—' %></td>
+          <td class="num"><%= it.usd(t.amount) %></td>
+          <td><span class="badge <%= t.status==='approved'?'badge-live':t.status==='rejected'?'badge-warn':'badge-idle' %>"><%= t.status %></span></td>
+          <td style="text-align:right;white-space:nowrap">
+            <% if (t.status === 'pending') { %>
+              <form method="post" action="/admin/transactions/<%= t.id %>/approve" style="display:inline">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                <button class="btn btn-primary btn-sm" data-confirm="Approve <%= it.usd(t.amount) %> for <%= t.first_name %>?">Approve</button>
+              </form>
+              <form method="post" action="/admin/transactions/<%= t.id %>/reject" style="display:inline">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                <input type="hidden" name="note" value="Declined after review">
+                <button class="btn btn-danger btn-sm" data-confirm="Decline this request?">Decline</button>
+              </form>
+            <% } else { %>
+              <span class="small muted"><%= t.admin_note || '—' %></span>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

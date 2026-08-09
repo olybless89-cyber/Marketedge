@@ -1,0 +1,77 @@
+import { Hono } from 'hono';
+import crypto from 'node:crypto';
+import { eq } from 'drizzle-orm';
+import { db } from '../db/client.js';
+import { users, ledger, notifications } from '../db/schema.js';
+import { hash, verify, createSession, destroySession, csrfToken, throttle } from '../lib/auth.js';
+import { render, eta } from '../lib/view.js';
+import * as fmt from '../lib/money.js';
+
+export const auth = new Hono();
+
+const shell = (c, view, data = {}, title = '') =>
+  render(c, 'layouts/auth', { body: eta.render(view, { ...fmt, csrf: csrfToken(c), ...data }), title });
+
+auth.get('/login', (c) => {
+  if (c.get('user')) return c.redirect('/dashboard');
+  return shell(c, 'pages/login', { next: c.req.query('next') || '' }, 'Log in');
+});
+
+auth.post('/login', throttle(8), async (c) => {
+  const b = c.get('body');
+  const email = String(b.email || '').trim().toLowerCase();
+  const back = (v) => shell(c, 'pages/login', { error: v, email, next: b.next || '' }, 'Log in');
+
+  const [u] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  // Same message either way — don't confirm which emails exist.
+  if (!u || !(await verify(u.passwordHash, String(b.password || ''))))
+    return back('That email and password combination did not match an account.');
+  if (u.status !== 'active')
+    return back('This account is suspended. Contact support to restore access.');
+
+  await createSession(c, u.id);
+  const next = String(b.next || '');
+  return c.redirect(next.startsWith('/') ? next : (u.role === 'admin' ? '/admin' : '/dashboard'));
+});
+
+auth.get('/register', (c) => {
+  if (c.get('user')) return c.redirect('/dashboard');
+  return shell(c, 'pages/register', {}, 'Open an account');
+});
+
+auth.post('/register', throttle(6), async (c) => {
+  const b = c.get('body');
+  const f = {
+    firstName: String(b.firstName || '').trim(),
+    lastName: String(b.lastName || '').trim(),
+    email: String(b.email || '').trim().toLowerCase(),
+    country: String(b.country || '').trim(),
+    phone: String(b.phone || '').trim(),
+  };
+  const back = (e) => shell(c, 'pages/register', { error: e, f }, 'Open an account');
+
+  if (!f.firstName || !f.lastName) return back('Enter your first and last name.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(f.email)) return back('Enter a valid email address.');
+  if (String(b.password || '').length < 10) return back('Use a password of at least 10 characters.');
+  if (b.password !== b.confirm) return back('The two passwords do not match.');
+
+  const [dupe] = await db.select({ id: users.id }).from(users).where(eq(users.email, f.email)).limit(1);
+  if (dupe) return back('An account already exists for that email. Try logging in instead.');
+
+  const [u] = await db.insert(users).values({
+    ...f,
+    passwordHash: await hash(String(b.password)),
+    referralCode: crypto.randomBytes(4).toString('hex').toUpperCase(),
+  }).returning();
+
+  await db.insert(notifications).values({
+    userId: u.id, kind: 'info',
+    title: 'Welcome to the platform',
+    body: 'Fund your account to start trading, or browse strategies while you decide.',
+  });
+
+  await createSession(c, u.id);
+  return c.redirect('/dashboard');
+});
+
+auth.post('/logout', async (c) => { await destroySession(c); return c.redirect('/'); });

@@ -1,0 +1,29 @@
+<div class="page-head">
+  <div><h1>Automated strategies</h1>
+    <p class="small" style="margin:4px 0 0">Rule-based systems that trade your allocation without manual input.</p></div>
+  <span class="small muted num"><%= it.usd(it.bal.available) %> available</span>
+</div>
+<div class="grid g3">
+  <% if (!it.list.length) { %>
+    <div class="card empty" style="grid-column:1/-1"><h4>No strategies published</h4>
+      <p class="small">An administrator can publish automated strategies from the admin panel.</p></div>
+  <% } %>
+  <% it.list.forEach(function(b){ %>
+    <div class="card">
+      <div class="card-head">
+        <h3><%= b.name %></h3>
+        <span class="badge badge-blue"><%= b.market %></span>
+      </div>
+      <p class="small"><%= b.tagline %></p>
+      <dl class="kv">
+        <dt>Cadence</dt><dd style="font-family:var(--ff-body)"><%= b.cadence %></dd>
+        <dt>Minimum</dt><dd><%= it.usd(b.minAllocation,0) %></dd>
+      </dl>
+      <div style="margin-top:13px">
+        <div class="small muted" style="display:flex;justify-content:space-between"><span>Risk</span><span class="num"><%= b.riskScore %>/10</span></div>
+        <div class="meter"><i style="width:<%= b.riskScore*10 %>%"></i></div>
+      </div>
+      <button class="btn btn-quiet btn-block btn-sm" style="margin-top:15px" disabled>Allocation opens soon</button>
+    </div>
+  <% }) %>
+</div>

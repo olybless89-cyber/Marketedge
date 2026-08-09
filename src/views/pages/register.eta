@@ -1,0 +1,49 @@
+<div class="card">
+  <h2 style="font-size:1.5rem">Open an account</h2>
+  <p class="small">Takes about two minutes. You can fund it later.</p>
+
+  <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+  <% const f = it.f || {} %>
+
+  <form method="post" action="/register">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <div class="row2">
+      <div class="field">
+        <label for="fn">First name</label>
+        <input class="input" id="fn" name="firstName" required autocomplete="given-name" value="<%= f.firstName || '' %>">
+      </div>
+      <div class="field">
+        <label for="ln">Last name</label>
+        <input class="input" id="ln" name="lastName" required autocomplete="family-name" value="<%= f.lastName || '' %>">
+      </div>
+    </div>
+    <div class="field">
+      <label for="em">Email</label>
+      <input class="input" id="em" name="email" type="email" required autocomplete="email" value="<%= f.email || '' %>">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="co">Country</label>
+        <input class="input" id="co" name="country" autocomplete="country-name" value="<%= f.country || '' %>">
+      </div>
+      <div class="field">
+        <label for="ph">Phone</label>
+        <input class="input" id="ph" name="phone" type="tel" autocomplete="tel" value="<%= f.phone || '' %>">
+      </div>
+    </div>
+    <div class="field">
+      <label for="pw">Password</label>
+      <input class="input" id="pw" name="password" type="password" required minlength="10" autocomplete="new-password">
+      <div class="hint">At least 10 characters. A short phrase works better than a scrambled word.</div>
+    </div>
+    <div class="field">
+      <label for="cf">Confirm password</label>
+      <input class="input" id="cf" name="confirm" type="password" required autocomplete="new-password">
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Create account</button>
+  </form>
+
+  <p class="small center" style="margin:18px 0 0">
+    Already registered? <a href="/login" style="color:var(--blue-hi);font-weight:600">Log in</a>
+  </p>
+</div>

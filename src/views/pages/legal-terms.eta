@@ -1,0 +1,5 @@
+<section class="section"><div class="wrap" style="max-width:760px">
+  <span class="eyebrow blue">Legal</span><h1>Terms of service</h1>
+  <p class="lede">Replace this page with terms drafted for your jurisdiction before accepting a single live client.</p>
+  <p>This scaffold ships with placeholder legal pages so the routes and navigation are complete. It is not legal text and must not be published as-is. At minimum your final terms should cover: eligibility and onboarding, client money handling, order execution, fees and spreads, withdrawal conditions and timeframes, account closure, dispute resolution, and the governing jurisdiction.</p>
+</div></section>

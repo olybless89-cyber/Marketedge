@@ -1,0 +1,21 @@
+{
+  "name": "rydoninv",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/db/seed.js",
+    "migrate": "node src/db/migrate.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.17",
+    "argon2": "^0.45.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.45.2",
+    "eta": "^4.6.0",
+    "hono": "^4.13.1",
+    "postgres": "^3.4.9"
+  }
+}

@@ -1,0 +1,19 @@
+<div class="page-head"><h1>Settings</h1></div>
+<% if (it.ok) { %><div class="notice notice-ok">Saved.</div><% } %>
+<div class="grid g2" style="max-width:900px">
+  <div class="card">
+    <div class="card-head"><h3>Profile</h3></div>
+    <dl class="kv">
+      <dt>Name</dt><dd style="font-family:var(--ff-body)"><%= it.user.firstName %> <%= it.user.lastName %></dd>
+      <dt>Email</dt><dd style="font-family:var(--ff-body)"><%= it.user.email %></dd>
+      <dt>Country</dt><dd style="font-family:var(--ff-body)"><%= it.user.country || '—' %></dd>
+      <dt>Referral code</dt><dd><%= it.user.referralCode || '—' %></dd>
+      <dt>Verification</dt><dd style="font-family:var(--ff-body)"><span class="badge <%= it.user.kycStatus==='verified'?'badge-live':'badge-warn' %>"><%= it.user.kycStatus %></span></dd>
+    </dl>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>Security</h3></div>
+    <p class="small">Your password is stored as an Argon2id hash and is never recoverable — only replaceable.</p>
+    <a class="btn btn-quiet btn-block" href="/dashboard/settings#password">Change password</a>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+<div class="page-head"><h1>Deposit</h1></div>
+<% if (it.sent) { %><div class="notice notice-ok">Deposit submitted. It posts to your balance once we confirm the transfer.</div><% } %>
+
+<div class="grid" style="grid-template-columns:.9fr 1.1fr;gap:20px">
+  <div class="card">
+    <div class="card-head"><h3>Fund your account</h3></div>
+    <form method="post" action="/dashboard/deposit">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="field">
+        <label for="m">Method</label>
+        <select class="input" id="m" name="method">
+          <option value="usdt_trc20">USDT — TRC20</option>
+          <option value="btc">Bitcoin</option>
+          <option value="eth">Ethereum — ERC20</option>
+          <option value="bank">Bank transfer</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="a">Amount (USD)</label>
+        <input class="input num" id="a" name="amount" type="number" min="10" step="0.01" required placeholder="500.00">
+        <div class="hint">Minimum deposit is $10. Network fees are paid by the sender.</div>
+      </div>
+      <button class="btn btn-primary btn-block">Submit deposit</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Deposit history</h3></div>
+    <div class="table-wrap" style="border:0">
+      <table>
+        <thead><tr><th>Date</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>
+        <tbody>
+          <% if (!it.rows.length) { %>
+            <tr><td colspan="4"><div class="empty"><h4>No deposits yet</h4><p class="small">Your first transfer will appear here.</p></div></td></tr>
+          <% } %>
+          <% it.rows.forEach(function(r){ %>
+            <tr>
+              <td class="small muted"><%= it.ago(r.createdAt) %></td>
+              <td class="small"><%= r.method.replace('_',' ').toUpperCase() %></td>
+              <td class="num"><%= it.usd(r.amount) %></td>
+              <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

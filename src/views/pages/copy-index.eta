@@ -1,0 +1,36 @@
+<section class="section">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:38px">
+      <span class="eyebrow">Social trading</span>
+      <h2>Published trading records</h2>
+      <p class="lede">Win rate is measured over closed trades. Return is measured against volume traded, not account equity — the honest denominator.</p>
+    </div>
+    <div class="grid g3">
+      <% if (!it.traders.length) { %>
+        <div class="card empty" style="grid-column:1/-1"><h4>No published records yet</h4></div>
+      <% } %>
+      <% it.traders.forEach(function(t){ %>
+        <a class="card" href="/copy-trading/<%= t.slug %>">
+          <div class="trader-head">
+            <div class="avatar"><%= it.initials(t.displayName.split(' ')[0], t.displayName.split(' ')[1]) %></div>
+            <div style="min-width:0;flex:1"><h3><%= t.displayName %></h3><div class="role"><%= t.strategy %></div></div>
+            <span class="badge <%= t.openTrades ? 'badge-live':'badge-idle' %>"><%= t.openTrades ? 'In market':'Flat' %></span>
+          </div>
+          <% if (t.bio) { %><p class="small"><%= t.bio %></p><% } %>
+          <dl class="kv">
+            <dt>Return on volume</dt><dd class="<%= it.dir(t.roi) %>"><%= it.pct(t.roi) %></dd>
+            <dt>Closed trades</dt><dd><%= t.closedTrades %></dd>
+            <dt>Win rate</dt><dd><%= t.winRate.toFixed(1) %>%</dd>
+            <dt>Copying now</dt><dd><%= t.followers %></dd>
+            <dt>Minimum</dt><dd><%= it.usd(t.minCopy,0) %></dd>
+            <dt>Last trade</dt><dd style="font-family:var(--ff-body)"><%= it.ago(t.lastTradeAt) %></dd>
+          </dl>
+          <div style="margin-top:13px">
+            <div class="small muted" style="display:flex;justify-content:space-between"><span>Risk</span><span class="num"><%= t.riskScore %>/10</span></div>
+            <div class="meter"><i style="width:<%= t.riskScore*10 %>%"></i></div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
