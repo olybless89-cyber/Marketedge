@@ -117,10 +117,10 @@ async function main() {
     const [plan] = await sql`select * from plans where slug = 'standard'`;
     if (plan) {
       const amount = 5000;
-      const matures = new Date(Date.now() + plan.duration_periods * plan.period_hours * 3600e3);
+      const matures = new Date(Date.now() + Number(plan.duration_periods) * Number(plan.period_hours) * 3600e3);
       const [inv] = await sql`
         insert into investments (user_id, plan_id, principal, matures_at)
-        values (${demo.id}, ${plan.id}, ${amount}, ${matures}) returning id`;
+        values (${demo.id}, ${plan.id}, ${amount}, ${matures.toISOString()}) returning id`;
       await sql`insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo) values
         (${demo.id}, 'main',   'investment_open', ${-amount}, 'investment', ${inv.id}, 'Opened Standard'),
         (${demo.id}, 'locked', 'investment_open', ${amount},  'investment', ${inv.id}, 'Standard principal')`;

@@ -12,6 +12,7 @@ import { auth } from './routes/auth.js';
 import { dash } from './routes/dashboard.js';
 import { admin } from './routes/admin.js';
 import { startEngine } from './workers/engine.js';
+import { migrate } from './db/migrate.js';
 import { sql } from './db/client.js';
 
 const app = new Hono();
@@ -45,10 +46,13 @@ app.get('/healthz', async (c) => {
   catch (e) { return c.json({ ok: false, error: e.message }, 503); }
 });
 
+// Order matters: public routes (auth + pub) must be mounted before the
+// auth-protected routers, otherwise their `*` guard middleware would
+// shadow public pages like /, /markets, /plans and force a login redirect.
 app.route('/', auth);
+app.route('/', pub);
 app.route('/', dash);
 app.route('/', admin);
-app.route('/', pub);
 
 app.notFound((c) => c.html(
   `<!doctype html><meta charset="utf-8"><title>Not found</title>
@@ -72,10 +76,17 @@ app.onError((err, c) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`[web] listening on :${info.port}`);
-  if (process.env.RUN_ENGINE !== 'false') startEngine();
-});
+
+// Ensure schema exists before serving traffic (idempotent, safe on every boot).
+migrate()
+  .then(() => serve({ fetch: app.fetch, port }, (info) => {
+    console.log(`[web] listening on :${info.port}`);
+    if (process.env.RUN_ENGINE !== 'false') startEngine();
+  }))
+  .catch((err) => {
+    console.error('[boot] migration failed, not starting server:', err);
+    process.exit(1);
+  });
 
 const bye = async () => { console.log('[web] shutting down'); await sql.end({ timeout: 5 }); process.exit(0); };
 process.on('SIGTERM', bye);

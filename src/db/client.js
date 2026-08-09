@@ -12,12 +12,19 @@ if (!/-pooler\./.test(url) && /neon\.tech/.test(url)) {
   console.warn('[db] Neon URL is not the pooled endpoint. Use the host containing "-pooler".');
 }
 
+// Respect sslmode in the URL; default to require for production safety.
+//   sslmode=require  -> ssl: 'require'
+//   sslmode=disable  -> ssl: false   (local dev / testing)
+//   (unset)          -> ssl: 'require'
+const sm = /sslmode=([^&]+)/i.exec(url);
+const sslOpt = sm ? (sm[1].toLowerCase() === 'disable' ? false : sm[1].toLowerCase()) : 'require';
+
 export const sql = postgres(url, {
   max: Number(process.env.DB_POOL_MAX || 8),
   idle_timeout: 20,
   connect_timeout: 15,
   prepare: false,          // required for pgbouncer transaction pooling
-  ssl: 'require',
+  ssl: sslOpt,
 });
 
 export const db = drizzle(sql, { schema });
