@@ -4,22 +4,35 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema.js';
 
 const url = process.env.DATABASE_URL;
-if (!url) throw new Error('DATABASE_URL is not set. Copy .env.example to .env and fill it in.');
+
+if (!url) {
+  // Don't throw at import time — that crashes the process before the web
+  // server starts, which puts Railway in a restart loop that hides the
+  // real cause. Defer the failure to query time so /healthz still works
+  // and the error surfaces in logs and on /readyz.
+  console.error('[db] DATABASE_URL is not set. The web server will start, but every database query will fail. Add a Postgres database in Railway and set DATABASE_URL, then redeploy.');
+}
 
 // Neon: use the -pooler host. Railway containers keep connections warm and
 // the direct endpoint will exhaust its connection limit under any real load.
-if (!/-pooler\./.test(url) && /neon\.tech/.test(url)) {
+if (url && !/-pooler\./.test(url) && /neon\.tech/.test(url)) {
   console.warn('[db] Neon URL is not the pooled endpoint. Use the host containing "-pooler".');
 }
 
 // Respect sslmode in the URL; default to require for production safety.
 //   sslmode=require  -> ssl: 'require'
 //   sslmode=disable  -> ssl: false   (local dev / testing)
-//   (unset)          -> ssl: 'require'
-const sm = /sslmode=([^&]+)/i.exec(url);
-const sslOpt = sm ? (sm[1].toLowerCase() === 'disable' ? false : sm[1].toLowerCase()) : 'require';
+//   (unset)          -> ssl: 'require'  (Railway Postgres and Neon both accept SSL)
+const sm = url ? /sslmode=([^&]+)/i.exec(url) : null;
+const sslOpt = !url
+  ? false
+  : sm ? (sm[1].toLowerCase() === 'disable' ? false : sm[1].toLowerCase()) : 'require';
 
-export const sql = postgres(url, {
+// Placeholder URL when DATABASE_URL is unset; fails fast on connect with a
+// clear ECONNREFUSED instead of crashing at import.
+const connUrl = url || 'postgresql://unset:unset@127.0.0.1:5432/unset';
+
+export const sql = postgres(connUrl, {
   max: Number(process.env.DB_POOL_MAX || 8),
   idle_timeout: 20,
   connect_timeout: 15,

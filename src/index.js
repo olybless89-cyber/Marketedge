@@ -41,9 +41,13 @@ app.use('*', loadUser);
 app.use('*', csrfGuard);
 app.use('*', async (c, next) => { c.set('csrf', csrfToken(c)); await next(); });
 
-app.get('/healthz', async (c) => {
-  try { await sql`select 1`; return c.json({ ok: true, ts: Date.now() }); }
-  catch (e) { return c.json({ ok: false, error: e.message }, 503); }
+app.get('/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
+
+// DB readiness probe — separate from liveness so a DB outage doesn't
+// put Railway into a restart loop that prevents you from reading logs.
+app.get('/readyz', async (c) => {
+  try { await sql`select 1`; return c.json({ ok: true, db: true, ts: Date.now() }); }
+  catch (e) { return c.json({ ok: false, db: false, error: e.message }, 503); }
 });
 
 // Order matters: public routes (auth + pub) must be mounted before the
@@ -77,16 +81,18 @@ app.onError((err, c) => {
 
 const port = Number(process.env.PORT || 3000);
 
-// Ensure schema exists before serving traffic (idempotent, safe on every boot).
-migrate()
-  .then(() => serve({ fetch: app.fetch, port }, (info) => {
-    console.log(`[web] listening on :${info.port}`);
-    if (process.env.RUN_ENGINE !== 'false') startEngine();
-  }))
-  .catch((err) => {
-    console.error('[boot] migration failed, not starting server:', err);
-    process.exit(1);
-  });
+// Start serving immediately. Migration runs in the background so a DB
+// problem doesn't kill the container (and put Railway in a restart loop
+// that hides the real error). The DB status is visible on /readyz.
+serve({ fetch: app.fetch, port }, (info) => {
+  console.log(`[web] listening on :${info.port}`);
+  migrate()
+    .then(() => {
+      console.log('[web] schema ready');
+      if (process.env.RUN_ENGINE !== 'false') startEngine();
+    })
+    .catch((err) => console.error('[web] migration failed (check DATABASE_URL):', err.message));
+});
 
 const bye = async () => { console.log('[web] shutting down'); await sql.end({ timeout: 5 }); process.exit(0); };
 process.on('SIGTERM', bye);
