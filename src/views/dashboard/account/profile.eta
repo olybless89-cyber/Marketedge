@@ -1,0 +1,42 @@
+<div class="page-head">
+  <div><h1>Edit profile</h1>
+    <p class="small" style="margin:4px 0 0">Update the details we hold on file for your account.</p></div>
+  <a class="btn btn-quiet btn-sm" href="/dashboard/account">Back to account</a>
+</div>
+
+<% if (it.ok) { %><div class="notice notice-ok">Profile updated.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="card" style="max-width:620px">
+  <form method="post" action="/dashboard/account/profile">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <div class="grid g2">
+      <div class="field">
+        <label for="fn">First name</label>
+        <input class="input" id="fn" name="firstName" value="<%= it.esc(it.me.firstName) %>" maxlength="80" required>
+      </div>
+      <div class="field">
+        <label for="ln">Last name</label>
+        <input class="input" id="ln" name="lastName" value="<%= it.esc(it.me.lastName) %>" maxlength="80" required>
+      </div>
+    </div>
+    <div class="field">
+      <label for="em">Email</label>
+      <input class="input" id="em" name="email" type="email" value="<%= it.esc(it.me.email) %>" maxlength="255" required>
+    </div>
+    <div class="grid g2">
+      <div class="field">
+        <label for="ph">Phone</label>
+        <input class="input" id="ph" name="phone" type="tel" value="<%= it.esc(it.me.phone || '') %>" maxlength="40" placeholder="+234…">
+      </div>
+      <div class="field">
+        <label for="co">Country</label>
+        <input class="input" id="co" name="country" value="<%= it.esc(it.me.country || '') %>" maxlength="80" placeholder="Nigeria">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="btn btn-primary">Save changes</button>
+      <a class="btn btn-quiet" href="/dashboard/account">Cancel</a>
+    </div>
+  </form>
+</div>

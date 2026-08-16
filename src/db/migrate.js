@@ -88,6 +88,21 @@ const DDL = [
   )`,
   `create index if not exists inv_user_idx on investments(user_id, status)`,
 
+  `create table if not exists spot_positions (
+    id serial primary key,
+    user_id integer not null,
+    symbol varchar(24) not null,
+    qty numeric(20,8) not null,
+    entry_price numeric(20,8) not null,
+    cost numeric(20,8) not null,
+    status varchar(20) not null default 'open',
+    pnl numeric(20,8) not null default 0,
+    exit_price numeric(20,8),
+    opened_at timestamptz not null default now(),
+    closed_at timestamptz
+  )`,
+  `create index if not exists spot_user_idx on spot_positions(user_id, status)`,
+
   `create table if not exists traders (
     id serial primary key,
     slug varchar(80) not null,
@@ -200,6 +215,40 @@ const DDL = [
     created_at timestamptz not null default now()
   )`,
   `create index if not exists notif_user_idx on notifications(user_id, read_at)`,
+
+  `create table if not exists kyc_submissions (
+    id serial primary key,
+    user_id integer not null,
+    document_type varchar(40) not null,
+    document_number varchar(80),
+    country varchar(80),
+    front_url text,
+    back_url text,
+    selfie_url text,
+    status varchar(20) not null default 'pending',
+    admin_note text,
+    reviewed_by integer,
+    reviewed_at timestamptz,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists kyc_user_idx on kyc_submissions(user_id, status)`,
+  `create index if not exists kyc_status_idx on kyc_submissions(status)`,
+
+  `create table if not exists mail_log (
+    id serial primary key,
+    user_id integer,
+    to_email varchar(255) not null,
+    template varchar(60) not null,
+    subject varchar(200) not null,
+    body_html text,
+    status varchar(20) not null default 'logged',
+    error text,
+    ref_type varchar(32),
+    ref_id integer,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists mail_user_idx on mail_log(user_id, created_at)`,
+  `create index if not exists mail_tpl_idx on mail_log(template, created_at)`,
 
   `create table if not exists settings (
     key varchar(80) primary key,

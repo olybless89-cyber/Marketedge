@@ -97,6 +97,25 @@ export const investments = pgTable('investments', {
   maturesAt: timestamp('matures_at', { withTimezone: true }).notNull(),
 }, (t) => ({ userIdx: index('inv_user_idx').on(t.userId, t.status) }));
 
+/* User spot positions. A buy debits USD from the main account and opens a
+   holding; a sell credits USD back at the live price. P&L is realised on
+   close and posted to the ledger. Open positions are marked to the prices
+   table for unrealised P&L.                                           */
+export const spotPositions = pgTable('spot_positions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  symbol: varchar('symbol', { length: 24 }).notNull(),        // e.g. BTCUSDT
+  qty: numeric('qty', { precision: 20, scale: 8 }).notNull(),  // units of the asset
+  entryPrice: numeric('entry_price', { precision: 20, scale: 8 }).notNull(),
+  cost: numeric('cost', { precision: 20, scale: 8 }).notNull(), // USD spent
+  status: varchar('status', { length: 20 }).notNull().default('open'), // open | closed
+  pnl: numeric('pnl', { precision: 20, scale: 8 }).notNull().default('0'),
+  exitPrice: numeric('exit_price', { precision: 20, scale: 8 }),
+  openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+}, (t) => ({ userIdx: index('spot_user_idx').on(t.userId, t.status) }));
+
+
 /* Traders. Note what is NOT here: follower count, total profit, win
    rate, equity %. Those are computed from copy_positions + follows
    so they cannot be invented. See src/lib/stats.js.                 */
@@ -191,6 +210,46 @@ export const prices = pgTable('prices', {
   source: varchar('source', { length: 24 }).notNull().default('binance'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* KYC submissions. One row per upload; the latest per user sets kyc_status
+   on users once an admin reviews it. Documents are referenced by URL/path. */
+export const kycSubmissions = pgTable('kyc_submissions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  documentType: varchar('document_type', { length: 40 }).notNull(), // passport | national_id | drivers_license
+  documentNumber: varchar('document_number', { length: 80 }),
+  country: varchar('country', { length: 80 }),
+  frontUrl: text('front_url'),
+  backUrl: text('back_url'),
+  selfieUrl: text('selfie_url'),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | approved | rejected
+  adminNote: text('admin_note'),
+  reviewedBy: integer('reviewed_by'),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userIdx: index('kyc_user_idx').on(t.userId, t.status),
+  statusIdx: index('kyc_status_idx').on(t.status),
+}));
+
+/* Outbox. Every mail the system generates is recorded here regardless of
+   whether SMTP delivery succeeds — this is the audit trail. */
+export const mailLog = pgTable('mail_log', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id'),
+  toEmail: varchar('to_email', { length: 255 }).notNull(),
+  template: varchar('template', { length: 60 }).notNull(),
+  subject: varchar('subject', { length: 200 }).notNull(),
+  bodyHtml: text('body_html'),
+  status: varchar('status', { length: 20 }).notNull().default('logged'), // logged | sent | failed
+  error: text('error'),
+  refType: varchar('ref_type', { length: 32 }),
+  refId: integer('ref_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userIdx: index('mail_user_idx').on(t.userId, t.createdAt),
+  tplIdx: index('mail_tpl_idx').on(t.template, t.createdAt),
+}));
 
 export const sessions = pgTable('sessions', {
   id: varchar('id', { length: 64 }).primaryKey(),

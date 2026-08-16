@@ -16,6 +16,7 @@
     "drizzle-orm": "^0.45.2",
     "eta": "^4.6.0",
     "hono": "^4.13.1",
+    "nodemailer": "^9.0.5",
     "postgres": "^3.4.9"
   }
 }

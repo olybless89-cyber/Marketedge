@@ -4,10 +4,18 @@
     <p class="small" style="margin:4px 0 0">Here's where your account stands right now.</p>
   </div>
   <div style="display:flex;gap:9px">
-    <a class="btn btn-quiet btn-sm" href="/dashboard/deposit">Deposit</a>
+    <a class="btn btn-quiet btn-sm" href="/dashboard/trade">Trade</a>
+    <a class="btn btn-quiet btn-sm" href="/dashboard/portfolio">Portfolio</a>
     <a class="btn btn-primary btn-sm" href="/dashboard/invest">Invest</a>
   </div>
 </div>
+
+<% if (it.user.kycStatus !== 'verified') { %>
+  <div class="notice notice-warn" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+    <div><b>Verify your identity.</b> <span class="small">KYC verification is required to withdraw funds.</span></div>
+    <a class="btn btn-primary btn-sm" href="/dashboard/kyc">Verify now</a>
+  </div>
+<% } %>
 
 <div class="grid g4" style="margin-bottom:22px">
   <div class="stat">

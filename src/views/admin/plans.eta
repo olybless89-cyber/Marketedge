@@ -1,5 +1,7 @@
 <div class="page-head"><h1>Investment plans</h1></div>
-<% if (it.ok) { %><div class="notice notice-ok">Plan created.</div><% } %>
+<% if (it.ok === '1') { %><div class="notice notice-ok">Plan created.</div><% } %>
+<% if (it.ok === 'edit') { %><div class="notice notice-ok">Plan updated.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
 <div class="grid" style="grid-template-columns:1.3fr .7fr;gap:20px">
   <div class="table-wrap" style="height:fit-content">
@@ -14,8 +16,9 @@
             <td class="small"><%= p.durationPeriods %> × <%= p.periodHours %>h</td>
             <td class="num small"><%= it.usd(p.minAmount,0) %> – <%= it.usd(p.maxAmount,0) %></td>
             <td><span class="badge <%= p.active?'badge-live':'badge-idle' %>"><%= p.active?'live':'hidden' %></span></td>
-            <td style="text-align:right">
-              <form method="post" action="/admin/plans/<%= p.id %>/toggle">
+            <td style="text-align:right;white-space:nowrap">
+              <a class="btn btn-quiet btn-sm" href="/admin/plans#edit-<%= p.id %>">Edit</a>
+              <form method="post" action="/admin/plans/<%= p.id %>/toggle" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= it.csrf %>">
                 <button class="btn btn-quiet btn-sm"><%= p.active?'Hide':'Publish' %></button>
               </form>
@@ -45,3 +48,26 @@
     </form>
   </div>
 </div>
+
+<% it.rows.forEach(function(p){ %>
+  <div class="card" id="edit-<%= p.id %>" style="margin-top:20px;max-width:680px">
+    <div class="card-head"><h3>Edit — <%= p.name %></h3>
+      <a class="btn btn-quiet btn-sm" href="/admin/plans">Close</a></div>
+    <form method="post" action="/admin/plans/<%= p.id %>/edit">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="field"><label for="enm-<%= p.id %>">Name</label><input class="input" id="enm-<%= p.id %>" name="name" value="<%= p.name %>" required></div>
+      <div class="row2">
+        <div class="field"><label for="erp-<%= p.id %>">Rate % per period</label><input class="input num" id="erp-<%= p.id %>" name="roiPercent" type="number" step="0.01" value="<%= Number(p.roiPercent) %>" required></div>
+        <div class="field"><label for="eph-<%= p.id %>">Period (hours)</label><input class="input num" id="eph-<%= p.id %>" name="periodHours" type="number" value="<%= p.periodHours %>" required></div>
+      </div>
+      <div class="field"><label for="edp-<%= p.id %>">Number of periods</label><input class="input num" id="edp-<%= p.id %>" name="durationPeriods" type="number" value="<%= p.durationPeriods %>" required></div>
+      <div class="row2">
+        <div class="field"><label for="emn-<%= p.id %>">Minimum</label><input class="input num" id="emn-<%= p.id %>" name="minAmount" type="number" value="<%= Number(p.minAmount) %>"></div>
+        <div class="field"><label for="emx-<%= p.id %>">Maximum</label><input class="input num" id="emx-<%= p.id %>" name="maxAmount" type="number" value="<%= Number(p.maxAmount) %>"></div>
+      </div>
+      <div class="field"><label for="eso-<%= p.id %>">Sort order</label><input class="input num" id="eso-<%= p.id %>" name="sortOrder" type="number" value="<%= p.sortOrder %>"></div>
+      <button class="btn btn-primary btn-block btn-sm">Save plan</button>
+    </form>
+  </div>
+<% }) %>
+

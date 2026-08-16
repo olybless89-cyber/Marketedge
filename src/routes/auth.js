@@ -5,6 +5,7 @@ import { db } from '../db/client.js';
 import { users, ledger, notifications } from '../db/schema.js';
 import { hash, verify, createSession, destroySession, csrfToken, throttle } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
+import { mailWelcome } from '../lib/mail.js';
 import * as fmt from '../lib/money.js';
 
 export const auth = new Hono();
@@ -69,6 +70,9 @@ auth.post('/register', throttle(6), async (c) => {
     title: 'Welcome to the platform',
     body: 'Fund your account to start trading, or browse strategies while you decide.',
   });
+
+  // Registration mail — logged to the outbox; sent if SMTP is configured.
+  mailWelcome(u).catch((e) => console.error('[mail] welcome failed:', e.message));
 
   await createSession(c, u.id);
   return c.redirect('/dashboard');

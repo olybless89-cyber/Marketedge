@@ -1,4 +1,5 @@
 import { sql } from '../db/client.js';
+import { mailPlanClosed } from '../lib/mail.js';
 
 /* =================================================================
    Three loops, all writing rows. Nothing here touches the UI —
@@ -198,6 +199,15 @@ export async function runAccrual() {
       await sql`insert into notifications (user_id, kind, title, body)
         values (${i.user_id}, 'success', 'Plan matured',
                 ${`Your ${i.name} plan has completed. Principal and returns are back in your balance.`})`;
+
+      // Plan closing mail — fire-and-forget; never block the accrual loop.
+      const [owner] = await sql`select email, first_name from users where id = ${i.user_id}`;
+      if (owner) {
+        mailPlanClosed(
+          { id: i.user_id, email: owner.email, firstName: owner.first_name },
+          i.name, i.principal, i.accrued + payout,
+        ).catch((e) => console.error('[mail] plan closed failed:', e.message));
+      }
     }
   }
   return due.length;

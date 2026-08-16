@@ -1,0 +1,10 @@
+<h1 style="margin:0 0 8px;font-family:Space Grotesk,Arial,sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em;color:#fff">Identity verified</h1>
+<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#B8C5DA">Hi <%= it.firstName %>, your identity has been verified. Your account is now fully activated.</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px">
+  <tr><td style="background:#0C1A14;border:1px solid rgba(22,199,132,.3);border-radius:10px;padding:16px 20px">
+    <p style="margin:0;font-size:14px;line-height:1.6;color:#9FF0CE">✓ Verification complete — your account has no remaining restrictions.</p>
+  </td></tr>
+</table>
+
+<a href="<%= it.base %>/dashboard" style="display:inline-block;background:#2F6BFF;color:#fff;font-weight:600;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Go to dashboard</a>

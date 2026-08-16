@@ -1,0 +1,24 @@
+<div class="page-head"><div><h1>Mail outbox</h1>
+  <p class="small" style="margin:4px 0 0">Every mail the system generates is logged here. Status <b>logged</b> means recorded but SMTP is not configured; <b>sent</b> means delivered.</p></div></div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>When</th><th>Recipient</th><th>Template</th><th>Subject</th><th>Status</th></tr></thead>
+    <tbody>
+      <% if (!it.rows.length) { %>
+        <tr><td colspan="5"><div class="empty"><h4>No mail sent yet</h4>
+          <p class="small">Registration, deposit, withdrawal, plan and KYC mails appear here.</p></div></td></tr>
+      <% } %>
+      <% it.rows.forEach(function(m){ %>
+        <tr>
+          <td class="small muted"><%= it.ago(m.created_at) %></td>
+          <td><b><%= m.first_name ? m.first_name + ' ' + m.last_name : '—' %></b>
+            <div class="small muted"><%= m.to_email %></div></td>
+          <td class="small num"><%= m.template.replace('mail/','') %></td>
+          <td class="small"><%= m.subject %><% if (m.error) { %><div class="small" style="color:var(--down)"><%= m.error %></div><% } %></td>
+          <td><span class="badge <%= m.status==='sent'?'badge-live':m.status==='failed'?'badge-warn':'badge-idle' %>"><%= m.status %></span></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,20 @@
+<div class="page-head"><div><h1>Wallet addresses</h1>
+  <p class="small" style="margin:4px 0 0">These are the destinations shown to clients on the deposit page. Leave a field blank to hide that method's address.</p></div></div>
+<% if (it.ok) { %><div class="notice notice-ok">Wallet addresses saved.</div><% } %>
+
+<div class="card" style="max-width:620px">
+  <div class="card-head"><h3>Payment destinations</h3></div>
+  <form method="post" action="/admin/wallets">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <div class="field"><label for="usdt">USDT — TRC20 address</label>
+      <input class="input num" id="usdt" name="usdt_trc20" value="<%= it.wallets.usdt_trc20 || '' %>" placeholder="TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE"></div>
+    <div class="field"><label for="btc">Bitcoin address</label>
+      <input class="input num" id="btc" name="btc" value="<%= it.wallets.btc || '' %>" placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"></div>
+    <div class="field"><label for="eth">Ethereum — ERC20 address</label>
+      <input class="input num" id="eth" name="eth" value="<%= it.wallets.eth || '' %>" placeholder="0x71C..."></div>
+    <div class="field"><label for="bank">Bank transfer details</label>
+      <textarea class="input" id="bank" name="bank" rows="3" placeholder="Bank: ...&#10;Account: ...&#10;Reference: ..."><%= it.wallets.bank || '' %></textarea>
+      <div class="hint">Bank details are free-form text shown to the client.</div></div>
+    <button class="btn btn-primary btn-block btn-sm">Save addresses</button>
+  </form>
+</div>

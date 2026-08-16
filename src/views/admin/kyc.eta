@@ -1,0 +1,53 @@
+<div class="page-head"><div><h1>KYC review</h1>
+  <p class="small" style="margin:4px 0 0">Approving sets the user's identity to verified and unlocks their account.</p></div></div>
+
+<div class="tabs">
+  <% ['pending','approved','rejected','all'].forEach(function(s){ %>
+    <a href="/admin/kyc?status=<%= s %>" <%= it.status===s?'aria-current=page':'' %>><%= s.replace(/^./,x=>x.toUpperCase()) %></a>
+  <% }) %>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Submitted</th><th>Client</th><th>Document</th><th>Number</th><th>Files</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!it.rows.length) { %>
+        <tr><td colspan="7"><div class="empty"><h4>Nothing in this view</h4></div></td></tr>
+      <% } %>
+      <% it.rows.forEach(function(k){ %>
+        <tr>
+          <td class="small muted"><%= it.ago(k.created_at) %></td>
+          <td><b><%= k.first_name %> <%= k.last_name %></b>
+            <div class="small muted"><%= k.email %></div></td>
+          <td class="small"><%= k.document_type.replace('_',' ') %><div class="small muted"><%= k.country || k.user_country || '—' %></div></td>
+          <td class="small num"><%= k.document_number || '—' %></td>
+          <td class="small">
+            <% if (k.front_url) { %><a href="<%= k.front_url %>" target="_blank" rel="noopener" class="small" style="color:var(--blue-hi)">front</a> <% } %>
+            <% if (k.back_url) { %><a href="<%= k.back_url %>" target="_blank" rel="noopener" class="small" style="color:var(--blue-hi)">back</a> <% } %>
+            <% if (k.selfie_url) { %><a href="<%= k.selfie_url %>" target="_blank" rel="noopener" class="small" style="color:var(--blue-hi)">selfie</a><% } %>
+            <% if (!k.front_url && !k.back_url && !k.selfie_url) { %>—<% } %>
+          </td>
+          <td><span class="badge <%= k.status==='approved'?'badge-live':k.status==='rejected'?'badge-warn':'badge-idle' %>"><%= k.status %></span></td>
+          <td style="text-align:right;white-space:nowrap">
+            <% if (k.status === 'pending') { %>
+              <form method="post" action="/admin/kyc/<%= k.id %>/approve" style="display:inline">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                <button class="btn btn-primary btn-sm" data-confirm="Approve KYC for <%= k.first_name %>?">Approve</button>
+              </form>
+              <form method="post" action="/admin/kyc/<%= k.id %>/reject" style="display:inline">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                <button class="btn btn-danger btn-sm" data-confirm="Reject this KYC?">Reject</button>
+              </form>
+            <% } else { %>
+              <span class="small muted"><%= k.admin_note || '—' %></span>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:22px;max-width:560px">
+  <p class="small" style="margin:0">Approving marks the user verified and sends a confirmation mail. Rejecting resets their status and prompts them to resubmit — both actions are recorded with your name and a timestamp.</p>
+</div>

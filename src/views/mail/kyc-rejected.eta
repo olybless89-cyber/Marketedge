@@ -1,0 +1,13 @@
+<h1 style="margin:0 0 8px;font-family:Space Grotesk,Arial,sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em;color:#fff">Identity review — action needed</h1>
+<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#B8C5DA">Hi <%= it.firstName %>, we reviewed your identity submission and were unable to verify it.</p>
+
+<% if (it.note) { %>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px">
+  <tr><td style="background:#2A1620;border:1px solid rgba(240,73,92,.3);border-radius:10px;padding:16px 20px">
+    <p style="margin:0;font-size:14px;line-height:1.6;color:#FFC4CB"><%= it.note %></p>
+  </td></tr>
+</table>
+<% } %>
+
+<p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#6B7C9B">Please submit your documents again, making sure they are clear, unexpired, and show all four corners.</p>
+<a href="<%= it.base %>/dashboard/kyc" style="display:inline-block;background:#2F6BFF;color:#fff;font-weight:600;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Resubmit documents</a>

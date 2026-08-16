@@ -1,0 +1,67 @@
+<div class="page-head"><div><h1>Edit user</h1>
+  <p class="small" style="margin:4px 0 0"><%= it.u.first_name %> <%= it.u.last_name %> · ID <%= it.u.id %></p></div>
+  <a class="btn btn-quiet btn-sm" href="/admin/users">Back to users</a></div>
+
+<% if (it.ok) { %><div class="notice notice-ok">User updated.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="grid g2" style="max-width:1000px">
+  <div class="card">
+    <div class="card-head"><h3>Profile</h3></div>
+    <form method="post" action="/admin/users/<%= it.u.id %>/edit">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="row2">
+        <div class="field"><label for="fn">First name</label><input class="input" id="fn" name="firstName" value="<%= it.u.first_name %>" required></div>
+        <div class="field"><label for="ln">Last name</label><input class="input" id="ln" name="lastName" value="<%= it.u.last_name %>" required></div>
+      </div>
+      <div class="field"><label for="em">Email</label><input class="input" id="em" name="email" type="email" value="<%= it.u.email %>" required></div>
+      <div class="row2">
+        <div class="field"><label for="co">Country</label><input class="input" id="co" name="country" value="<%= it.u.country || '' %>"></div>
+        <div class="field"><label for="ph">Phone</label><input class="input" id="ph" name="phone" value="<%= it.u.phone || '' %>"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="ro">Role</label>
+          <select class="input" id="ro" name="role">
+            <option value="user" <%= it.u.role==='user'?'selected':'' %>>User</option>
+            <option value="admin" <%= it.u.role==='admin'?'selected':'' %>>Admin</option>
+          </select></div>
+        <div class="field"><label for="st">Status</label>
+          <select class="input" id="st" name="status">
+            <option value="active" <%= it.u.status==='active'?'selected':'' %>>Active</option>
+            <option value="suspended" <%= it.u.status==='suspended'?'selected':'' %>>Suspended</option>
+          </select></div>
+      </div>
+      <button class="btn btn-primary btn-block btn-sm">Save changes</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Account summary</h3></div>
+    <dl class="kv">
+      <dt>Balance</dt><dd style="font-family:var(--ff-mono)"><%= it.usd(it.u.balance) %></dd>
+      <dt>KYC</dt><dd><span class="badge <%= it.u.kyc_status==='verified'?'badge-live':it.u.kyc_status==='pending'?'badge-idle':'badge-warn' %>"><%= it.u.kyc_status %></span></dd>
+      <dt>Referral code</dt><dd style="font-family:var(--ff-mono)"><%= it.u.referral_code || '—' %></dd>
+      <dt>Joined</dt><dd><%= it.dt(it.u.created_at) %></dd>
+    </dl>
+
+    <div class="card-head" style="margin:0 -20px -20px;border-top:1px solid var(--line-soft)"><h3>Balance adjustment</h3></div>
+    <p class="small" style="margin:8px 0 12px">Writes a ledger line with your email attached — visible in the client's statement.</p>
+    <form method="post" action="/admin/users/<%= it.u.id %>/adjust">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="field"><label for="am">Amount (+/−)</label><input class="input num" id="am" name="amount" type="number" step="0.01" required></div>
+      <div class="field"><label for="mm">Reason</label><input class="input" id="mm" name="memo" required placeholder="Goodwill credit, ticket #1204"></div>
+      <button class="btn btn-quiet btn-block btn-sm">Post adjustment</button>
+    </form>
+
+    <div style="margin-top:14px">
+      <form method="post" action="/admin/users/<%= it.u.id %>/status">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <input type="hidden" name="status" value="<%= it.u.status==='active'?'suspended':'active' %>">
+        <button class="btn <%= it.u.status==='active'?'btn-danger':'btn-quiet' %> btn-block btn-sm"
+                data-confirm="<%= it.u.status==='active'?'Suspend':'Reactivate' %> <%= it.u.first_name %>?">
+          <%= it.u.status==='active'?'Suspend account':'Reactivate account' %>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

@@ -19,15 +19,8 @@
           <td class="num"><%= it.usd(u.balance) %></td>
           <td class="small muted"><%= it.ago(u.created_at) %></td>
           <td><span class="badge <%= u.status==='active'?'badge-live':'badge-warn' %>"><%= u.status %></span></td>
-          <td style="text-align:right">
-            <form method="post" action="/admin/users/<%= u.id %>/status" style="display:inline">
-              <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-              <input type="hidden" name="status" value="<%= u.status==='active'?'suspended':'active' %>">
-              <button class="btn <%= u.status==='active'?'btn-danger':'btn-quiet' %> btn-sm"
-                      data-confirm="<%= u.status==='active'?'Suspend':'Reactivate' %> <%= u.first_name %>?">
-                <%= u.status==='active'?'Suspend':'Reactivate' %>
-              </button>
-            </form>
+          <td style="text-align:right;white-space:nowrap">
+            <a class="btn btn-quiet btn-sm" href="/admin/users/<%= u.id %>">Edit</a>
           </td>
         </tr>
       <% }) %>

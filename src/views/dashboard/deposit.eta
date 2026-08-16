@@ -8,7 +8,7 @@
       <input type="hidden" name="_csrf" value="<%= it.csrf %>">
       <div class="field">
         <label for="m">Method</label>
-        <select class="input" id="m" name="method">
+        <select class="input" id="m" name="method" data-wallets='<%~ JSON.stringify(it.wallets || {}) %>'>
           <option value="usdt_trc20">USDT — TRC20</option>
           <option value="btc">Bitcoin</option>
           <option value="eth">Ethereum — ERC20</option>
@@ -19,6 +19,14 @@
         <label for="a">Amount (USD)</label>
         <input class="input num" id="a" name="amount" type="number" min="10" step="0.01" required placeholder="500.00">
         <div class="hint">Minimum deposit is $10. Network fees are paid by the sender.</div>
+      </div>
+      <div id="wallet-box" class="field" style="display:none">
+        <label>Send to this address</label>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <code id="wallet-addr" class="input num" style="white-space:pre-wrap;word-break:break-all;user-select:all"></code>
+          <button type="button" class="btn btn-quiet btn-sm" data-copy="#wallet-addr">Copy</button>
+        </div>
+        <div class="hint">Only send the matching asset to this address. Other networks may lose funds.</div>
       </div>
       <button class="btn btn-primary btn-block">Submit deposit</button>
     </form>

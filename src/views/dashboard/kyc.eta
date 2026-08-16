@@ -1,0 +1,63 @@
+<div class="page-head"><h1>Identity verification</h1>
+  <span class="badge <%= it.user.kycStatus==='verified'?'badge-live':it.user.kycStatus==='pending'?'badge-idle':'badge-warn' %>">
+    <%= it.user.kycStatus %>
+  </span></div>
+
+<% if (it.ok) { %><div class="notice notice-ok">Documents submitted. We'll notify you once review is complete.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px">
+  <div class="card">
+    <div class="card-head"><h3>Submit documents</h3></div>
+    <% if (it.user.kycStatus === 'verified') { %>
+      <div class="empty"><h4>Already verified</h4>
+        <p class="small">Your identity is confirmed. No further action needed.</p></div>
+    <% } else if (it.user.kycStatus === 'pending') { %>
+      <div class="empty"><h4>Under review</h4>
+        <p class="small">Your last submission is being reviewed. You'll get a notification when it's done.</p></div>
+    <% } else { %>
+      <p class="small" style="margin:0 0 14px">Verify your identity to unlock withdrawals and higher limits. Review usually takes under 24 hours.</p>
+      <form method="post" action="/dashboard/kyc">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label for="dt">Document type</label>
+          <select class="input" id="dt" name="documentType" required>
+            <option value="">Choose…</option>
+            <option value="passport">Passport</option>
+            <option value="national_id">National ID card</option>
+            <option value="drivers_license">Driver's licence</option>
+          </select></div>
+        <div class="row2">
+          <div class="field"><label for="dn">Document number</label><input class="input" id="dn" name="documentNumber" placeholder="A1234567B"></div>
+          <div class="field"><label for="co">Issuing country</label><input class="input" id="co" name="country" value="<%= it.user.country || '' %>" placeholder="Nigeria"></div>
+        </div>
+        <div class="field"><label for="fu">Front of document (link)</label><input class="input" id="fu" name="frontUrl" placeholder="https://..."></div>
+        <div class="field"><label for="bu">Back of document (link)</label><input class="input" id="bu" name="backUrl" placeholder="https://..."></div>
+        <div class="field"><label for="su">Selfie holding document (link)</label><input class="input" id="su" name="selfieUrl" placeholder="https://...">
+          <div class="hint">Paste a link to a hosted image. Make sure all four corners are visible and the text is readable.</div></div>
+        <button class="btn btn-primary btn-block">Submit for review</button>
+      </form>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Submission history</h3></div>
+    <div class="table-wrap" style="border:0">
+      <table>
+        <thead><tr><th>Date</th><th>Document</th><th>Status</th><th>Note</th></tr></thead>
+        <tbody>
+          <% if (!it.rows.length) { %>
+            <tr><td colspan="4"><div class="empty"><h4>No submissions</h4></div></td></tr>
+          <% } %>
+          <% it.rows.forEach(function(r){ %>
+            <tr>
+              <td class="small muted"><%= it.ago(r.createdAt) %></td>
+              <td class="small"><%= r.documentType.replace('_',' ') %></td>
+              <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>
+              <td class="small muted"><%= r.adminNote || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

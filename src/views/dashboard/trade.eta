@@ -1,0 +1,85 @@
+<div class="page-head">
+  <div><h1>Trade</h1>
+    <p class="small" style="margin:4px 0 0">Buy and sell crypto at live market prices. Positions settle instantly against your available balance.</p></div>
+  <span class="small muted num"><%= it.usd(it.bal.available) %> available</span>
+</div>
+
+<% if (it.ok === '1') { %><div class="notice notice-ok">Position opened. Your fill is at the live market price.</div><% } %>
+<% if (it.ok === 'sold') { %><div class="notice notice-ok">Position closed. Proceeds and P&amp;L are in your balance.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="grid" style="grid-template-columns:.85fr 1.15fr;gap:20px;margin-bottom:22px">
+  <div class="card">
+    <div class="card-head"><h3>Place order</h3><span class="badge badge-live">Market</span></div>
+    <form method="post" action="/dashboard/trade">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <input type="hidden" name="action" value="buy">
+      <div class="field">
+        <label for="sym">Market</label>
+        <select class="input" id="sym" name="symbol" data-prices='<%~ JSON.stringify(it.prices.map(p => ({s:p.pair,k:p.symbol,px:p.price,chg:p.change}))) %>'>
+          <% it.prices.forEach(function(p){ %>
+            <option value="<%= p.pair %>"><%= p.symbol %> · <%= it.usd(p.price,2) %> <span class="muted">(<%= p.change >= 0 ? '+' : '' %><%= Number(p.change).toFixed(2) %>%)</span></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="amt">Amount (USD)</label>
+        <input class="input num" id="amt" name="amount" type="number" step="0.01" min="1" placeholder="100.00" required>
+      </div>
+      <div class="small muted" id="est" style="margin:-4px 0 14px"></div>
+      <button class="btn btn-primary btn-block">Buy at market</button>
+      <p class="small muted" style="margin-top:10px">You pay from your available balance. The asset is held as an open position you can close any time.</p>
+    </form>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;height:420px">
+    <div class="card-head" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--line-soft)">
+      <h3 id="chart-sym">BTCUSD</h3><span class="badge badge-live">Live</span>
+    </div>
+    <div style="height:100%">
+      <div class="tradingview-widget-container" style="height:100%">
+        <div class="tradingview-widget-container__widget" style="height:100%"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+        {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0D1626","gridColor":"rgba(30,47,77,0.5)","allow_symbol_change":false,"support_host":"https://www.tradingview.com"}
+        </script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card-head"><h3 style="font-family:var(--ff-display)">Your positions</h3></div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Asset</th><th class="num">Qty</th><th class="num">Entry</th><th class="num">Mark</th><th class="num">Value</th><th class="num">P&amp;L</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!it.positions.length) { %>
+        <tr><td colspan="8"><div class="empty"><h4>No positions yet</h4><p class="small">Buy a market above to open your first position.</p></div></td></tr>
+      <% } %>
+      <% it.positions.forEach(function(p){
+           const mark = Number(p.mark), entry = Number(p.entry_price), qty = Number(p.qty);
+           const value = mark * qty, pnl = p.status === 'open' ? (mark - entry) * qty : Number(p.pnl); %>
+        <tr>
+          <td><b><%= p.symbol.replace(/USDT$/,'') %></b><div class="small muted num"><%= p.symbol %></div></td>
+          <td class="num"><%= it.num(qty,6) %></td>
+          <td class="num"><%= it.usd(entry) %></td>
+          <td class="num" data-watch><%= it.usd(mark) %></td>
+          <td class="num"><%= it.usd(value) %></td>
+          <td class="num <%= it.dir(pnl) %>" data-watch><%= it.signedUsd(pnl) %></td>
+          <td><span class="badge <%= p.status==='open'?'badge-live':'badge-idle' %>"><%= p.status %></span></td>
+          <td>
+            <% if (p.status === 'open') { %>
+              <form method="post" action="/dashboard/trade" style="margin:0">
+                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                <input type="hidden" name="action" value="sell">
+                <input type="hidden" name="positionId" value="<%= p.id %>">
+                <button class="btn btn-danger btn-sm" data-confirm="Close this <%= p.symbol.replace(/USDT$/,'') %> position at the live price?">Sell</button>
+              </form>
+            <% } else { %>
+              <span class="small muted"><%= it.dt(p.closed_at) %></span>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

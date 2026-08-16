@@ -1,0 +1,55 @@
+<div class="page-head"><h1>Account</h1>
+  <p class="small" style="margin:4px 0 0">Your profile, security and verification in one place.</p></div>
+
+<% if (it.ok) { %><div class="notice notice-ok">Saved.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="grid g2" style="max-width:920px">
+  <div class="card">
+    <div class="card-head"><h3>Profile</h3></div>
+    <dl class="kv">
+      <dt>Name</dt><dd style="font-family:var(--ff-body)"><%= it.user.firstName %> <%= it.user.lastName %></dd>
+      <dt>Email</dt><dd style="font-family:var(--ff-body)"><%= it.user.email %></dd>
+      <dt>Phone</dt><dd style="font-family:var(--ff-body)"><%= it.user.phone || '—' %></dd>
+      <dt>Country</dt><dd style="font-family:var(--ff-body)"><%= it.user.country || '—' %></dd>
+      <dt>Referral code</dt><dd><%= it.user.referralCode || '—' %></dd>
+    </dl>
+    <a class="btn btn-quiet btn-block" href="/dashboard/account/profile">Edit profile</a>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Identity verification</h3></div>
+    <% const st = it.user.kycStatus; %>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span class="badge <%= st==='verified'?'badge-live':st==='pending'?'badge-warn':'badge-idle' %>"><%= st %></span>
+      <% if (st === 'verified') { %><span class="small muted">You're fully verified.</span><% } %>
+      <% if (st === 'pending') { %><span class="small muted">Under review — usually under 24h.</span><% } %>
+      <% if (st === 'unverified' || st === 'rejected') { %><span class="small muted">Verify to unlock withdrawals.</span><% } %>
+    </div>
+    <% if (it.latestKyc && it.latestKyc.status === 'rejected' && it.latestKyc.reviewNote) { %>
+      <div class="notice notice-warn" style="margin-bottom:14px"><b>Reviewer note:</b> <%= it.latestKyc.reviewNote %></div>
+    <% } %>
+    <a class="btn <%= st==='verified'?'btn-quiet':'btn-primary' %> btn-block" href="/dashboard/kyc">
+      <%= st==='verified' ? 'View verification' : 'Verify identity' %>
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Security</h3></div>
+    <dl class="kv">
+      <dt>Password</dt><dd class="small muted">Last changed when you set it</dd>
+      <dt>Session</dt><dd class="small muted">You're signed in on this device</dd>
+    </dl>
+    <a class="btn btn-quiet btn-block" href="/dashboard/account/password">Change password</a>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Balance snapshot</h3></div>
+    <dl class="kv">
+      <dt>Available</dt><dd class="num"><%= it.usd(it.bal.available) %></dd>
+      <dt>Locked in plans</dt><dd class="num"><%= it.usd(it.bal.locked) %></dd>
+      <dt>Total</dt><dd class="num"><%= it.usd(it.bal.total) %></dd>
+    </dl>
+    <a class="btn btn-quiet btn-block" href="/dashboard/portfolio">View portfolio</a>
+  </div>
+</div>

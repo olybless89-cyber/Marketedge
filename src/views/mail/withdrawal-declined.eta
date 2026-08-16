@@ -1,0 +1,13 @@
+<h1 style="margin:0 0 8px;font-family:Space Grotesk,Arial,sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em;color:#fff">Withdrawal declined</h1>
+<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#B8C5DA">Hi <%= it.firstName %>, your withdrawal request of $<%= it.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) %> was declined. The held funds have been returned to your balance.</p>
+
+<% if (it.note) { %>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px">
+  <tr><td style="background:#2A1620;border:1px solid rgba(240,73,92,.3);border-radius:10px;padding:16px 20px">
+    <p style="margin:0;font-size:14px;line-height:1.6;color:#FFC4CB"><%= it.note %></p>
+  </td></tr>
+</table>
+<% } %>
+
+<p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#6B7C9B">You can submit a new withdrawal request once the details are corrected.</p>
+<a href="<%= it.base %>/dashboard/withdraw" style="display:inline-block;background:#2F6BFF;color:#fff;font-weight:600;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">View withdrawals</a>

@@ -40,3 +40,55 @@ document.body.addEventListener('click', (e) => {
   const el = e.target.closest('[data-confirm]');
   if (el && !confirm(el.dataset.confirm)) { e.preventDefault(); e.stopPropagation(); }
 }, true);
+
+// Deposit page: reveal the wallet address for the chosen method
+const methodSel = document.getElementById('m');
+if (methodSel && methodSel.dataset.wallets) {
+  const wallets = JSON.parse(methodSel.dataset.wallets);
+  const box = document.getElementById('wallet-box');
+  const addr = document.getElementById('wallet-addr');
+  const update = () => {
+    const v = wallets[methodSel.value] || '';
+    if (v) { addr.textContent = v; box.style.display = ''; }
+    else { box.style.display = 'none'; }
+  };
+  methodSel.addEventListener('change', update);
+  update();
+}
+
+// Copy-to-clipboard helper
+document.body.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-copy]');
+  if (!btn) return;
+  const target = document.querySelector(btn.dataset.copy);
+  if (!target) return;
+  navigator.clipboard?.writeText(target.textContent.trim());
+  const t = btn.textContent; btn.textContent = 'Copied';
+  setTimeout(() => { btn.textContent = t; }, 1200);
+});
+
+// Trade page: live order estimate + chart symbol sync
+(function () {
+  const sel = document.getElementById('sym');
+  const amt = document.getElementById('amt');
+  const est = document.getElementById('est');
+  const chartSym = document.getElementById('chart-sym');
+  if (!sel || !amt) return;
+  let prices = [];
+  try { prices = JSON.parse(sel.dataset.prices || '[]'); } catch {}
+  const fmt = (n, dp = 6) => Number(n).toLocaleString('en-US', { maximumFractionDigits: dp });
+  const refresh = () => {
+    const p = prices.find(x => x.s === sel.value) || prices[0];
+    if (!p) return;
+    const usd = Number(amt.value || 0);
+    if (chartSym) chartSym.textContent = (p.k || sel.value).replace(/USDT$/, 'USD');
+    if (usd > 0 && p.px > 0) {
+      est.textContent = `≈ ${fmt(usd / p.px)} ${p.k} at ${Number(p.px).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`;
+    } else {
+      est.textContent = '';
+    }
+  };
+  sel.addEventListener('change', refresh);
+  amt.addEventListener('input', refresh);
+  refresh();
+})();

@@ -3,11 +3,16 @@ import { eq } from 'drizzle-orm';
 import { db, sql } from '../db/client.js';
 import {
   users, transactions, ledger, plans as plansT, traders as tradersT,
-  traderTrades, notifications, investments,
+  traderTrades, notifications, investments, kycSubmissions, mailLog,
 } from '../db/schema.js';
 import { requireAdmin } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { traderStats, balance, unreadCount } from '../lib/stats.js';
+import { getWallets, setWallets } from '../lib/settings.js';
+import {
+  mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
+  mailKycApproved, mailKycRejected,
+} from '../lib/mail.js';
 import * as fmt from '../lib/money.js';
 
 export const admin = new Hono();
@@ -22,10 +27,15 @@ const NAV = [
     { href: '/admin/deposits',    label: 'Deposits',    icon: svg('<path d="M12 3v13M6 11l6 6 6-6M4 21h16"/>') },
     { href: '/admin/withdrawals', label: 'Withdrawals', icon: svg('<path d="M12 21V8M6 13l6-6 6 6M4 3h16"/>') },
     { href: '/admin/plans',       label: 'Plans',       icon: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>') },
+    { href: '/admin/wallets',     label: 'Wallets',     icon: svg('<rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M16 12h4M2 10h20"/>') },
   ]},
   { label: 'People', items: [
     { href: '/admin/users',   label: 'Users',   icon: svg('<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.9"/>') },
+    { href: '/admin/kyc',     label: 'KYC review', icon: svg('<path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>') },
     { href: '/admin/traders', label: 'Traders', icon: svg('<path d="M3 17l5-6 4 4 6-8"/><path d="M3 21h18"/>') },
+  ]},
+  { label: 'System', items: [
+    { href: '/admin/mail', label: 'Mail outbox', icon: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>') },
   ]},
 ];
 
@@ -80,6 +90,7 @@ admin.post('/admin/transactions/:id/:action', async (c) => {
   if (!t) return c.notFound();
   if (t.status !== 'pending') return c.redirect(`/admin/${t.type}s`);
 
+  const [u] = await db.select().from(users).where(eq(users.id, t.userId)).limit(1);
   const amount = Number(t.amount);
 
   if (action === 'approve') {
@@ -103,6 +114,10 @@ admin.post('/admin/transactions/:id/:action', async (c) => {
       body: `${fmt.usd(amount)} ${t.type === 'deposit' ? 'is now available in your account.' : 'has been sent to your destination address.'}`,
     });
 
+    // Deposit/withdrawal mail.
+    if (u) (t.type === 'deposit' ? mailDepositConfirmed : mailWithdrawalSent)(u, t)
+      .catch((e) => console.error('[mail] tx approve failed:', e.message));
+
   } else {
     await db.update(transactions).set({
       status: 'rejected', reviewedBy: me.id, reviewedAt: new Date(), adminNote: note,
@@ -120,6 +135,10 @@ admin.post('/admin/transactions/:id/:action', async (c) => {
       title: `${t.type === 'deposit' ? 'Deposit' : 'Withdrawal'} declined`,
       body: note || 'Contact support for details.',
     });
+
+    // Decline mail.
+    if (u) (t.type === 'deposit' ? mailDepositDeclined : mailWithdrawalDeclined)(u, t, note)
+      .catch((e) => console.error('[mail] tx reject failed:', e.message));
   }
 
   return c.redirect(`/admin/${t.type}s`);
@@ -222,4 +241,144 @@ admin.post('/admin/plans', async (c) => {
 admin.post('/admin/plans/:id/toggle', async (c) => {
   await sql`update plans set active = not active where id = ${Number(c.req.param('id'))}`;
   return c.redirect('/admin/plans');
+});
+
+/* ---------------- plan edit ---------------- */
+admin.post('/admin/plans/:id/edit', async (c) => {
+  const id = Number(c.req.param('id'));
+  const b = c.get('body');
+  const [plan] = await db.select().from(plansT).where(eq(plansT.id, id)).limit(1);
+  if (!plan) return c.notFound();
+
+  const name = String(b.name || '').trim();
+  if (!name) return c.redirect('/admin/plans?e=' + encodeURIComponent('Plan name is required.'));
+
+  await db.update(plansT).set({
+    name,
+    roiPercent: String(Number(b.roiPercent) || plan.roiPercent),
+    periodHours: Number(b.periodHours) || plan.periodHours,
+    durationPeriods: Number(b.durationPeriods) || plan.durationPeriods,
+    minAmount: String(Number(b.minAmount) || plan.minAmount),
+    maxAmount: String(Number(b.maxAmount) || plan.maxAmount),
+    sortOrder: Number(b.sortOrder ?? plan.sortOrder),
+  }).where(eq(plansT.id, id));
+  return c.redirect('/admin/plans?ok=edit');
+});
+
+/* ---------------- user edit ---------------- */
+admin.get('/admin/users/:id', async (c) => {
+  const id = Number(c.req.param('id'));
+  const [u] = await sql`
+    select u.id, u.first_name, u.last_name, u.email, u.country, u.phone, u.role,
+           u.status, u.kyc_status, u.referral_code, u.created_at,
+           coalesce((select sum(amount) from ledger where user_id = u.id), 0)::text balance
+    from users u where u.id = ${id}`;
+  if (!u) return c.notFound();
+  return shell(c, 'admin/user', { u, ok: c.req.query('ok'), error: c.req.query('e') }, 'Edit user');
+});
+
+admin.post('/admin/users/:id/edit', async (c) => {
+  const id = Number(c.req.param('id'));
+  const b = c.get('body');
+  const me = c.get('user');
+  const [u] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  if (!u) return c.notFound();
+
+  const email = String(b.email || '').trim().toLowerCase();
+  const firstName = String(b.firstName || '').trim();
+  const lastName = String(b.lastName || '').trim();
+  const role = b.role === 'admin' ? 'admin' : 'user';
+  const status = b.status === 'suspended' ? 'suspended' : 'active';
+
+  if (!firstName || !lastName) return c.redirect(`/admin/users/${id}?e=` + encodeURIComponent('Name is required.'));
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) return c.redirect(`/admin/users/${id}?e=` + encodeURIComponent('Enter a valid email.'));
+
+  // Don't let an admin demote or suspend themselves.
+  if (id === me.id && (role !== u.role || status !== u.status))
+    return c.redirect(`/admin/users/${id}?e=` + encodeURIComponent("You can't change your own role or status."));
+
+  // Email uniqueness check.
+  if (email !== u.email) {
+    const [dupe] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+    if (dupe) return c.redirect(`/admin/users/${id}?e=` + encodeURIComponent('That email is already in use.'));
+  }
+
+  await db.update(users).set({
+    firstName, lastName, email,
+    country: String(b.country || '').trim() || null,
+    phone: String(b.phone || '').trim() || null,
+    role, status,
+  }).where(eq(users.id, id));
+  return c.redirect(`/admin/users/${id}?ok=1`);
+});
+
+/* ---------------- wallet addresses ---------------- */
+admin.get('/admin/wallets', async (c) =>
+  shell(c, 'admin/wallets', { wallets: await getWallets(), ok: c.req.query('ok') }, 'Wallet addresses'));
+
+admin.post('/admin/wallets', async (c) => {
+  const b = c.get('body');
+  await setWallets({
+    usdt_trc20: String(b.usdt_trc20 || ''),
+    btc: String(b.btc || ''),
+    eth: String(b.eth || ''),
+    bank: String(b.bank || ''),
+  });
+  return c.redirect('/admin/wallets?ok=1');
+});
+
+/* ---------------- KYC review ---------------- */
+admin.get('/admin/kyc', async (c) => {
+  const status = c.req.query('status') || 'pending';
+  const rows = await sql`
+    select k.*, u.first_name, u.last_name, u.email, u.country user_country
+    from kyc_submissions k join users u on u.id = k.user_id
+    ${status === 'all' ? sql`` : sql`where k.status = ${status}`}
+    order by k.created_at desc limit 100`;
+  return shell(c, 'admin/kyc', { rows, status }, 'KYC review');
+});
+
+admin.post('/admin/kyc/:id/:action', async (c) => {
+  const id = Number(c.req.param('id'));
+  const action = c.req.param('action');   // approve | reject
+  const me = c.get('user');
+  const note = String(c.get('body')?.note || '');
+
+  const [k] = await db.select().from(kycSubmissions).where(eq(kycSubmissions.id, id)).limit(1);
+  if (!k) return c.notFound();
+  if (k.status !== 'pending') return c.redirect('/admin/kyc');
+
+  const [u] = await db.select().from(users).where(eq(users.id, k.userId)).limit(1);
+
+  if (action === 'approve') {
+    await db.update(kycSubmissions).set({
+      status: 'approved', adminNote: note, reviewedBy: me.id, reviewedAt: new Date(),
+    }).where(eq(kycSubmissions.id, id));
+    await db.update(users).set({ kycStatus: 'verified' }).where(eq(users.id, k.userId));
+    await db.insert(notifications).values({
+      userId: k.userId, kind: 'success', title: 'Identity verified',
+      body: 'Your identity has been verified. Your account is fully activated.',
+    });
+    if (u) mailKycApproved(u).catch((e) => console.error('[mail] kyc approved failed:', e.message));
+  } else {
+    await db.update(kycSubmissions).set({
+      status: 'rejected', adminNote: note, reviewedBy: me.id, reviewedAt: new Date(),
+    }).where(eq(kycSubmissions.id, id));
+    await db.update(users).set({ kycStatus: 'unverified' }).where(eq(users.id, k.userId));
+    await db.insert(notifications).values({
+      userId: k.userId, kind: 'warn', title: 'Identity review — action needed',
+      body: note || 'Please resubmit your documents with clearer images.',
+    });
+    if (u) mailKycRejected(u, note).catch((e) => console.error('[mail] kyc rejected failed:', e.message));
+  }
+  return c.redirect('/admin/kyc');
+});
+
+/* ---------------- mail outbox ---------------- */
+admin.get('/admin/mail', async (c) => {
+  const rows = await sql`
+    select m.*, u.first_name, u.last_name
+    from mail_log m left join users u on u.id = m.user_id
+    order by m.created_at desc limit 100`;
+  return shell(c, 'admin/mail', { rows }, 'Mail outbox');
 });

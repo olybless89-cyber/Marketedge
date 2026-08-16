@@ -13,6 +13,7 @@ import { dash } from './routes/dashboard.js';
 import { admin } from './routes/admin.js';
 import { startEngine } from './workers/engine.js';
 import { migrate } from './db/migrate.js';
+import { warmTransporter } from './lib/mail.js';
 import { sql } from './db/client.js';
 
 const app = new Hono();
@@ -86,6 +87,7 @@ const port = Number(process.env.PORT || 3000);
 // that hides the real error). The DB status is visible on /readyz.
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`[web] listening on :${info.port}`);
+  warmTransporter();
   migrate()
     .then(() => {
       console.log('[web] schema ready');
