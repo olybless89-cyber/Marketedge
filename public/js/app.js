@@ -25,14 +25,60 @@ document.body.addEventListener('htmx:afterSwap', (e) => {
   });
 });
 
-// Sidebar on mobile
+// Sidebar on mobile — proper side drawer with scrim, ESC, link & close-button
+// dismissal, and body-scroll lock while open.
 const side = document.querySelector('.side');
-document.querySelector('[data-side-toggle]')?.addEventListener('click', () => {
+const toggleBtn = document.querySelector('[data-side-toggle]');
+
+function closeSide() {
+  if (!side) return;
+  side.classList.remove('open');
+  document.body.classList.remove('side-open');
+  const s = document.querySelector('.scrim');
+  if (s) s.remove();
+}
+function openSide() {
+  if (!side) return;
   side.classList.add('open');
-  const s = document.createElement('div');
-  s.className = 'scrim';
-  s.onclick = () => { side.classList.remove('open'); s.remove(); };
-  document.body.appendChild(s);
+  document.body.classList.add('side-open');
+  if (!document.querySelector('.scrim')) {
+    const s = document.createElement('div');
+    s.className = 'scrim';
+    s.onclick = closeSide;
+    document.body.appendChild(s);
+  }
+  side.focus?.();
+}
+
+toggleBtn?.addEventListener('click', openSide);
+
+// Inject a header with a close affordance into the drawer (mobile only).
+if (side && !side.querySelector('.side-close')) {
+  const header = document.createElement('button');
+  header.type = 'button';
+  header.className = 'side-close';
+  header.setAttribute('aria-label', 'Close menu');
+  header.innerHTML =
+    '<span>Menu</span>' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  header.addEventListener('click', closeSide);
+  side.insertBefore(header, side.firstChild);
+}
+
+// Close the drawer when any nav link inside it is clicked.
+side?.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href]');
+  if (a && !a.classList.contains('logo')) closeSide();
+});
+
+// ESC closes the drawer.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && side?.classList.contains('open')) closeSide();
+});
+
+// Close the drawer if the viewport grows back past the mobile breakpoint.
+window.matchMedia('(min-width: 901px)').addEventListener('change', (m) => {
+  if (m.matches) closeSide();
 });
 
 // Confirm destructive actions without a library
@@ -65,6 +111,21 @@ document.body.addEventListener('click', (e) => {
   navigator.clipboard?.writeText(target.textContent.trim());
   const t = btn.textContent; btn.textContent = 'Copied';
   setTimeout(() => { btn.textContent = t; }, 1200);
+});
+
+// Amount preset chips (deposit / withdraw): fill the linked amount input.
+document.querySelectorAll('.amount-presets').forEach((group) => {
+  const target = group.dataset.target ? document.querySelector(group.dataset.target) : null;
+  if (!target) return;
+  group.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-amt]');
+    if (!btn) return;
+    const val = btn.dataset.amt === 'max' ? group.dataset.max : btn.dataset.amt;
+    target.value = val || '';
+    target.dispatchEvent(new Event('input'));
+    group.querySelectorAll('button').forEach((b) => b.classList.remove('on'));
+    btn.classList.add('on');
+  });
 });
 
 // Trade page: live order estimate + chart symbol sync

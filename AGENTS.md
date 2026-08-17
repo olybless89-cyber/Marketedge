@@ -17,6 +17,11 @@ Node.js + Hono (web) + Drizzle ORM + Postgres + Eta templates. Single-process.
 - Mail: `src/lib/mail.js` renders `.eta` body wrapped by `views/mail/layout.eta`, logs to `mail_log` table, sends via nodemailer SMTP. `getTransporter()` reads `mail_config` from `settings` table first, then `SMTP_URL` env, else log-only. Fire-and-forget with `.catch()`.
 - Settings: `src/lib/settings.js` — key/value store in `settings` table (jsonb). Wallet addresses stored under key `wallet_addresses`.
 
+## Frontend conventions & gotchas
+- `public/css/app.css` carries two naming layers: a BEM-style layer (`.stat__v`, `.card--flush`, `.btn--ghost`) and a "single-dash" compatibility layer (`.stat-v`, `.btn-ghost`, `.card-head`, `.metric-card`, `.notice`, `.page-head`, `.kv`, `.meter`, `.avatar`, `.trader-head`, `.plan*`, `.row2`). The `.eta` dashboard templates use the single-dash names; both resolve onto the same design tokens. Keep new component styles in the single-dash layer to match the templates.
+- Dashboard tables use bare `<table>` inside `.table-wrap` (NOT the `.tbl` class). Styles live under `.table-wrap table` so they apply automatically — no need to add a class in templates.
+- Sidebar (`.side`) is a sticky column on desktop (`@media min-width 901px`) and a fixed off-canvas drawer on mobile (`@media max-width 900px`). The drawer is driven by `public/js/app.js`: `[data-side-toggle]` opens, `.scrim`/`.side-close`/ESC/nav-link click close, and `body.side-open` locks scroll. Breakpoint is 900px; a tablet refinement exists for 901–1100px.
+
 ## Testing locally
 Needs Postgres. Start one, set `DATABASE_URL` in `.env` (use `?sslmode=disable` for a local container — `postgres` lib defaults to SSL `require`), run `node src/db/migrate.js && node src/db/seed.js`, then `RUN_ENGINE=false node src/index.js`.
 - CSRF note for curl: fetch the page with the cookie jar, grep the `_csrf` token, POST with the same jar. Token is stable per session.

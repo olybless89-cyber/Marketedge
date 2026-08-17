@@ -45,7 +45,8 @@
 </div>
 
 <div class="card-head"><h3 style="font-family:var(--ff-display)">Your plans</h3></div>
-<div class="table-wrap">
+<div class="card card--flush" style="overflow:hidden">
+<div class="table-wrap" style="border:0">
   <table>
     <thead><tr><th>Plan</th><th class="num">Principal</th><th class="num">Accrued</th><th>Progress</th><th>Matures</th><th>Status</th></tr></thead>
     <tbody>
@@ -67,4 +68,5 @@
       <% }) %>
     </tbody>
   </table>
+</div>
 </div>

@@ -267,9 +267,12 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
   border:1px solid var(--yellow-line);border-radius:var(--r-md);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 
 /* App shell */
-.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;background:var(--bg-void)}
 @media(max-width:900px){.app{grid-template-columns:1fr}}
-.content{padding:var(--s-6);min-width:0}
+.content{padding:clamp(20px,2.4vw,32px) clamp(16px,2.6vw,40px) 48px;min-width:0;max-width:1280px;margin-inline:auto;width:100%}
+.main{min-width:0;background:var(--bg-base);border-top-left-radius:0}
+@media(min-width:901px){.main{border-top-left-radius:18px;overflow:hidden}}
+
 .foot{border-top:1px solid var(--line-soft);background:var(--bg-void);padding-block:var(--s-8) var(--s-6)}
 .foot-grid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:var(--s-6);padding-bottom:var(--s-7)}
 @media(max-width:900px){.foot-grid{grid-template-columns:1fr 1fr}}
@@ -325,9 +328,22 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .side-grp a:hover{background:var(--bg-hover);color:var(--ink)}
 .side-grp a.on{background:var(--yellow-ghost);color:var(--yellow-hi);font-weight:600;
   box-shadow:inset 2px 0 0 var(--yellow)}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:var(--s-4);
-  flex-wrap:wrap;padding-bottom:var(--s-5);margin-bottom:var(--s-5);border-bottom:1px solid var(--line-soft)}
-.main{min-width:0}
+.topbar{
+  display:flex;align-items:center;gap:var(--s-4);
+  padding:16px 0;margin-bottom:26px;border-bottom:1px solid var(--line-soft);
+  position:sticky;top:0;z-index:60;
+  background:linear-gradient(180deg,var(--bg-base) 62%,rgba(8,14,38,0));
+  backdrop-filter:blur(8px)}
+.topbar__balance{margin-left:auto}
+.topbar__user{display:flex;align-items:center;gap:10px;cursor:pointer}
+.topbar__user .avatar{width:36px;height:36px;font-size:.8rem}
+.topbar__user .user-name{line-height:1.25}
+.topbar__user .user-name b{display:block;font-size:.9rem;font-weight:600;color:var(--ink)}
+.topbar__user .user-name span{font-size:.72rem;color:var(--ink-3)}
+.iconbtn{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg-inset);color:var(--ink-2);cursor:pointer;
+  position:relative;transition:border-color .15s var(--ease),color .15s var(--ease),background .15s var(--ease)}
+.iconbtn:hover{border-color:var(--blue-line);color:var(--ink);background:var(--bg-hover)}
 .risk{padding:var(--s-5);border:1px solid var(--line-soft);border-radius:var(--r-md);
   background:var(--bg-inset);color:var(--ink-3);font-size:var(--t-xs);line-height:1.7}
 .risk strong{color:var(--ink-2)}
@@ -347,13 +363,206 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .hl__d{font-size:var(--t-sm);color:var(--ink-3);line-height:1.55}
 
 
+/* ==========================================================================
+   Dashboard component layer
+   Single-dash class names used across the .eta dashboard templates. These
+   resolve onto the token system above so every dashboard page renders with a
+   consistent, world-standard visual language.
+   ========================================================================== */
+
+/* --- Page header (every dashboard sub-page) ----------------------------- */
+.page-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s-4);
+  flex-wrap:wrap;margin-bottom:24px
+}
+.page-head>div{min-width:0}
+.page-head h1{font-size:clamp(1.4rem,2.2vw,1.85rem);font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+.page-head .small{color:var(--ink-3);margin-top:5px}
+.page-head .num{color:var(--ink-2)}
+@media(max-width:620px){.page-head{align-items:flex-start;flex-direction:column;gap:10px}}
+
+/* Section header — used for bare .card-head OUTSIDE a .card (e.g. "Recent
+   activity", "Available strategies"). Renders as a clean label + action row
+   instead of a dangling divider. */
+.card:not(.card--flush)>.card-head~.table-wrap,
+main .card-head{margin-bottom:14px}
+main>.card-head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:var(--s-4);
+  padding:0;border:0;margin:30px 0 14px
+}
+main>.card-head h3{
+  font-family:var(--f-display);font-size:1.05rem;font-weight:700;letter-spacing:-.02em;color:var(--ink)
+}
+main>.card-head .small,.main>.card-head .small{color:var(--yellow-hi);font-weight:600}
+
+/* --- Notices / alerts (notice-* maps onto alert tokens) ---------------- */
+.notice{
+  display:flex;align-items:flex-start;gap:11px;padding:13px 16px;margin-bottom:18px;
+  border-radius:var(--r-md);font-size:var(--t-sm);border:1px solid var(--line);
+  background:var(--bg-inset);color:var(--ink-2);line-height:1.5
+}
+.notice::before{content:'';flex:none;width:4px;align-self:stretch;border-radius:99px;background:var(--ink-4)}
+.notice b{color:var(--ink);font-weight:600}
+.notice .small,.notice .btn{color:inherit}
+.notice-ok{background:var(--up-ghost);border-color:rgba(22,199,132,.3);color:#A6F0D0}
+.notice-ok::before{background:var(--up)}
+.notice-err{background:var(--down-ghost);border-color:rgba(240,73,92,.3);color:#FFC4CB}
+.notice-err::before{background:var(--down)}
+.notice-warn{background:var(--warn-ghost);border-color:rgba(245,165,36,.3);color:#FFDFA8}
+.notice-warn::before{background:var(--warn)}
+.notice-ok b,.notice-err b,.notice-warn b{color:var(--ink)}
+
+/* --- Key/value definition lists ---------------------------------------- */
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:11px 18px;margin:0}
+dl.kv dt{font-family:var(--f-mono);font-size:var(--t-xs);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);align-self:center}
+dl.kv dd{margin:0;font-size:var(--t-sm);color:var(--ink);font-variant-numeric:tabular-nums;
+  text-align:right;word-break:break-word}
+dl.kv dd.muted{color:var(--ink-3)}
+@media(max-width:480px){dl.kv{grid-template-columns:1fr;gap:2px 0}
+  dl.kv dt{font-size:.62rem;margin-top:8px}
+  dl.kv dd{text-align:left}}
+
+/* --- Progress meter ---------------------------------------------------- */
+.meter{height:6px;border-radius:var(--r-full);background:var(--bg-inset);
+  overflow:hidden;border:1px solid var(--line-soft)}
+.meter>i{display:block;height:100%;border-radius:inherit;
+  background:var(--blue-grad);transition:width .5s var(--ease)}
+.meter.gold>i{background:var(--gold-grad)}
+.meter.up>i{background:var(--up)}
+.meter.down>i{background:var(--down)}
+
+/* --- Avatar (initials) ------------------------------------------------- */
+.avatar{display:grid;place-items:center;flex:none;border-radius:var(--r-full);
+  background:var(--blue-grad);color:#fff;font-family:var(--f-display);
+  font-weight:700;letter-spacing:.02em;text-transform:uppercase;
+  width:42px;height:42px;font-size:.82rem;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 4px 14px -4px rgba(59,123,255,.5)}
+
+/* --- Trader card header (copy trading / overview) ---------------------- */
+.trader-head{display:flex;align-items:center;gap:var(--s-3);margin-bottom:var(--s-4)}
+.trader-head h3{font-size:var(--t-md);font-weight:600;margin:0;letter-spacing:-.01em}
+.trader-head .role{font-size:var(--t-xs);color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.08em;font-family:var(--f-mono);margin-top:2px}
+
+/* --- Investment plan cards (invest page) ------------------------------- */
+.plan{display:flex;flex-direction:column;gap:14px;position:relative;padding:24px;
+  transition:border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease)}
+.plan:hover{transform:translateY(-3px);box-shadow:var(--shadow-pop)}
+.plan-head{display:flex;flex-direction:column;gap:6px}
+.plan h3{font-size:1.15rem;font-weight:700;letter-spacing:-.02em}
+.plan-tag{align-self:flex-start;font-family:var(--f-mono);font-size:var(--t-xs);
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--yellow-deep);
+  background:var(--gold-grad);border:1px solid var(--yellow-line);
+  padding:4px 11px;border-radius:var(--r-full);margin-bottom:4px;
+  box-shadow:var(--shadow-yellow)}
+.plan-rate{display:flex;align-items:baseline;gap:8px;margin-top:6px}
+.plan-rate b{font-family:var(--f-display);font-size:2.4rem;font-weight:800;
+  background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;line-height:1;letter-spacing:-.04em}
+.plan-rate small{font-size:var(--t-xs);color:var(--ink-3);text-transform:uppercase;
+  letter-spacing:.06em}
+.plan-feats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;
+  flex:1}
+.plan-feats li{display:flex;align-items:flex-start;gap:9px;font-size:var(--t-sm);color:var(--ink-2);line-height:1.45}
+.plan-feats svg{flex:none;color:var(--up);margin-top:3px}
+.plan-range{display:flex;justify-content:space-between;font-size:var(--t-xs);color:var(--ink-3);
+  padding-top:14px;border-top:1px solid var(--line-soft)}
+.plan-range b{color:var(--ink);font-family:var(--f-mono)}
+.plan-foot{margin-top:auto}
+/* Featured plan — clearly the recommended tier */
+.plan.featured{
+  border-color:var(--yellow-line);
+  box-shadow:0 0 0 1px var(--yellow-line),0 0 60px -20px rgba(245,184,46,.4),var(--shadow-card);
+  background:linear-gradient(180deg,rgba(28,42,82,.95),rgba(14,24,56,.95))
+}
+.plan.featured::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;
+  background:var(--gold-grad);border-radius:var(--r-lg) var(--r-lg) 0 0}
+
+/* --- Two-column form row (kyc) ----------------------------------------- */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3)}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+
+/* --- Stat tiles (portfolio / statement) — card-style, consistent ------- */
+.stat{
+  display:flex;flex-direction:column;gap:5px;
+  background:linear-gradient(180deg,rgba(16,32,74,.86),rgba(10,20,48,.92));
+  border:1px solid var(--line-soft);border-radius:var(--r-lg);
+  padding:18px 18px;box-shadow:var(--shadow-card);position:relative;overflow:hidden
+}
+.stat::after{content:'';position:absolute;inset:0 0 auto 0;height:2px;
+  background:linear-gradient(90deg,var(--blue),transparent);opacity:.5}
+.stat-k{font-family:var(--f-mono);font-size:var(--t-xs);font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);margin:0}
+.stat-v{font-family:var(--f-display);font-size:1.7rem;font-weight:700;color:var(--ink);
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:2px}
+.stat-v.up,.stat-v .up{color:var(--up)}
+.stat-v.down,.stat-v .down{color:var(--down)}
+.stat-sub{font-size:var(--t-xs);color:var(--ink-4);margin-top:5px;line-height:1.4}
+
+/* --- Missing badge variant --------------------------------------------- */
+.badge-warn{background:var(--warn-ghost);color:var(--warn);border-color:rgba(245,165,36,.28)}
+
+/* --- Bare tables in the dashboard --------------------------------------
+   Dashboard templates use plain <table> inside .table-wrap, not the .tbl
+   class. Mirror the .tbl look so every dashboard table is styled. */
+.table-wrap{overflow-x:auto;border-radius:var(--r-md)}
+.table-wrap>table,.table-wrap table{
+  width:100%;border-collapse:collapse;font-size:var(--t-sm)
+}
+.table-wrap table th{
+  text-align:left;padding:12px 16px;font-family:var(--f-mono);font-size:.66rem;
+  font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  border-bottom:1px solid var(--line);white-space:nowrap;background:var(--bg-inset)
+}
+.table-wrap table th:first-child{border-top-left-radius:var(--r-md)}
+.table-wrap table th:last-child{border-top-right-radius:var(--r-md)}
+.table-wrap table td{
+  padding:13px 16px;border-bottom:1px solid var(--line-soft);color:var(--ink-2);vertical-align:middle
+}
+.table-wrap table td b{color:var(--ink);font-weight:600}
+.table-wrap table tbody tr{transition:background .15s var(--ease)}
+.table-wrap table tbody tr:hover{background:var(--bg-hover)}
+.table-wrap table tbody tr:last-child td{border-bottom:none}
+.table-wrap table .num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.table-wrap table th.num{text-align:right}
+.table-wrap table .up{color:var(--up)}.table-wrap table .down{color:var(--down)}
+
+/* --- Code block (wallet address) --------------------------------------- */
+code.input{
+  display:block;font-family:var(--f-mono);background:var(--bg-inset) !important;
+  padding:14px 16px;line-height:1.6;border:1px solid var(--line) !important;
+  border-radius:var(--r-md);color:var(--yellow-hi);word-break:break-all;user-select:all
+}
+
+/* --- Amount preset chips (deposit / withdraw) -------------------------- */
+.amount-presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.amount-presets button{
+  flex:1 1 auto;min-width:64px;padding:8px 10px;font-size:var(--t-sm);font-weight:600;
+  font-family:var(--f-mono);color:var(--ink-2);background:var(--bg-inset);
+  border:1px solid var(--line);border-radius:var(--r-sm);cursor:pointer;
+  transition:border-color .15s var(--ease),color .15s var(--ease),background .15s var(--ease)
+}
+.amount-presets button:hover{border-color:var(--yellow-line);color:var(--yellow-hi);background:var(--yellow-ghost)}
+.amount-presets button.on{border-color:var(--yellow-deep);color:var(--yellow-hi);background:var(--yellow-ghost)}
+
+/* --- Notification rows -------------------------------------------------- */
+.notif{display:flex;gap:14px;align-items:flex-start}
+.notif__dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px;background:var(--blue)}
+.notif__dot.read{background:transparent;border:1px solid var(--line)}
+.notif__body{flex:1;min-width:0}
+.notif__body b{display:block;font-size:.94rem;font-weight:600;color:var(--ink)}
+.notif__body p{margin:4px 0 0;font-size:var(--t-sm);color:var(--ink-3);line-height:1.5}
+.notif__time{font-size:var(--t-xs);color:var(--ink-4);white-space:nowrap}
+
 /* Make the topbar more compact on mobile like the screenshot */
 @media (max-width: 900px) {
   .content { padding: 16px 14px 28px; }
   .topbar {
-    padding-bottom: 14px;
-    margin-bottom: 14px;
+    padding: 12px 0;
+    margin-bottom: 18px;
     gap: 10px;
+    flex-wrap: nowrap;
   }
   .balance-chip {
     padding: 7px 12px;
@@ -361,8 +570,10 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
   }
   .balance-chip b { font-size: 0.95rem; }
   .dash-welcome h1 { font-size: 1.4rem; }
-  .metric-value { font-size: 1.6rem; }
+  .metric-value { font-size: 1.55rem; }
   .metric-card { padding: 18px 18px; border-radius: 14px; }
+  .stat-v { font-size: 1.45rem; }
+  .stat { padding: 16px; }
 }
 
 
@@ -477,6 +688,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
 }
+.metric-value.up, .metric-value .up { color: var(--up); }
+.metric-value.down, .metric-value .down { color: var(--down); }
 .metric-desc {
   font-size: 0.78rem;
   color: var(--ink-4);
@@ -565,4 +778,42 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
     height: 38px;
     flex: none;
   }
+
+  /* Lock body scroll while the drawer is open */
+  body.side-open { overflow: hidden; }
+
+  /* Inline close affordance injected at the top of the drawer on mobile */
+  .side-close {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 4px 6px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    background: none;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: var(--t-sm);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .side-close svg { width: 18px; height: 18px; }
+
+  /* On small phones, collapse the user name so the topbar never overflows */
+  .topbar .user-name { display: none; }
+}
+
+@media (min-width: 901px) {
+  /* Desktop: never show the injected mobile close button */
+  .side-close { display: none !important; }
+}
+
+/* --- Tablet refinement: give content more room 901–1100px --------------- */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .app { grid-template-columns: 224px minmax(0, 1fr); }
+  .content { padding: 22px 18px 36px; }
 }

@@ -10,23 +10,25 @@
   <div class="stat"><div class="stat-k">Current balance</div><div class="stat-v"><%= it.usd(it.pf.total) %></div></div>
 </div>
 
-<div class="table-wrap">
-  <table>
-    <thead><tr><th>Date</th><th>Account</th><th>Activity</th><th>Reference</th><th class="num">Amount</th></tr></thead>
-    <tbody>
-      <% if (!it.rows.length) { %>
-        <tr><td colspan="5"><div class="empty"><h4>Nothing to show yet</h4>
-          <p class="small">Fund your account and the first line appears here.</p></div></td></tr>
-      <% } %>
-      <% it.rows.forEach(function(r){ %>
-        <tr>
-          <td class="small muted"><%= it.dt(r.createdAt) %></td>
-          <td><span class="pill"><%= r.account %></span></td>
-          <td><%= r.kind.replace(/_/g,' ').replace(/^./, s=>s.toUpperCase()) %></td>
-          <td class="small muted"><%= r.memo || '—' %></td>
-          <td class="num <%= it.dir(r.amount) %>"><%= it.signedUsd(r.amount) %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+<div class="card card--flush" style="overflow:hidden">
+  <div class="table-wrap" style="border:0">
+    <table>
+      <thead><tr><th>Date</th><th>Account</th><th>Activity</th><th>Reference</th><th class="num">Amount</th></tr></thead>
+      <tbody>
+        <% if (!it.rows.length) { %>
+          <tr><td colspan="5"><div class="empty"><h4>Nothing to show yet</h4>
+            <p class="small">Fund your account and the first line appears here.</p></div></td></tr>
+        <% } %>
+        <% it.rows.forEach(function(r){ %>
+          <tr>
+            <td class="small muted"><%= it.dt(r.createdAt) %></td>
+            <td><span class="pill"><%= r.account %></span></td>
+            <td><%= r.kind.replace(/_/g,' ').replace(/^./, s=>s.toUpperCase()) %></td>
+            <td class="small muted"><%= r.memo || '—' %></td>
+            <td class="num <%= it.dir(r.amount) %>"><%= it.signedUsd(r.amount) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
 </div>
