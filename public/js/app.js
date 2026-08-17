@@ -65,10 +65,16 @@ if (side && !side.querySelector('.side-close')) {
   side.insertBefore(header, side.firstChild);
 }
 
-// Close the drawer when any nav link inside it is clicked.
+// Navigation links reload the page, which resets the expanded state, so we
+// only need to dismiss the overlay for non-navigating interactions. Closing
+// on a link click would reflow the rail mid-click and cancel the navigation.
 side?.addEventListener('click', (e) => {
   const a = e.target.closest('a[href]');
-  if (a && !a.classList.contains('logo')) closeSide();
+  if (a && !a.classList.contains('logo') && side.classList.contains('open')) {
+    // keep overlay visible until the new page loads
+    e.preventDefault();
+    window.location.href = a.getAttribute('href');
+  }
 });
 
 // ESC closes the drawer.

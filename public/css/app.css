@@ -268,10 +268,50 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 
 /* App shell */
 .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;background:var(--bg-void)}
-@media(max-width:900px){.app{grid-template-columns:1fr}}
 .content{padding:clamp(20px,2.4vw,32px) clamp(16px,2.6vw,40px) 48px;min-width:0;max-width:1280px;margin-inline:auto;width:100%}
 .main{min-width:0;background:var(--bg-base);border-top-left-radius:0}
 @media(min-width:901px){.main{border-top-left-radius:18px;overflow:hidden}}
+
+/* Mobile + tablet: keep the sidebar visible like desktop, but as a slim icon
+   rail so navigation is always reachable. Tapping the rail expands it to a
+   full overlay (with scrim) without ever fully hiding the nav. */
+@media(max-width:900px){
+  .app{grid-template-columns:64px minmax(0,1fr)}
+  .side{
+    width:64px;min-width:64px;
+    padding:14px 8px 24px;
+    position:sticky;top:0;height:100vh;
+    overflow-x:hidden;overflow-y:auto;
+    z-index:120;
+  }
+  .side .logo{font-size:0;gap:0;justify-content:center}
+  .side .logo-mark{width:26px;height:26px;margin:0 0 18px}
+  .side-grp>p{height:0;overflow:hidden;margin:0;padding:0;visibility:hidden}
+  .side-grp{margin-bottom:14px}
+  .side-grp>a,.side-logout{
+    justify-content:center;padding:11px 0;gap:0;border-radius:10px;
+    position:relative;
+  }
+  .side-grp a .label,.side-logout .label,.side-grp>a .tag{display:none}
+  /* section separators */
+  .side-grp + .side-grp{border-top:1px solid var(--line-soft);padding-top:14px}
+  /* expand the rail to a full overlay */
+  .side.open{
+    position:fixed;top:0;left:0;bottom:0;width:min(268px,82vw);
+    z-index:200;box-shadow:10px 0 40px rgba(0,0,0,.5);
+    padding:18px 14px 40px;
+  }
+  .side.open .logo{font-size:var(--t-md);gap:10px;justify-content:flex-start}
+  .side.open .logo-mark{margin:0}
+  .side.open .side-grp>p{height:auto;overflow:visible;visibility:visible;margin-bottom:var(--s-3);padding-inline:var(--s-3)}
+  .side.open .side-grp>a,.side.open .side-logout{justify-content:flex-start;padding:10px var(--s-3);gap:var(--s-3);border-radius:var(--r-sm)}
+  .side.open .side-grp a .label,.side.open .side-logout .label,.side.open .side-grp>a .tag{display:flex}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;backdrop-filter:blur(3px)}
+  body.side-open{overflow:hidden}
+  .side-close{display:none}
+  .side.open .side-close{display:flex}
+}
+
 
 .foot{border-top:1px solid var(--line-soft);background:var(--bg-void);padding-block:var(--s-8) var(--s-6)}
 .foot-grid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:var(--s-6);padding-bottom:var(--s-7)}
@@ -707,99 +747,26 @@ code.input{
   }
 }
 
-/* ========== Mobile sidebar = proper side drawer ========== */
+/* ========== Mobile sidebar refinements (rail is defined above) ========== */
 @media (max-width: 900px) {
-  .app {
-    grid-template-columns: 1fr;
-  }
+  .content { padding: 14px 14px 32px; }
+  .topbar { padding-bottom: 12px; margin-bottom: 12px; gap: 8px; flex-wrap: nowrap; }
+  .balance-chip { padding: 6px 11px; font-size: 0.78rem; }
+  .balance-chip b { font-size: 0.92rem; }
 
-  .side {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: min(282px, 85vw);
-    height: 100vh;
-    height: 100dvh;
-    z-index: 200;
-    transform: translateX(-108%);
-    transition: transform 0.28s cubic-bezier(.22,.61,.36,1);
-    border-right: 1px solid var(--line-soft);
-    border-bottom: none !important;
-    box-shadow: 10px 0 40px rgba(0,0,0,.5);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 18px 14px 40px;
-    background: var(--bg-void);
-  }
-
-  .side.open {
-    transform: translateX(0);
-  }
-
-  .scrim {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.58);
-    z-index: 199;
-    backdrop-filter: blur(3px);
-    animation: fadeInScrim 0.2s ease;
-  }
-
-  @keyframes fadeInScrim {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
-  .content {
-    padding: 14px 14px 32px;
-  }
-
-  .topbar {
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-    gap: 8px;
-    flex-wrap: nowrap;
-  }
-
-  .balance-chip {
-    padding: 6px 11px;
-    font-size: 0.78rem;
-  }
-  .balance-chip b {
-    font-size: 0.92rem;
-  }
-
-  [data-side-toggle],
-  .nav-toggle {
+  /* The toggle expands the always-visible rail into a full overlay */
+  [data-side-toggle], .nav-toggle {
     display: grid !important;
     place-content: center;
-    width: 38px;
-    height: 38px;
-    flex: none;
+    width: 38px; height: 38px; flex: none;
   }
 
-  /* Lock body scroll while the drawer is open */
-  body.side-open { overflow: hidden; }
-
-  /* Inline close affordance injected at the top of the drawer on mobile */
   .side-close {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    margin-bottom: 14px;
-    padding: 4px 6px 12px;
-    border-bottom: 1px solid var(--line-soft);
-    background: none;
-    border-left: 0;
-    border-right: 0;
-    border-top: 0;
-    color: var(--ink-2);
-    font: inherit;
-    font-size: var(--t-sm);
-    font-weight: 600;
-    cursor: pointer;
+    align-items: center; justify-content: space-between; width: 100%;
+    margin-bottom: 14px; padding: 4px 6px 12px;
+    border: 0; border-bottom: 1px solid var(--line-soft);
+    background: none; color: var(--ink-2);
+    font: inherit; font-size: var(--t-sm); font-weight: 600; cursor: pointer;
   }
   .side-close svg { width: 18px; height: 18px; }
 
