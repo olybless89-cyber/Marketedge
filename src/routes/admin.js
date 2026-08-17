@@ -11,7 +11,7 @@ import { traderStats, balance, unreadCount } from '../lib/stats.js';
 import { getWallets, setWallets } from '../lib/settings.js';
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
-  mailKycApproved, mailKycRejected,
+  mailKycApproved, mailKycRejected, getMailConfig, setMailConfig, sendTestMail,
 } from '../lib/mail.js';
 import * as fmt from '../lib/money.js';
 
@@ -36,6 +36,7 @@ const NAV = [
   ]},
   { label: 'System', items: [
     { href: '/admin/mail', label: 'Mail outbox', icon: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>') },
+    { href: '/admin/mail/settings', label: 'Mail settings', icon: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>') },
   ]},
 ];
 
@@ -381,4 +382,47 @@ admin.get('/admin/mail', async (c) => {
     from mail_log m left join users u on u.id = m.user_id
     order by m.created_at desc limit 100`;
   return shell(c, 'admin/mail', { rows }, 'Mail outbox');
+});
+
+/* ---------------- mail settings (SMTP / Gmail) ---------------- */
+admin.get('/admin/mail/settings', async (c) => {
+  const cfg = await getMailConfig() || {
+    host: 'smtp.gmail.com', port: 465, secure: true,
+    user: '', pass: '', fromName: 'Marketedge', fromAddress: '',
+  };
+  const hasPass = !!(cfg.pass && cfg.pass.length);
+  return shell(c, 'admin/mail-settings', {
+    cfg, hasPass,
+    ok: c.req.query('ok'),
+    testStatus: c.req.query('test'),
+    testMsg: c.req.query('msg') ? decodeURIComponent(c.req.query('msg')) : '',
+  }, 'Mail settings');
+});
+
+admin.post('/admin/mail/settings', async (c) => {
+  const b = c.get('body');
+  const port = Number(b.port);
+  const secure = b.secure === 'on' || b.secure === 'true' || port === 465;
+  await setMailConfig({
+    host: String(b.host || ''),
+    port: port || 465,
+    secure,
+    user: String(b.user || ''),
+    pass: String(b.pass || ''),
+    fromName: String(b.fromName || ''),
+    fromAddress: String(b.fromAddress || ''),
+  });
+  return c.redirect('/admin/mail/settings?ok=1');
+});
+
+admin.post('/admin/mail/test', async (c) => {
+  const b = c.get('body');
+  const to = String(b.to || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(to))
+    return c.redirect('/admin/mail/settings?test=invalid&msg=' + encodeURIComponent('Enter a valid email address.'));
+  const r = await sendTestMail(to);
+  const msg = r.status === 'sent'
+    ? `Test email sent to ${to}. Check the inbox (and spam folder).`
+    : (r.error || 'Send failed.');
+  return c.redirect('/admin/mail/settings?test=' + r.status + '&msg=' + encodeURIComponent(msg));
 });

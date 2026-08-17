@@ -15,10 +15,10 @@
 
 <div class="table-wrap">
   <table>
-    <thead><tr><th>Date</th><th>Client</th><th>Method</th><th>Destination</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Date</th><th>Client</th><th>Method</th><th>Destination</th><th class="num">Amount</th><% if (it.type === 'deposit') { %><th>Receipt</th><% } %><th>Status</th><th></th></tr></thead>
     <tbody>
       <% if (!it.rows.length) { %>
-        <tr><td colspan="7"><div class="empty"><h4>Nothing in this view</h4></div></td></tr>
+        <tr><td colspan="<%= it.type === 'deposit' ? 8 : 7 %>"><div class="empty"><h4>Nothing in this view</h4></div></td></tr>
       <% } %>
       <% it.rows.forEach(function(t){ %>
         <tr>
@@ -27,6 +27,9 @@
           <td class="small"><%= t.method.replace('_',' ').toUpperCase() %></td>
           <td class="small num" style="max-width:170px;overflow:hidden;text-overflow:ellipsis"><%= t.address || '—' %></td>
           <td class="num"><%= it.usd(t.amount) %></td>
+          <% if (it.type === 'deposit') { %>
+            <td class="small"><% if (t.proof_url) { %><a href="<%= t.proof_url %>" target="_blank" rel="noopener" class="go">View receipt</a><% } else { %><span class="muted">—</span><% } %></td>
+          <% } %>
           <td><span class="badge <%= t.status==='approved'?'badge-live':t.status==='rejected'?'badge-warn':'badge-idle' %>"><%= t.status %></span></td>
           <td style="text-align:right;white-space:nowrap">
             <% if (t.status === 'pending') { %>

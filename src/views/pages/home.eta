@@ -1,7 +1,7 @@
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <span class="eyebrow blue">Multi-asset trading platform</span>
+      <span class="eyebrow">Multi-asset trading platform</span>
       <h1>Trade global markets<span>with confidence</span></h1>
       <p class="lede">
         Forex, cryptocurrency, shares, indices and commodities in a single account —
@@ -258,7 +258,7 @@
 <!-- ── Closing CTA ───────────────────────────────────────────────── -->
 <section class="section">
   <div class="wrap">
-    <div class="card" style="text-align:center;padding:clamp(32px,6vw,64px);background:linear-gradient(140deg,rgba(47,107,255,.14),var(--bg-elev) 62%)">
+    <div class="card" style="text-align:center;padding:clamp(32px,6vw,64px);background:linear-gradient(140deg,rgba(47,107,255,.14),rgba(255,200,61,.10) 40%,var(--bg-elev) 72%)">
       <h2>Open an account in under two minutes</h2>
       <p class="lede center">Fund it when you're ready. There's no minimum to look around.</p>
       <div class="hero-cta" style="justify-content:center">

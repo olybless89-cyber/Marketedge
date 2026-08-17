@@ -1,10 +1,11 @@
 <div class="page-head"><h1>Deposit</h1></div>
-<% if (it.sent) { %><div class="notice notice-ok">Deposit submitted. It posts to your balance once we confirm the transfer.</div><% } %>
+<% if (it.sent) { %><div class="notice notice-ok">Deposit submitted with your receipt. Your balance updates once admin confirms the transfer.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
 <div class="grid" style="grid-template-columns:.9fr 1.1fr;gap:20px">
   <div class="card">
     <div class="card-head"><h3>Fund your account</h3></div>
-    <form method="post" action="/dashboard/deposit">
+    <form method="post" action="/dashboard/deposit" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= it.csrf %>">
       <div class="field">
         <label for="m">Method</label>
@@ -28,6 +29,16 @@
         </div>
         <div class="hint">Only send the matching asset to this address. Other networks may lose funds.</div>
       </div>
+      <div class="field">
+        <label for="rc">Payment receipt</label>
+        <input class="input" id="rc" name="receipt" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf">
+        <div class="hint">Upload a screenshot or photo of the transfer confirmation, or paste a link below.</div>
+      </div>
+      <div class="field">
+        <label for="ru">…or receipt link</label>
+        <input class="input" id="ru" name="receiptUrl" type="url" placeholder="https://…">
+        <div class="hint">Used only if no file is attached. Admin reviews this to confirm your deposit.</div>
+      </div>
       <button class="btn btn-primary btn-block">Submit deposit</button>
     </form>
   </div>
@@ -36,16 +47,17 @@
     <div class="card-head"><h3>Deposit history</h3></div>
     <div class="table-wrap" style="border:0">
       <table>
-        <thead><tr><th>Date</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>
+        <thead><tr><th>Date</th><th>Method</th><th class="num">Amount</th><th>Receipt</th><th>Status</th></tr></thead>
         <tbody>
           <% if (!it.rows.length) { %>
-            <tr><td colspan="4"><div class="empty"><h4>No deposits yet</h4><p class="small">Your first transfer will appear here.</p></div></td></tr>
+            <tr><td colspan="5"><div class="empty"><h4>No deposits yet</h4><p class="small">Your first transfer will appear here.</p></div></td></tr>
           <% } %>
           <% it.rows.forEach(function(r){ %>
             <tr>
               <td class="small muted"><%= it.ago(r.createdAt) %></td>
               <td class="small"><%= r.method.replace('_',' ').toUpperCase() %></td>
               <td class="num"><%= it.usd(r.amount) %></td>
+              <td class="small"><% if (r.proofUrl) { %><a href="<%= r.proofUrl %>" target="_blank" rel="noopener" class="go">View</a><% } else { %><span class="muted">—</span><% } %></td>
               <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>
             </tr>
           <% }) %>

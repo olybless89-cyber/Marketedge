@@ -14,7 +14,13 @@ import { admin } from './routes/admin.js';
 import { startEngine } from './workers/engine.js';
 import { migrate } from './db/migrate.js';
 import { warmTransporter } from './lib/mail.js';
+import { ensureUploadDir, UPLOAD_DIR } from './lib/uploads.js';
 import { sql } from './db/client.js';
+
+// Ensure the upload directory exists before routes are registered, so the
+// static file server finds its root even when UPLOAD_DIR points at a fresh
+// volume mount. Safe no-op when it already exists.
+await ensureUploadDir().catch((e) => console.error('[web] uploads dir init failed:', e.message));
 
 const app = new Hono();
 
@@ -36,7 +42,13 @@ app.use('*', secureHeaders({
 
 app.use('/css/*', serveStatic({ root: './public' }));
 app.use('/js/*',  serveStatic({ root: './public' }));
-app.use('/img/*', serveStatic({ root: './public' }));
+app.use('/img/*',  serveStatic({ root: './public' }));
+// Receipts: served at /uploads/* but the on-disk root follows UPLOAD_DIR so
+// it can live on a persistent volume in production.
+app.use('/uploads/*', serveStatic({
+  root: UPLOAD_DIR,
+  rewriteRequestPath: (p) => p.replace(/^\/uploads/, ''),
+}));
 
 app.use('*', loadUser);
 app.use('*', csrfGuard);
@@ -88,6 +100,7 @@ const port = Number(process.env.PORT || 3000);
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`[web] listening on :${info.port}`);
   warmTransporter();
+  ensureUploadDir().catch((e) => console.error('[web] uploads dir failed:', e.message));
   migrate()
     .then(() => {
       console.log('[web] schema ready');

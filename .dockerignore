@@ -1,0 +1,33 @@
+# Version control & metadata
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (installed inside the image via npm ci)
+node_modules
+
+# Local environment / secrets — never bake into the image
+.env
+.env.*
+
+# Runtime data (mounted as a volume in prod, not baked in)
+public/uploads
+
+# Drizzle generated cache
+drizzle/meta
+
+# Logs & temp
+*.log
+npm-debug.log*
+.tmp
+.agent_tmp
+
+# Editor / OS noise
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs that don't belong in the runtime image
+README.md
+AGENTS.md

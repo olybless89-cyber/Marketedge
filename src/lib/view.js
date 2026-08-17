@@ -22,8 +22,8 @@ export function render(c, template, data = {}) {
     csrf: c.get('csrf'),
     path: c.req.path,
     brand: {
-      name: process.env.BRAND_NAME || 'Rydon Invest',
-      domain: process.env.BRAND_DOMAIN || 'rydoninv.com',
+      name: process.env.BRAND_NAME || 'Marketedge',
+      domain: process.env.BRAND_DOMAIN || 'marketedge.com',
       year: new Date().getFullYear(),
     },
   });

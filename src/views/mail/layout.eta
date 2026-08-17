@@ -9,7 +9,7 @@
       <tr><td style="padding:24px 28px;border-bottom:1px solid #172440">
         <a href="<%= it.base %>" style="display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#E6EDF7;font-family:Space Grotesk,Arial,sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em">
           <span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#2F6BFF">
-            <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#FFC83D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
           <%= it.name %>
         </a>

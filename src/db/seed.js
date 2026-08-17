@@ -73,7 +73,7 @@ async function main() {
   }
 
   /* --- admin --- */
-  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@rydoninv.com').toLowerCase();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@marketedge.com').toLowerCase();
   const [existing] = await sql`select id from users where email = ${adminEmail}`;
   if (!existing) {
     const pw = process.env.ADMIN_PASSWORD || 'ChangeMe!2026';
@@ -87,7 +87,7 @@ async function main() {
   }
 
   /* --- demo client with a funded, active account --- */
-  const demoEmail = 'demo@rydoninv.com';
+  const demoEmail = 'demo@marketedge.com';
   let [demo] = await sql`select id from users where email = ${demoEmail}`;
   if (!demo) {
     [demo] = await sql`

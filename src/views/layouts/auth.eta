@@ -11,10 +11,10 @@
 </head>
 <body>
 <div style="min-height:100vh;display:grid;place-items:center;padding:34px 18px;position:relative;overflow:hidden">
-  <div style="position:absolute;width:760px;height:760px;top:-330px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(47,107,255,.15),transparent 62%);pointer-events:none"></div>
+  <div style="position:absolute;width:760px;height:760px;top:-330px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(47,107,255,.15),rgba(255,200,61,.06) 40%,transparent 62%);pointer-events:none"></div>
   <div style="width:100%;max-width:440px;position:relative">
     <a class="logo" href="/" style="justify-content:center;margin-bottom:24px">
-      <svg class="logo-mark" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#2F6BFF"/><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="logo-mark" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#2F6BFF"/><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#FFC83D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <%= it.brand.name %>
     </a>
     <%~ it.body %>

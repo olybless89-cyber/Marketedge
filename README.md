@@ -1,4 +1,4 @@
-# Rydon Invest
+# Marketedge
 
 Multi-asset trading platform — public marketing site, client dashboard, and admin panel.
 Node + Hono, server-rendered with Eta and HTMX, Postgres via Drizzle. No build step, no
@@ -53,22 +53,70 @@ Set these variables in the Railway dashboard:
 | `ADMIN_PASSWORD` | strong password, change after first login |
 | `NODE_ENV` | `production` |
 | `BRAND_NAME` / `BRAND_DOMAIN` | your branding |
+| `UPLOAD_DIR` | `/data/uploads` (if a volume is mounted at `/data`) |
 
-`PORT` is injected by Railway. Leave it unset.
+`PORT` is injected by Railway. Leave it unset. SMTP/mail is configured from the
+admin UI after first login — no env var needed.
 
 ### 3. Schema and seed
 
 ```bash
-railway run npm run db:push   # creates tables from src/db/schema.js
+railway run npm run migrate   # creates tables (idempotent, also runs on boot)
 railway run npm run seed      # plans, traders, bots, admin, demo client, trade history
 ```
 
 The seed prints the admin and demo credentials. It's idempotent — safe to re-run.
+`migrate` also runs automatically when the app boots, so this step is optional.
 
-### 4. Domain
+### 4. Persistent uploads (Volume)
+
+Receipts are saved to disk under `UPLOAD_DIR` (defaults to `public/uploads`).
+Railway's filesystem is **ephemeral** — without a volume, uploaded receipts vanish
+on every redeploy/restart. Attach a volume to keep them:
+
+1. In the service → **Settings → Volumes**, add a volume mounted at `/data`.
+2. Set the env var `UPLOAD_DIR=/data/uploads`.
+3. Redeploy. The app creates the directory on boot.
+
+Mail config and sessions already live in the database, so they persist without a volume.
+
+### 5. Domain
 
 Add your domain in Railway's settings. TLS is issued automatically, which also fixes the
 "Not secure" warning in the address bar.
+
+### 6. Transactional email (Gmail)
+
+The platform sends welcome, deposit, withdrawal, plan and KYC emails. SMTP is
+**optional at deploy time** — with nothing configured every mail is still logged to
+the outbox (status `logged`); it just isn't delivered. Configure it from the admin UI,
+no redeploy required.
+
+**Option A — Gmail App Password (recommended for a quick start)**
+
+1. Enable **2-Step Verification** on the Google account:
+   <https://myaccount.google.com/security>
+2. Open **App Passwords** and create one for *Mail*:
+   <https://myaccount.google.com/apppasswords>
+3. Sign in as admin → **System → Mail settings** and enter:
+   - SMTP host: `smtp.gmail.com`
+   - Port: `465`, SSL on
+   - Username: your full Gmail address
+   - Password: the 16-character App Password (spaces are fine)
+   - From name / From address: your Gmail address
+4. **Save**, then **Send a test email**. The result shows at the top and in the
+   **Mail outbox** (status `sent`).
+
+The credentials are stored in the database `settings` table (key `mail_config`),
+never in `.env`, and the password field is masked — leave it blank on save to keep
+the existing one. Gmail caps sending at ~500/day; for higher volume use a dedicated
+provider (SendGrid, Postmark, Amazon SES) with the same form.
+
+**Option B — environment variable**
+
+For infrastructure-as-code, set `SMTP_URL` instead (e.g.
+`smtps://user:pass@smtp.example.com`). The admin UI config takes precedence when
+both are present. `MAIL_FROM` sets the default From header in that mode.
 
 ---
 
