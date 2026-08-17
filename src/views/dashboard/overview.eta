@@ -1,52 +1,56 @@
-<div class="page-head">
+<!-- Mobile-first dashboard matching rydoninv style -->
+<div class="dash-welcome">
   <div>
     <h1>Welcome back, <%= it.user.firstName %></h1>
-    <p class="small" style="margin:4px 0 0">Here's where your account stands right now.</p>
+    <p class="dash-sub">Here's where your account stands right now.</p>
   </div>
-  <div style="display:flex;gap:9px">
-    <a class="btn btn-quiet btn-sm" href="/dashboard/trade">Trade</a>
-    <a class="btn btn-quiet btn-sm" href="/dashboard/portfolio">Portfolio</a>
+  <div class="dash-actions">
+    <a class="btn btn-ghost btn-sm" href="/dashboard/deposit">Deposit</a>
     <a class="btn btn-primary btn-sm" href="/dashboard/invest">Invest</a>
   </div>
 </div>
 
 <% if (it.user.kycStatus !== 'verified') { %>
-  <div class="notice notice-warn" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+  <div class="notice notice-warn" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px">
     <div><b>Verify your identity.</b> <span class="small">KYC verification is required to withdraw funds.</span></div>
     <a class="btn btn-primary btn-sm" href="/dashboard/kyc">Verify now</a>
   </div>
 <% } %>
 
-<div class="grid g4" style="margin-bottom:22px">
-  <div class="stat">
-    <div class="stat-k">Total equity</div>
-    <div class="stat-v"><%= it.usd(it.pf.equity) %></div>
-    <div class="stat-sub">Cash, locked capital and accrued returns</div>
+<!-- Metric cards – stacked on mobile, grid on desktop -->
+<div class="metric-stack">
+  <div class="metric-card">
+    <div class="metric-label">TOTAL EQUITY</div>
+    <div class="metric-value"><%= it.usd(it.pf.equity) %></div>
+    <div class="metric-desc">Cash, locked capital and accrued returns</div>
   </div>
-  <div class="stat">
-    <div class="stat-k">Available</div>
-    <div class="stat-v"><%= it.usd(it.pf.available) %></div>
-    <div class="stat-sub">Free to invest or withdraw</div>
+
+  <div class="metric-card">
+    <div class="metric-label">AVAILABLE</div>
+    <div class="metric-value"><%= it.usd(it.pf.available) %></div>
+    <div class="metric-desc">Free to invest or withdraw</div>
   </div>
-  <div class="stat">
-    <div class="stat-k">Realised P&amp;L</div>
-    <div class="stat-v <%= it.dir(it.pf.realised) %>"><%= it.signedUsd(it.pf.realised) %></div>
-    <div class="stat-sub"><%= it.pf.closedTrades %> closed trades · <%= it.pf.winRate.toFixed(1) %>% win rate</div>
+
+  <div class="metric-card">
+    <div class="metric-label">REALISED P&L</div>
+    <div class="metric-value <%= it.dir(it.pf.realised) %>"><%= it.signedUsd(it.pf.realised) %></div>
+    <div class="metric-desc"><%= it.pf.closedTrades %> closed trades · <%= it.pf.winRate.toFixed(1) %>% win rate</div>
   </div>
-  <div class="stat">
-    <div class="stat-k">In strategies</div>
-    <div class="stat-v"><%= it.usd(it.pf.staked + it.pf.exposure) %></div>
-    <div class="stat-sub"><%= it.pf.activePlans %> plans · <%= it.pf.openTrades %> open positions</div>
+
+  <div class="metric-card hide-on-mobile">
+    <div class="metric-label">IN STRATEGIES</div>
+    <div class="metric-value"><%= it.usd(it.pf.staked + it.pf.exposure) %></div>
+    <div class="metric-desc"><%= it.pf.activePlans %> plans · <%= it.pf.openTrades %> open positions</div>
   </div>
 </div>
 
 <% if (it.pf.pending > 0) { %>
-  <div class="notice notice-warn">
+  <div class="notice notice-warn" style="margin-top:14px">
     <%= it.usd(it.pf.pending) %> is awaiting review. It posts to your balance once confirmed.
   </div>
 <% } %>
 
-<div class="grid" style="grid-template-columns:1.35fr .65fr;gap:20px;margin-bottom:22px">
+<div class="grid" style="grid-template-columns:1.35fr .65fr;gap:20px;margin:22px 0">
   <div class="card" style="padding:0;overflow:hidden">
     <div class="card-head" style="padding:18px 22px;margin:0;border-bottom:1px solid var(--line-soft)">
       <h3>Portfolio chart</h3>

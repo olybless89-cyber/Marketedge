@@ -442,3 +442,98 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
     display: grid !important;
   }
 }
+
+/* ========== Mobile dashboard (rydoninv-style) ========== */
+.dash-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.dash-welcome h1 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: var(--ink);
+}
+.dash-sub {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+}
+.dash-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.metric-stack {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+@media (min-width: 720px) {
+  .metric-stack {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 1100px) {
+  .metric-stack {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .hide-on-mobile { display: flex !important; }
+}
+
+.metric-card {
+  background: linear-gradient(180deg, rgba(16,32,74,.9), rgba(10,20,48,.95));
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-card);
+}
+.metric-label {
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.metric-value {
+  font-family: var(--f-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.metric-desc {
+  font-size: 0.8rem;
+  color: var(--ink-4);
+  margin-top: 2px;
+}
+
+.hide-on-mobile { display: none; }
+
+/* Make the topbar more compact on mobile like the screenshot */
+@media (max-width: 900px) {
+  .content { padding: 16px 14px 28px; }
+  .topbar {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .balance-chip {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+  }
+  .balance-chip b { font-size: 0.95rem; }
+  .dash-welcome h1 { font-size: 1.4rem; }
+  .metric-value { font-size: 1.6rem; }
+  .metric-card { padding: 18px 18px; border-radius: 14px; }
+}
