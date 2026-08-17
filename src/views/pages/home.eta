@@ -43,39 +43,40 @@
   </div>
 </section>
 
-<!-- ── Positive highlights ───────────────────────────────────────── -->
+<!-- ── Positive highlights / Trust ───────────────────────────────── -->
 <section class="section section--tight" id="highlights">
   <div class="wrap">
     <div class="center" style="margin-bottom:40px">
-      <span class="eyebrow yellow">Why traders choose Marketedge</span>
-      <h2 style="margin-top:14px">Built for serious markets</h2>
-      <p class="lede" style="margin:14px auto 0">Premium infrastructure, transparent pricing and a track record you can verify.</p>
+      <span class="eyebrow yellow">Positive Highlights</span>
+      <h2 style="margin-top:14px">Why traders trust Marketedge</h2>
+      <p class="lede" style="margin:14px auto 0">Verified safety signals and clear payment protection.</p>
     </div>
-    <div class="g4 highlights">
-      <div class="card card--hover hl">
-        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/></svg></div>
-        <div class="hl__num num-serif"><%= it.stats.instruments %>+</div>
-        <div class="hl__k">Instruments priced live</div>
-        <p class="hl__d">Forex, crypto, shares, indices and energies — all in one audited feed.</p>
-      </div>
-      <div class="card card--hover hl">
-        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v6h-6"/></svg></div>
-        <div class="hl__num num-serif"><%= it.compact(it.stats.trades) %></div>
-        <div class="hl__k">Trades executed</div>
-        <p class="hl__d">Every fill is logged and reconciled. Execution you can audit end-to-end.</p>
-      </div>
-      <div class="card card--hover hl">
-        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-        <div class="hl__num num-serif">24/7</div>
-        <div class="hl__k">Secure withdrawals</div>
-        <p class="hl__d">Bank-grade encryption and reviewed payouts, around the clock.</p>
-      </div>
-      <div class="card card--hover hl">
-        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-        <div class="hl__num num-serif">&lt; 40ms</div>
-        <div class="hl__k">Median execution</div>
-        <p class="hl__d">Low-latency routing to deep liquidity venues across every session.</p>
-      </div>
+
+    <div class="card" style="max-width:720px;margin:0 auto;padding:32px 36px;background:linear-gradient(135deg,#e8f9f1 0%,#d4f3e7 100%);border:1px solid rgba(22,199,132,.25);border-radius:18px;position:relative;overflow:hidden">
+      <div style="position:absolute;right:-20px;bottom:-30px;opacity:.08;font-size:180px;line-height:1;color:#16C784;pointer-events:none">✓</div>
+
+      <ul style="list-style:none;padding:0;margin:0;display:grid;gap:22px;position:relative;z-index:1">
+        <li style="display:flex;gap:16px;align-items:flex-start">
+          <span style="flex:none;width:28px;height:28px;border-radius:50%;background:#16C784;color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px">✓</span>
+          <div style="color:#1a2b3c;font-size:1.05rem;line-height:1.55">
+            This website offers payment methods which allow you to
+            <a href="/legal/terms" style="color:#0d9b6a;font-weight:600;text-decoration:underline">get your money back</a>
+          </div>
+        </li>
+        <li style="display:flex;gap:16px;align-items:flex-start">
+          <span style="flex:none;width:28px;height:28px;border-radius:50%;background:#16C784;color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px">✓</span>
+          <div style="color:#1a2b3c;font-size:1.05rem;line-height:1.55">
+            According to the SSL check the certificate is valid
+          </div>
+        </li>
+        <li style="display:flex;gap:16px;align-items:flex-start">
+          <span style="flex:none;width:28px;height:28px;border-radius:50%;background:#16C784;color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px">✓</span>
+          <div style="color:#1a2b3c;font-size:1.05rem;line-height:1.55">
+            <a href="https://www.dnsfilter.com/" target="_blank" rel="noopener" style="color:#0d9b6a;font-weight:600;text-decoration:underline">DNSFilter</a>
+            considers this website safe
+          </div>
+        </li>
+      </ul>
     </div>
   </div>
 </section>
