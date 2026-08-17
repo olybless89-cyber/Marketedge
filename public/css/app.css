@@ -1,6 +1,6 @@
 /* Marketedge — design tokens. Premium sapphire blue + luxurious gold.
-   Green/red are reserved for price movement only. Never decorative. */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+   Green/red are reserved for price movement only. Never decorative.
+   Fonts loaded via <link> in layout templates. */
 
 :root {
   --bg-void:#04071A; --bg-base:#080E26; --bg-raised:#0E1838; --bg-elev:#0A1228;
