@@ -2,9 +2,9 @@
 <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#B8C5DA">Your account is open. Fund it to start trading, or browse strategies while you decide — there's no rush.</p>
 
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px">
-  <tr><td style="background:#0C1424;border:1px solid #1E2D4A;border-radius:10px;padding:18px 20px">
-    <p style="margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#6B7C9B;font-weight:600">Next steps</p>
-    <p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#E6EDF7">
+  <tr><td style="background:#060C20;border:1px solid #1B2D5C;border-radius:10px;padding:18px 20px">
+    <p style="margin:0;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#7E8FBF;font-weight:600">Next steps</p>
+    <p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#F6F8FF">
       1. Make a deposit from your dashboard<br>
       2. Open an investment plan or copy a trader<br>
       3. Track everything in your statement
@@ -12,4 +12,4 @@
   </td></tr>
 </table>
 
-<a href="<%= it.base %>/dashboard" style="display:inline-block;background:linear-gradient(90deg,#2F6BFF 0%,#2F6BFF 55%,#FFC83D 100%);color:#0A1020;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Go to dashboard</a>
+<a href="<%= it.base %>/dashboard" style="display:inline-block;background:linear-gradient(90deg,#3B7BFF 0%,#3B7BFF 55%,#F5B82E 100%);color:#080E26;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Go to dashboard</a>

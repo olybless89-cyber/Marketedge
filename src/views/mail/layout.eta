@@ -2,14 +2,14 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><%= it.subject %></title></head>
-<body style="margin:0;background:#0A1020;font-family:Inter,Segoe UI,Arial,sans-serif;color:#E6EDF7">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A1020;padding:32px 16px">
+<body style="margin:0;background:#080E26;font-family:Inter,Segoe UI,Arial,sans-serif;color:#F6F8FF">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#080E26;padding:32px 16px">
   <tr><td align="center">
-    <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#131E35;border:1px solid #1E2D4A;border-radius:14px;overflow:hidden">
-      <tr><td style="padding:24px 28px;border-bottom:1px solid #172440">
-        <a href="<%= it.base %>" style="display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#E6EDF7;font-family:Space Grotesk,Arial,sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em">
-          <span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#2F6BFF">
-            <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#FFC83D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#10204A;border:1px solid #1B2D5C;border-radius:14px;overflow:hidden">
+      <tr><td style="padding:24px 28px;border-bottom:1px solid #13204A">
+        <a href="<%= it.base %>" style="display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:#F6F8FF;font-family:Space Grotesk,Arial,sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em">
+          <span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:#3B7BFF">
+            <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#F5B82E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
           <%= it.name %>
         </a>
@@ -17,14 +17,14 @@
       <tr><td style="padding:30px 28px">
         <%~ it.body %>
       </td></tr>
-      <tr><td style="padding:20px 28px;border-top:1px solid #172440;background:#0C1424">
-        <p style="margin:0;font-size:12px;line-height:1.6;color:#6B7C9B">
+      <tr><td style="padding:20px 28px;border-top:1px solid #13204A;background:#060C20">
+        <p style="margin:0;font-size:12px;line-height:1.6;color:#7E8FBF">
           <%= it.name %> · <%= it.domain %><br>
           This message was sent to <%= it.to %>. If you didn't expect it, you can ignore it.
         </p>
       </td></tr>
     </table>
-    <p style="margin:18px 0 0;font-size:11px;color:#3F5170">© <%= it.year %> <%= it.name %>. All rights reserved.</p>
+    <p style="margin:18px 0 0;font-size:11px;color:#566796">© <%= it.year %> <%= it.name %>. All rights reserved.</p>
   </td></tr>
 </table>
 </body>

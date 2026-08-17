@@ -35,9 +35,46 @@
         <div class="tradingview-widget-container" style="height:100%">
           <div class="tradingview-widget-container__widget" style="height:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-          {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"D","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0D1626","gridColor":"rgba(30,47,77,0.5)","hide_side_toolbar":true,"allow_symbol_change":true,"studies":["STD;RSI"],"support_host":"https://www.tradingview.com"}
+          {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"D","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0A1228","gridColor":"rgba(27,45,92,0.5)","hide_side_toolbar":true,"allow_symbol_change":true,"studies":["STD;RSI"],"support_host":"https://www.tradingview.com"}
           </script>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Positive highlights ───────────────────────────────────────── -->
+<section class="section section--tight" id="highlights">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:40px">
+      <span class="eyebrow yellow">Why traders choose Marketedge</span>
+      <h2 style="margin-top:14px">Built for serious markets</h2>
+      <p class="lede" style="margin:14px auto 0">Premium infrastructure, transparent pricing and a track record you can verify.</p>
+    </div>
+    <div class="g4 highlights">
+      <div class="card card--hover hl">
+        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/></svg></div>
+        <div class="hl__num num-serif"><%= it.stats.instruments %>+</div>
+        <div class="hl__k">Instruments priced live</div>
+        <p class="hl__d">Forex, crypto, shares, indices and energies — all in one audited feed.</p>
+      </div>
+      <div class="card card--hover hl">
+        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v6h-6"/></svg></div>
+        <div class="hl__num num-serif"><%= it.compact(it.stats.trades) %></div>
+        <div class="hl__k">Trades executed</div>
+        <p class="hl__d">Every fill is logged and reconciled. Execution you can audit end-to-end.</p>
+      </div>
+      <div class="card card--hover hl">
+        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="hl__num num-serif">24/7</div>
+        <div class="hl__k">Secure withdrawals</div>
+        <p class="hl__d">Bank-grade encryption and reviewed payouts, around the clock.</p>
+      </div>
+      <div class="card card--hover hl">
+        <div class="hl__ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <div class="hl__num num-serif">&lt; 40ms</div>
+        <div class="hl__k">Median execution</div>
+        <p class="hl__d">Low-latency routing to deep liquidity venues across every session.</p>
       </div>
     </div>
   </div>
@@ -258,7 +295,7 @@
 <!-- ── Closing CTA ───────────────────────────────────────────────── -->
 <section class="section">
   <div class="wrap">
-    <div class="card" style="text-align:center;padding:clamp(32px,6vw,64px);background:linear-gradient(140deg,rgba(47,107,255,.14),rgba(255,200,61,.10) 40%,var(--bg-elev) 72%)">
+    <div class="card" style="text-align:center;padding:clamp(32px,6vw,64px);background:linear-gradient(140deg,rgba(59,123,255,.16),rgba(245,184,46,.12) 40%,var(--bg-elev) 72%)">
       <h2>Open an account in under two minutes</h2>
       <p class="lede center">Fund it when you're ready. There's no minimum to look around.</p>
       <div class="hero-cta" style="justify-content:center">

@@ -40,7 +40,7 @@
       <div class="tradingview-widget-container" style="height:100%">
         <div class="tradingview-widget-container__widget" style="height:100%"></div>
         <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
-        {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0D1626","gridColor":"rgba(30,47,77,0.5)","allow_symbol_change":false,"support_host":"https://www.tradingview.com"}
+        {"autosize":true,"symbol":"BITSTAMP:BTCUSD","interval":"60","timezone":"Etc/UTC","theme":"dark","style":"1","locale":"en","backgroundColor":"#0A1228","gridColor":"rgba(27,45,92,0.5)","allow_symbol_change":false,"support_host":"https://www.tradingview.com"}
         </script>
       </div>
     </div>

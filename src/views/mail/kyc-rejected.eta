@@ -9,5 +9,5 @@
 </table>
 <% } %>
 
-<p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#6B7C9B">Please submit your documents again, making sure they are clear, unexpired, and show all four corners.</p>
-<a href="<%= it.base %>/dashboard/kyc" style="display:inline-block;background:linear-gradient(90deg,#2F6BFF 0%,#2F6BFF 55%,#FFC83D 100%);color:#0A1020;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Resubmit documents</a>
+<p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#7E8FBF">Please submit your documents again, making sure they are clear, unexpired, and show all four corners.</p>
+<a href="<%= it.base %>/dashboard/kyc" style="display:inline-block;background:linear-gradient(90deg,#3B7BFF 0%,#3B7BFF 55%,#F5B82E 100%);color:#080E26;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Resubmit documents</a>

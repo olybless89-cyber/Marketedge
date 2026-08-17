@@ -15,7 +15,7 @@
 
   <aside class="side">
     <a class="logo" href="/">
-      <svg class="logo-mark" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#2F6BFF"/><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#FFC83D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <svg class="logo-mark" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3B7BFF"/><path d="M8 22L13 13l4 5 3-4 4 8" stroke="#F5B82E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <%= it.brand.name %>
     </a>
 
