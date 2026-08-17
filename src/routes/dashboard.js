@@ -11,6 +11,7 @@ import { render, eta } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
 import { mailPlanActivated } from '../lib/mail.js';
 import { getWallets } from '../lib/settings.js';
+import { saveReceipt } from '../lib/uploads.js';
 import * as fmt from '../lib/money.js';
 
 export const dash = new Hono();
@@ -82,23 +83,35 @@ dash.get('/dashboard/deposit', async (c) => {
       .orderBy(desc(transactions.createdAt)).limit(25),
     getWallets(),
   ]);
-  return shell(c, 'dashboard/deposit', { rows, wallets, sent: c.req.query('sent') }, 'Deposit');
+  return shell(c, 'dashboard/deposit', {
+    rows, wallets, sent: c.req.query('sent'), error: c.req.query('e'),
+  }, 'Deposit');
 });
 
 dash.post('/dashboard/deposit', async (c) => {
   const u = c.get('user');
   const b = c.get('body');
   const amount = Number(b.amount);
-  if (!(amount > 0)) return c.text('Enter an amount greater than zero.', 400);
+  const back = (msg) => c.redirect('/dashboard/deposit?e=' + encodeURIComponent(msg));
+  if (!(amount > 0)) return back('Enter an amount greater than zero.');
+
+  // A receipt is required — admin can't verify a deposit without proof.
+  let proofUrl;
+  try {
+    proofUrl = await saveReceipt(b.receipt, { link: b.receiptUrl });
+  } catch (e) {
+    return back(e.message);
+  }
+  if (!proofUrl) return back('Attach your payment receipt so admin can confirm the transfer.');
 
   await db.insert(transactions).values({
     userId: u.id, type: 'deposit', method: String(b.method || 'usdt_trc20'),
-    amount: String(amount), status: 'pending',
+    amount: String(amount), status: 'pending', proofUrl,
   });
   // No ledger row yet — funds only exist once an admin approves.
   await db.insert(notifications).values({
     userId: u.id, kind: 'info', title: 'Deposit submitted',
-    body: `We received your ${fmt.usd(amount)} deposit request. It posts to your balance once confirmed.`,
+    body: `We received your ${fmt.usd(amount)} deposit request with a receipt. It posts to your balance once admin confirms the transfer.`,
   });
   return c.redirect('/dashboard/deposit?sent=1');
 });

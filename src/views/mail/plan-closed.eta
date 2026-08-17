@@ -11,4 +11,4 @@
   </td></tr>
 </table>
 
-<a href="<%= it.base %>/dashboard" style="display:inline-block;background:#2F6BFF;color:#fff;font-weight:600;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Go to dashboard</a>
+<a href="<%= it.base %>/dashboard" style="display:inline-block;background:linear-gradient(90deg,#2F6BFF 0%,#2F6BFF 55%,#FFC83D 100%);color:#0A1020;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">Go to dashboard</a>

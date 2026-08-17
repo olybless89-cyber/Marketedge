@@ -1,0 +1,75 @@
+<div class="page-head"><div><h1>Mail settings</h1>
+  <p class="small" style="margin:4px 0 0">Configure the SMTP account that sends transactional email (welcome, deposit, withdrawal, plan and KYC mails). Gmail works with an App Password — see the steps below.</p></div></div>
+
+<% if (it.ok) { %><div class="notice notice-ok">Mail settings saved. The SMTP connection will be rebuilt on the next send.</div><% } %>
+<% if (it.testStatus === 'sent') { %><div class="notice notice-ok"><%= it.testMsg %></div><% } %>
+<% if (it.testStatus === 'failed' || it.testStatus === 'invalid') { %><div class="notice notice-err"><%= it.testMsg %></div><% } %>
+
+<div class="grid" style="grid-template-columns:1.1fr .9fr;gap:20px;align-items:start">
+  <div class="card">
+    <div class="card-head"><h3>SMTP account</h3></div>
+    <form method="post" action="/admin/mail/settings">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="row2">
+        <div class="field"><label for="host">SMTP host</label>
+          <input class="input" id="host" name="host" value="<%= it.cfg.host || '' %>" placeholder="smtp.gmail.com" required></div>
+        <div class="field"><label for="port">Port</label>
+          <input class="input num" id="port" name="port" type="number" value="<%= it.cfg.port || 465 %>" placeholder="465" required></div>
+      </div>
+      <div class="field">
+        <label class="row" style="gap:8px;align-items:center">
+          <input type="checkbox" name="secure" <%= it.cfg.secure !== false ? 'checked' : '' %>>
+          <span>Use SSL (port 465). Uncheck for STARTTLS (port 587).</span>
+        </label>
+      </div>
+      <div class="field"><label for="user">Username</label>
+        <input class="input" id="user" name="user" value="<%= it.cfg.user || '' %>" placeholder="you@gmail.com" required>
+        <div class="hint">For Gmail this is your full email address.</div></div>
+      <div class="field"><label for="pass">Password / App Password</label>
+        <input class="input" type="password" id="pass" name="pass" placeholder="<%= it.hasPass ? '•••••••• (leave blank to keep current)' : '16-character App Password' %>">
+        <div class="hint">For Gmail, paste the App Password from <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App Passwords</a> — spaces are fine.</div></div>
+      <div class="row2">
+        <div class="field"><label for="fromName">From name</label>
+          <input class="input" id="fromName" name="fromName" value="<%= it.cfg.fromName || 'Marketedge' %>" placeholder="Marketedge"></div>
+        <div class="field"><label for="fromAddress">From address</label>
+          <input class="input" id="fromAddress" name="fromAddress" value="<%= it.cfg.fromAddress || '' %>" placeholder="you@gmail.com"></div>
+      </div>
+      <button class="btn btn-primary btn-block btn-sm">Save settings</button>
+    </form>
+  </div>
+
+  <div class="grid" style="gap:20px">
+    <div class="card">
+      <div class="card-head"><h3>Send a test email</h3></div>
+      <form method="post" action="/admin/mail/test">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label for="to">Send test to</label>
+          <input class="input" id="to" name="to" type="email" placeholder="you@example.com" required></div>
+        <button class="btn btn-primary btn-block btn-sm">Send test email</button>
+        <div class="hint">The result appears at the top and in the <a href="/admin/mail">outbox</a>.</div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Set up Gmail</h3></div>
+      <ol class="small" style="margin:0;padding-left:18px;line-height:1.7">
+        <li>Enable <b>2-Step Verification</b> on your Google account at
+          <a href="https://myaccount.google.com/security" target="_blank" rel="noopener">myaccount.google.com/security</a>.</li>
+        <li>Open <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">App Passwords</a>
+          and create a password for <b>Mail</b>.</li>
+        <li>Copy the 16-character password (spaces are stripped automatically).</li>
+        <li>Fill the form with:
+          <ul style="margin:4px 0;padding-left:18px">
+            <li>Host: <code>smtp.gmail.com</code></li>
+            <li>Port: <code>465</code>, SSL on</li>
+            <li>Username: your Gmail address</li>
+            <li>Password: the App Password</li>
+            <li>From address: your Gmail address</li>
+          </ul>
+        </li>
+        <li>Save, then send a test email.</li>
+      </ol>
+      <p class="small muted" style="margin:10px 0 0">Gmail limits ~500 sends/day. For higher volume use a dedicated SMTP (SendGrid, Postmark, Amazon SES).</p>
+    </div>
+  </div>
+</div>

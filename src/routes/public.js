@@ -35,7 +35,7 @@ const INTEL = [
 const COIN_META = [
   { ticker: 'BTC', pair: 'BTCUSDT', name: 'Bitcoin',  grad: 'linear-gradient(135deg,#F7931A,#B45309)', blurb: 'The original decentralised digital currency, settled peer to peer with no central administrator.' },
   { ticker: 'ETH', pair: 'ETHUSDT', name: 'Ethereum', grad: 'linear-gradient(135deg,#627EEA,#3C4FB8)', blurb: 'A programmable blockchain with smart contracts, and the second largest asset by market cap.' },
-  { ticker: 'XRP', pair: 'XRPUSDT', name: 'Ripple',   grad: 'linear-gradient(135deg,#2F6BFF,#12326F)', blurb: 'A real-time settlement and remittance network built for moving value across borders.' },
+  { ticker: 'XRP', pair: 'XRPUSDT', name: 'Ripple',   grad: 'linear-gradient(135deg,#2F6BFF,#FFC83D)', blurb: 'A real-time settlement and remittance network built for moving value across borders.' },
   { ticker: 'ADA', pair: 'ADAUSDT', name: 'Cardano',  grad: 'linear-gradient(135deg,#5A6BF0,#2B3391)', blurb: 'A peer-reviewed proof-of-stake platform focused on scalability and sustainability.' },
 ];
 

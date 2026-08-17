@@ -10,4 +10,4 @@
 <% } %>
 
 <p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#6B7C9B">You can submit a new withdrawal request once the details are corrected.</p>
-<a href="<%= it.base %>/dashboard/withdraw" style="display:inline-block;background:#2F6BFF;color:#fff;font-weight:600;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">View withdrawals</a>
+<a href="<%= it.base %>/dashboard/withdraw" style="display:inline-block;background:linear-gradient(90deg,#2F6BFF 0%,#2F6BFF 55%,#FFC83D 100%);color:#0A1020;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">View withdrawals</a>

@@ -4,8 +4,8 @@
       <span class="eyebrow blue">Contact</span><h1>Talk to us</h1>
       <p class="lede">Support is staffed around the clock. Account and funding questions are usually answered within the hour.</p>
       <dl class="kv" style="margin-top:24px;max-width:340px">
-        <dt>Support</dt><dd style="font-family:var(--ff-body)">support@<%= it.domain || 'rydoninv.com' %></dd>
-        <dt>Compliance</dt><dd style="font-family:var(--ff-body)">compliance@<%= it.domain || 'rydoninv.com' %></dd>
+        <dt>Support</dt><dd style="font-family:var(--ff-body)">support@<%= it.domain || 'marketedge.com' %></dd>
+        <dt>Compliance</dt><dd style="font-family:var(--ff-body)">compliance@<%= it.domain || 'marketedge.com' %></dd>
         <dt>Hours</dt><dd style="font-family:var(--ff-body)">24 / 7</dd>
       </dl>
     </div>
