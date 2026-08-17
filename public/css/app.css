@@ -346,18 +346,38 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .hl__k{font-family:var(--f-display);font-size:var(--t-md);font-weight:600;color:var(--ink);letter-spacing:-.01em}
 .hl__d{font-size:var(--t-sm);color:var(--ink-3);line-height:1.55}
 
-/* ========== Sidebar link layout + badges (fixed left panel) ========== */
+
+/* Make the topbar more compact on mobile like the screenshot */
+@media (max-width: 900px) {
+  .content { padding: 16px 14px 28px; }
+  .topbar {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .balance-chip {
+    padding: 7px 12px;
+    font-size: 0.8rem;
+  }
+  .balance-chip b { font-size: 0.95rem; }
+  .dash-welcome h1 { font-size: 1.4rem; }
+  .metric-value { font-size: 1.6rem; }
+  .metric-card { padding: 18px 18px; border-radius: 14px; }
+}
+
+
+/* ========== Sidebar badges ========== */
 .side-grp a,
 .side-logout {
   display: flex;
   align-items: center;
-  gap: var(--s-3);
-  padding: 10px var(--s-3);
-  border-radius: var(--r-sm);
-  font-size: var(--t-sm);
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--ink-2);
-  transition: background .14s var(--ease), color .14s var(--ease);
+  transition: background .14s, color .14s;
   width: 100%;
   box-sizing: border-box;
   background: none;
@@ -378,7 +398,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 }
 .side-grp a .tag {
   flex: none;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -392,75 +412,24 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .tag--pro  { background: var(--yellow-ghost); color: var(--yellow-hi); border: 1px solid var(--yellow-line); }
 .tag--auto { background: var(--blue-ghost);   color: var(--blue-hi);   border: 1px solid var(--blue-line); }
 
-
-/* ========== Mobile sidebar drawer (side, not top) ========== */
-@media (max-width: 900px) {
-  .app {
-    grid-template-columns: 1fr;
-  }
-
-  .side {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: min(280px, 86vw);
-    height: 100vh;
-    height: 100dvh;
-    z-index: 100;
-    transform: translateX(-105%);
-    transition: transform 0.28s cubic-bezier(.22,.61,.36,1);
-    border-right: 1px solid var(--line-soft);
-    border-bottom: none;
-    box-shadow: 8px 0 32px rgba(0,0,0,.45);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-top: 20px;
-  }
-
-  .side.open {
-    transform: translateX(0);
-  }
-
-  .scrim {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.55);
-    z-index: 99;
-    backdrop-filter: blur(2px);
-    animation: fadeIn 0.2s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
-  /* Keep the hamburger visible */
-  .nav-toggle,
-  [data-side-toggle] {
-    display: grid !important;
-  }
-}
-
-/* ========== Mobile dashboard (rydoninv-style) ========== */
+/* ========== Mobile dashboard metrics ========== */
 .dash-welcome {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 .dash-welcome h1 {
-  font-size: 1.55rem;
+  font-size: 1.45rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   margin: 0;
   color: var(--ink);
 }
 .dash-sub {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 .dash-actions {
   display: flex;
@@ -470,34 +439,30 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .metric-stack {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 11px;
+  margin-bottom: 6px;
 }
 @media (min-width: 720px) {
-  .metric-stack {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .metric-stack { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 1100px) {
-  .metric-stack {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  .metric-stack { grid-template-columns: repeat(4, 1fr); }
   .hide-on-mobile { display: flex !important; }
 }
 
 .metric-card {
-  background: linear-gradient(180deg, rgba(16,32,74,.9), rgba(10,20,48,.95));
+  background: linear-gradient(180deg, rgba(16,32,74,.92), rgba(10,20,48,.96));
   border: 1px solid var(--line-soft);
-  border-radius: 16px;
-  padding: 20px 22px;
+  border-radius: 14px;
+  padding: 18px 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   box-shadow: var(--shadow-card);
 }
 .metric-label {
   font-family: var(--f-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -505,7 +470,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 }
 .metric-value {
   font-family: var(--f-display);
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--ink);
@@ -513,27 +478,91 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
   line-height: 1.15;
 }
 .metric-desc {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--ink-4);
-  margin-top: 2px;
+  margin-top: 1px;
 }
-
 .hide-on-mobile { display: none; }
 
-/* Make the topbar more compact on mobile like the screenshot */
+.dash-grid {
+  grid-template-columns: 1.35fr .65fr;
+  gap: 18px;
+}
 @media (max-width: 900px) {
-  .content { padding: 16px 14px 28px; }
+  .dash-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ========== Mobile sidebar = proper side drawer ========== */
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .side {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(282px, 85vw);
+    height: 100vh;
+    height: 100dvh;
+    z-index: 200;
+    transform: translateX(-108%);
+    transition: transform 0.28s cubic-bezier(.22,.61,.36,1);
+    border-right: 1px solid var(--line-soft);
+    border-bottom: none !important;
+    box-shadow: 10px 0 40px rgba(0,0,0,.5);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 18px 14px 40px;
+    background: var(--bg-void);
+  }
+
+  .side.open {
+    transform: translateX(0);
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.58);
+    z-index: 199;
+    backdrop-filter: blur(3px);
+    animation: fadeInScrim 0.2s ease;
+  }
+
+  @keyframes fadeInScrim {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .content {
+    padding: 14px 14px 32px;
+  }
+
   .topbar {
-    padding-bottom: 14px;
-    margin-bottom: 14px;
-    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
+
   .balance-chip {
-    padding: 7px 12px;
-    font-size: 0.8rem;
+    padding: 6px 11px;
+    font-size: 0.78rem;
   }
-  .balance-chip b { font-size: 0.95rem; }
-  .dash-welcome h1 { font-size: 1.4rem; }
-  .metric-value { font-size: 1.6rem; }
-  .metric-card { padding: 18px 18px; border-radius: 14px; }
+  .balance-chip b {
+    font-size: 0.92rem;
+  }
+
+  [data-side-toggle],
+  .nav-toggle {
+    display: grid !important;
+    place-content: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+  }
 }
