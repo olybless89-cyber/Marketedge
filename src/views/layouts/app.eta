@@ -20,32 +20,42 @@
     </a>
 
     <% it.nav.forEach(function(group){ %>
-      <div class="side-grp"><%= group.label %></div>
-      <% group.items.forEach(function(i){ %>
-        <a href="<%= i.href %>" <%= it.path === i.href || (i.href !== '/dashboard' && it.path.startsWith(i.href)) ? 'aria-current=page' : '' %>>
-          <%~ i.icon %>
-          <span><%= i.label %></span>
-          <% if (i.tag) { %><span class="tag"><%= i.tag %></span><% } %>
-        </a>
-      <% }) %>
+      <div class="side-grp">
+        <p><%= group.label %></p>
+        <% group.items.forEach(function(i){ %>
+          <a href="<%= i.href %>"
+             class="<%= (it.path === i.href || (i.href !== '/dashboard' && it.path.startsWith(i.href))) ? 'on' : '' %>"
+             <%= (it.path === i.href || (i.href !== '/dashboard' && it.path.startsWith(i.href))) ? 'aria-current=page' : '' %>>
+            <%~ i.icon %>
+            <span class="label"><%= i.label %></span>
+            <% if (i.tag) { %><span class="tag tag--<%= i.tag.toLowerCase() %>"><%= i.tag %></span><% } %>
+          </a>
+        <% }) %>
+      </div>
     <% }) %>
 
-    <div class="side-grp">Account</div>
-    <a href="/dashboard/account" <%= it.path === '/dashboard/account' || it.path.startsWith('/dashboard/account/') ? 'aria-current=page' : '' %>>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
-      <span>Account</span>
-    </a>
-    <a href="/dashboard/settings" <%= it.path === '/dashboard/settings' ? 'aria-current=page' : '' %>>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 006 19.4l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 15H3a2 2 0 110-4h.1A1.6 1.6 0 004.6 6l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 009 3.6V3a2 2 0 114 0v.1A1.6 1.6 0 0018 4.6l.1-.1a2 2 0 112.8 2.8l-.1.1A1.6 1.6 0 0021 9h0a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
-      <span>Settings</span>
-    </a>
-    <form method="post" action="/logout" style="margin:6px 0 24px">
-      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-      <button class="side" type="submit" style="all:unset;display:flex;align-items:center;gap:11px;padding:10px 20px;color:var(--text-2);font-size:.91rem;cursor:pointer;width:100%;box-sizing:border-box">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        <span>Log out</span>
-      </button>
-    </form>
+    <div class="side-grp">
+      <p>Account</p>
+      <a href="/dashboard/account"
+         class="<%= (it.path === '/dashboard/account' || it.path.startsWith('/dashboard/account/')) ? 'on' : '' %>"
+         <%= (it.path === '/dashboard/account' || it.path.startsWith('/dashboard/account/')) ? 'aria-current=page' : '' %>>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+        <span class="label">Account</span>
+      </a>
+      <a href="/dashboard/settings"
+         class="<%= it.path === '/dashboard/settings' ? 'on' : '' %>"
+         <%= it.path === '/dashboard/settings' ? 'aria-current=page' : '' %>>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1V21a2 2 0 11-4 0v-.1A1.6 1.6 0 006 19.4l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 15H3a2 2 0 110-4h.1A1.6 1.6 0 004.6 6l-.1-.1a2 2 0 112.8-2.8l.1.1A1.6 1.6 0 009 3.6V3a2 2 0 114 0v.1A1.6 1.6 0 0018 4.6l.1-.1a2 2 0 112.8 2.8l-.1.1A1.6 1.6 0 0021 9h0a2 2 0 110 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>
+        <span class="label">Settings</span>
+      </a>
+      <form method="post" action="/logout" style="margin:6px 0 24px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <button type="submit" class="side-logout">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          <span class="label">Log out</span>
+        </button>
+      </form>
+    </div>
   </aside>
 
   <div class="main">

@@ -345,3 +345,49 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
   background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
 .hl__k{font-family:var(--f-display);font-size:var(--t-md);font-weight:600;color:var(--ink);letter-spacing:-.01em}
 .hl__d{font-size:var(--t-sm);color:var(--ink-3);line-height:1.55}
+
+/* ========== Sidebar link layout + badges (fixed left panel) ========== */
+.side-grp a,
+.side-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 10px var(--s-3);
+  border-radius: var(--r-sm);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: background .14s var(--ease), color .14s var(--ease);
+  width: 100%;
+  box-sizing: border-box;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.side-grp a:hover,
+.side-logout:hover {
+  background: var(--bg-hover);
+  color: var(--ink);
+}
+.side-grp a .label,
+.side-logout .label {
+  flex: 1;
+  min-width: 0;
+}
+.side-grp a .tag {
+  flex: none;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.tag--new  { background: var(--blue-ghost);   color: var(--blue-hi);   border: 1px solid var(--blue-line); }
+.tag--live { background: var(--up-ghost);     color: var(--up);        border: 1px solid rgba(22,199,132,.35); }
+.tag--pro  { background: var(--yellow-ghost); color: var(--yellow-hi); border: 1px solid var(--yellow-line); }
+.tag--auto { background: var(--blue-ghost);   color: var(--blue-hi);   border: 1px solid var(--blue-line); }
