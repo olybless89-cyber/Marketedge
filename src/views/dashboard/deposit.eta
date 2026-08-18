@@ -2,7 +2,7 @@
 <% if (it.sent) { %><div class="notice notice-ok">Deposit submitted with your receipt. Your balance updates once admin confirms the transfer.</div><% } %>
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
-<div class="grid" style="grid-template-columns:.9fr 1.1fr;gap:20px">
+<div class="grid grid-form-split">
   <div class="card">
     <div class="card-head"><h3>Fund your account</h3></div>
     <form method="post" action="/dashboard/deposit" enctype="multipart/form-data">

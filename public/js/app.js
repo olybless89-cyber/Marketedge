@@ -65,15 +65,15 @@ if (side && !side.querySelector('.side-close')) {
   side.insertBefore(header, side.firstChild);
 }
 
-// Navigation links reload the page, which resets the expanded state, so we
-// only need to dismiss the overlay for non-navigating interactions. Closing
-// on a link click would reflow the rail mid-click and cancel the navigation.
+// Navigation links — allow the browser to follow href naturally.
+// We simply close the overlay visually (it will be destroyed on page load anyway).
+// NEVER call preventDefault() on anchor clicks — doing so blocks navigation.
 side?.addEventListener('click', (e) => {
   const a = e.target.closest('a[href]');
-  if (a && !a.classList.contains('logo') && side.classList.contains('open')) {
-    // keep overlay visible until the new page loads
-    e.preventDefault();
-    window.location.href = a.getAttribute('href');
+  if (a && side.classList.contains('open')) {
+    // Let the browser navigate; just clean up the overlay so the outgoing
+    // page doesn't briefly show a stuck scrim.
+    closeSide();
   }
 });
 
@@ -86,6 +86,39 @@ document.addEventListener('keydown', (e) => {
 window.matchMedia('(min-width: 901px)').addEventListener('change', (m) => {
   if (m.matches) closeSide();
 });
+
+// Public site nav — close the mobile dropdown when a link inside is tapped.
+const navLinks = document.getElementById('navlinks');
+const navToggle = document.querySelector('.nav-toggle');
+if (navLinks) {
+  navLinks.addEventListener('click', (e) => {
+    if (e.target.closest('a')) {
+      navLinks.classList.remove('open');
+      document.body.style.overflow = '';
+      navToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  // Close on outside tap (scrim-less approach).
+  document.addEventListener('click', (e) => {
+    if (
+      navLinks.classList.contains('open') &&
+      !navLinks.contains(e.target) &&
+      !navToggle?.contains(e.target)
+    ) {
+      navLinks.classList.remove('open');
+      document.body.style.overflow = '';
+      navToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  // ESC closes the nav too.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+      navLinks.classList.remove('open');
+      document.body.style.overflow = '';
+      navToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
 
 // Confirm destructive actions without a library
 document.body.addEventListener('click', (e) => {

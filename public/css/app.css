@@ -268,7 +268,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 
 /* App shell */
 .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;background:var(--bg-void)}
-.content{padding:clamp(20px,2.4vw,32px) clamp(16px,2.6vw,40px) 48px;min-width:0;max-width:1280px;margin-inline:auto;width:100%}
+.content{padding:clamp(20px,2.4vw,32px) clamp(16px,2.6vw,40px) 80px;min-width:0;max-width:1280px;margin-inline:auto;width:100%}
 .main{min-width:0;background:var(--bg-base);border-top-left-radius:0}
 @media(min-width:901px){.main{border-top-left-radius:18px;overflow:hidden}}
 
@@ -276,37 +276,39 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
    rail so navigation is always reachable. Tapping the rail expands it to a
    full overlay (with scrim) without ever fully hiding the nav. */
 @media(max-width:900px){
-  .app{grid-template-columns:64px minmax(0,1fr)}
+  .app{grid-template-columns:0 minmax(0,1fr)}
   .side{
-    width:64px;min-width:64px;
-    padding:14px 8px 24px;
-    position:sticky;top:0;height:100vh;
-    overflow-x:hidden;overflow-y:auto;
+    width:0;min-width:0;
+    padding:0;
+    position:fixed;top:0;left:0;bottom:0;
+    overflow:hidden;
     z-index:120;
+    transition:width .25s var(--ease),padding .25s var(--ease);
   }
-  .side .logo{font-size:0;gap:0;justify-content:center}
-  .side .logo-mark{width:26px;height:26px;margin:0 0 18px}
-  .side-grp>p{height:0;overflow:hidden;margin:0;padding:0;visibility:hidden}
-  .side-grp{margin-bottom:14px}
-  .side-grp>a,.side-logout{
-    justify-content:center;padding:11px 0;gap:0;border-radius:10px;
-    position:relative;
-  }
-  .side-grp a .label,.side-logout .label,.side-grp>a .tag{display:none}
-  /* section separators */
-  .side-grp + .side-grp{border-top:1px solid var(--line-soft);padding-top:14px}
-  /* expand the rail to a full overlay */
+  /* expand the rail to a full overlay when .open is added */
   .side.open{
-    position:fixed;top:0;left:0;bottom:0;width:min(268px,82vw);
-    z-index:200;box-shadow:10px 0 40px rgba(0,0,0,.5);
+    width:min(280px,85vw);
+    overflow-y:auto;overflow-x:hidden;
+    box-shadow:10px 0 40px rgba(0,0,0,.6);
     padding:18px 14px 40px;
   }
-  .side.open .logo{font-size:var(--t-md);gap:10px;justify-content:flex-start}
-  .side.open .logo-mark{margin:0}
-  .side.open .side-grp>p{height:auto;overflow:visible;visibility:visible;margin-bottom:var(--s-3);padding-inline:var(--s-3)}
-  .side.open .side-grp>a,.side.open .side-logout{justify-content:flex-start;padding:10px var(--s-3);gap:var(--s-3);border-radius:var(--r-sm)}
-  .side.open .side-grp a .label,.side.open .side-logout .label,.side.open .side-grp>a .tag{display:flex}
-  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;backdrop-filter:blur(3px)}
+  .side .logo{font-size:0;gap:0;justify-content:flex-start;opacity:0;transition:opacity .2s}
+  .side.open .logo{font-size:var(--t-md);gap:10px;opacity:1}
+  .side .logo-mark{width:26px;height:26px;margin:0}
+  .side-grp>p{height:0;overflow:hidden;margin:0;padding:0;visibility:hidden;opacity:0;transition:opacity .2s}
+  .side.open .side-grp>p{height:auto;overflow:visible;visibility:visible;opacity:1;margin-bottom:var(--s-3);padding-inline:var(--s-3)}
+  .side-grp{margin-bottom:14px}
+  .side-grp>a,.side-logout{
+    justify-content:flex-start;padding:10px var(--s-3);gap:var(--s-3);border-radius:var(--r-sm);
+    white-space:nowrap;
+  }
+  .side-grp a .label,.side-logout .label{display:none}
+  .side.open .side-grp a .label,.side.open .side-logout .label{display:flex}
+  .side-grp>a .tag{display:none}
+  .side.open .side-grp>a .tag{display:inline-flex}
+  /* section separators */
+  .side-grp + .side-grp{border-top:1px solid var(--line-soft);padding-top:14px}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:119;backdrop-filter:blur(3px)}
   body.side-open{overflow:hidden}
   .side-close{display:none}
   .side.open .side-close{display:flex}
@@ -597,23 +599,30 @@ code.input{
 
 /* Make the topbar more compact on mobile like the screenshot */
 @media (max-width: 900px) {
-  .content { padding: 16px 14px 28px; }
+  .content { padding: 16px 12px 80px; }
   .topbar {
-    padding: 12px 0;
-    margin-bottom: 18px;
-    gap: 10px;
+    padding: 10px 0 10px;
+    margin-bottom: 16px;
+    gap: 8px;
     flex-wrap: nowrap;
+    overflow: hidden;
   }
   .balance-chip {
-    padding: 7px 12px;
-    font-size: 0.8rem;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
   }
-  .balance-chip b { font-size: 0.95rem; }
-  .dash-welcome h1 { font-size: 1.4rem; }
-  .metric-value { font-size: 1.55rem; }
-  .metric-card { padding: 18px 18px; border-radius: 14px; }
-  .stat-v { font-size: 1.45rem; }
-  .stat { padding: 16px; }
+  .balance-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .balance-chip b { font-size: 0.9rem; }
+  .dash-welcome h1 { font-size: 1.35rem; }
+  .metric-value { font-size: 1.45rem; }
+  .metric-card { padding: 14px 14px; border-radius: 12px; }
+  .stat-v { font-size: 1.4rem; }
+  .stat { padding: 14px; }
+  /* Hide the user name text so topbar fits on narrow screens */
+  .topbar .user-name { display: none; }
 }
 
 
@@ -747,15 +756,10 @@ code.input{
   }
 }
 
-/* ========== Mobile sidebar refinements (rail is defined above) ========== */
+/* ========== Mobile sidebar refinements ========== */
 @media (max-width: 900px) {
-  .content { padding: 14px 14px 32px; }
-  .topbar { padding-bottom: 12px; margin-bottom: 12px; gap: 8px; flex-wrap: nowrap; }
-  .balance-chip { padding: 6px 11px; font-size: 0.78rem; }
-  .balance-chip b { font-size: 0.92rem; }
-
-  /* The toggle expands the always-visible rail into a full overlay */
-  [data-side-toggle], .nav-toggle {
+  /* The hamburger toggle is always shown on mobile */
+  [data-side-toggle] {
     display: grid !important;
     place-content: center;
     width: 38px; height: 38px; flex: none;
@@ -769,9 +773,6 @@ code.input{
     font: inherit; font-size: var(--t-sm); font-weight: 600; cursor: pointer;
   }
   .side-close svg { width: 18px; height: 18px; }
-
-  /* On small phones, collapse the user name so the topbar never overflows */
-  .topbar .user-name { display: none; }
 }
 
 @media (min-width: 901px) {
@@ -782,5 +783,192 @@ code.input{
 /* --- Tablet refinement: give content more room 901–1100px --------------- */
 @media (min-width: 901px) and (max-width: 1100px) {
   .app { grid-template-columns: 224px minmax(0, 1fr); }
-  .content { padding: 22px 18px 36px; }
+  .content { padding: 22px 18px 48px; }
+}
+
+/* ========== Responsive grid helpers used by dashboard pages ========== */
+
+/* Two-column form+history split (deposit, withdraw) */
+.grid-form-split {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .grid-form-split { grid-template-columns: 1fr; }
+}
+
+/* Trade page: order form + chart */
+.grid-trade-split {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .grid-trade-split { grid-template-columns: 1fr; }
+}
+
+/* Markets page: big chart + screener */
+.grid-markets-split {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .grid-markets-split { grid-template-columns: 1fr; }
+}
+
+/* Generic 50/50 split (portfolio) */
+.grid-half {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 720px) {
+  .grid-half { grid-template-columns: 1fr; }
+}
+
+/* ========== TradingView chart cards on mobile ========== */
+.trade-chart-card {
+  overflow: hidden;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-width: 860px) {
+  .trade-chart-card { height: 300px; }
+}
+
+.market-chart-card,
+.market-screener-card {
+  padding: 0;
+  overflow: hidden;
+  height: 600px;
+}
+@media (max-width: 860px) {
+  .market-chart-card { height: 340px; }
+  .market-screener-card { height: 420px; }
+}
+
+/* ========== Scrollable tables on narrow screens ========== */
+.table-wrap { -webkit-overflow-scrolling: touch; }
+@media (max-width: 620px) {
+  .table-wrap table { min-width: 520px; }
+}
+
+/* ========== Touch-friendly minimum tap targets ========== */
+@media (max-width: 900px) {
+  .btn { min-height: 44px; }
+  .iconbtn { width: 42px; height: 42px; }
+  .side-grp > a, .side-logout { min-height: 44px; }
+  .input, .select { min-height: 46px; font-size: 1rem; }
+}
+
+/* ========== Mobile bottom navigation bar ========== */
+.mobile-bottom-nav {
+  display: none;
+}
+@media (max-width: 900px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 110;
+    background: var(--bg-void);
+    border-top: 1px solid var(--line-soft);
+    padding: 0 env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    backdrop-filter: blur(16px);
+  }
+  .mobile-bottom-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px 8px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    text-decoration: none;
+    transition: color .15s var(--ease);
+    min-height: 54px;
+  }
+  .mobile-bottom-nav a svg { flex: none; }
+  .mobile-bottom-nav a:hover,
+  .mobile-bottom-nav a.on { color: var(--yellow-hi); }
+  .mobile-bottom-nav a.on svg { filter: drop-shadow(0 0 6px rgba(245,184,46,.55)); }
+}
+
+/* ========== Account / KYC two-col form stays single-col on mobile ========== */
+@media (max-width: 720px) {
+  .grid.g2, .g2 { grid-template-columns: 1fr !important; }
+}
+
+/* ========== Page head wraps neatly on phones ========== */
+@media (max-width: 480px) {
+  .page-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-head .num { align-self: flex-start; }
+}
+
+/* ========== Plan cards stack gracefully on mobile ========== */
+@media (max-width: 620px) {
+  .grid.g4, .g4 { grid-template-columns: 1fr !important; }
+  .plan { padding: 18px 16px; }
+}
+
+/* ========== Stat grid responsive ========== */
+@media (max-width: 720px) {
+  .grid.g4 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 420px) {
+  .grid.g4 { grid-template-columns: 1fr !important; }
+}
+
+/* ========== Notice boxes wrap on mobile ========== */
+@media (max-width: 620px) {
+  .notice[style*="justify-content:space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* ========== Public site nav mobile ========== */
+@media (max-width: 900px) {
+  .nav-links {
+    display: none;
+    position: fixed;
+    inset: 68px 0 0 0;
+    background: var(--bg-void);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 4px;
+    z-index: 90;
+    border-top: 1px solid var(--line-soft);
+    overflow-y: auto;
+  }
+  .nav-links.open { display: flex; }
+  .nav-links a {
+    padding: 13px 16px;
+    border-radius: var(--r-sm);
+    font-size: var(--t-base);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav-links a:last-child { border-bottom: 0; }
+  .nav-toggle { display: grid !important; }
+}
+
+/* ========== Footer responsive ========== */
+@media (max-width: 560px) {
+  .foot-grid { grid-template-columns: 1fr !important; gap: var(--s-5); }
+}
+
+/* ========== Topbar: [hamburger] [balance] [spacer] [bell] [avatar] ========== */
+@media (max-width: 900px) {
+  .topbar { padding: 10px 0; margin-bottom: 14px; gap: 8px; }
+  .topbar__balance { flex: 1; }
+  .balance-chip { max-width: 100%; }
 }

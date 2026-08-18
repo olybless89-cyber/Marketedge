@@ -71,7 +71,7 @@
 
       <div class="topbar__balance"></div>
 
-      <a href="/dashboard/notifications" class="iconbtn" aria-label="Notifications">
+      <a href="/dashboard/notifications" class="iconbtn" aria-label="Notifications" style="position:relative">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>
         <% if (it.unread) { %>
           <span style="position:absolute;top:-6px;right:-6px;background:var(--down);color:#fff;font-size:.62rem;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;border:2px solid var(--bg-base)"><%= it.unread > 99 ? '99+' : it.unread %></span>
@@ -90,6 +90,30 @@
     <main class="content"><%~ it.body %></main>
   </div>
 </div>
+
+<!-- Mobile bottom navigation bar -->
+<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+  <a href="/dashboard" class="<%= it.path === '/dashboard' ? 'on' : '' %>" aria-label="Dashboard">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Home</span>
+  </a>
+  <a href="/dashboard/trade" class="<%= it.path === '/dashboard/trade' ? 'on' : '' %>" aria-label="Trade">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-8"/></svg>
+    <span>Trade</span>
+  </a>
+  <a href="/dashboard/deposit" class="<%= it.path === '/dashboard/deposit' ? 'on' : '' %>" aria-label="Deposit">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12l4 4 4-4"/></svg>
+    <span>Deposit</span>
+  </a>
+  <a href="/dashboard/portfolio" class="<%= it.path === '/dashboard/portfolio' ? 'on' : '' %>" aria-label="Portfolio">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    <span>Portfolio</span>
+  </a>
+  <a href="/dashboard/account" class="<%= (it.path === '/dashboard/account' || it.path.startsWith('/dashboard/account/')) ? 'on' : '' %>" aria-label="Account">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+    <span>Account</span>
+  </a>
+</nav>
 <script src="/js/app.js" defer></script>
 </body>
 </html>
