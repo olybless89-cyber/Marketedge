@@ -1098,28 +1098,20 @@ code.input{
 
 /* ========== Public site nav mobile ========== */
 @media (max-width: 900px) {
-  .nav-links {
-    display: none;
-    position: fixed;
-    inset: 68px 0 0 0;
-    background: var(--bg-void);
-    flex-direction: column;
-    align-items: stretch;
-    padding: 16px;
-    gap: 4px;
-    z-index: 90;
-    border-top: 1px solid var(--line-soft);
-    overflow-y: auto;
+  /* Hide the full nav-links menu on mobile — hamburger removed */
+  .nav-links { display: none; }
+
+  /* Show both CTA buttons side-by-side at all mobile sizes */
+  .nav-right {
+    gap: var(--s-2);
   }
-  .nav-links.open { display: flex; }
-  .nav-links a {
-    padding: 13px 16px;
-    border-radius: var(--r-sm);
-    font-size: var(--t-base);
-    border-bottom: 1px solid var(--line-soft);
+  .nav-right .btn-ghost {
+    display: flex !important;
   }
-  .nav-links a:last-child { border-bottom: 0; }
-  .nav-toggle { display: grid !important; }
+  .nav-right .btn-sm {
+    padding: 7px 14px;
+    font-size: 0.8rem;
+  }
 }
 
 /* ========== Footer responsive ========== */

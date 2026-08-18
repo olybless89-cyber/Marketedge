@@ -87,49 +87,6 @@ window.matchMedia('(min-width: 901px)').addEventListener('change', (m) => {
   if (m.matches) closeSide();
 });
 
-// Public site nav — mobile hamburger toggle
-(function () {
-  const navLinks = document.getElementById('navlinks');
-  const navToggle = document.getElementById('nav-toggle-btn') ||
-                    document.querySelector('.nav-toggle');
-  if (!navLinks || !navToggle) return;
-
-  function openNav() {
-    navLinks.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    navToggle.setAttribute('aria-expanded', 'true');
-  }
-  function closeNav() {
-    navLinks.classList.remove('open');
-    document.body.style.overflow = '';
-    navToggle.setAttribute('aria-expanded', 'false');
-  }
-
-  navToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    navLinks.classList.contains('open') ? closeNav() : openNav();
-  });
-
-  // Close when a nav link is tapped
-  navLinks.addEventListener('click', (e) => {
-    if (e.target.closest('a')) closeNav();
-  });
-
-  // Close on outside tap
-  document.addEventListener('click', (e) => {
-    if (navLinks.classList.contains('open') &&
-        !navLinks.contains(e.target) &&
-        !navToggle.contains(e.target)) {
-      closeNav();
-    }
-  });
-
-  // ESC closes the nav
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeNav();
-  });
-})();
-
 // Confirm destructive actions without a library
 document.body.addEventListener('click', (e) => {
   const el = e.target.closest('[data-confirm]');
