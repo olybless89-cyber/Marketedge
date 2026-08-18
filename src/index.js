@@ -27,15 +27,15 @@ const app = new Hono();
 app.use('*', logger());
 app.use('*', compress());
 app.use('*', secureHeaders({
-  // TradingView needs inline scripts and its own frames; everything else is locked down.
+  // TradingView and Google reCAPTCHA need external scripts; everything else is locked down.
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'", 'https://s3.tradingview.com', 'https://unpkg.com', 'https://www.tradingview-widget.com'],
+    scriptSrc: ["'self'", "'unsafe-inline'", 'https://s3.tradingview.com', 'https://unpkg.com', 'https://www.tradingview-widget.com', 'https://www.google.com', 'https://www.gstatic.com'],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'https:'],
-    connectSrc: ["'self'", 'https://api.binance.com', 'https://api.coingecko.com', 'https:'],
-    frameSrc: ['https://www.tradingview-widget.com', 'https://s.tradingview.com', 'https://www.tradingview.com'],
+    connectSrc: ["'self'", 'https://api.binance.com', 'https://api.coingecko.com', 'https://www.google.com', 'https:'],
+    frameSrc: ['https://www.tradingview-widget.com', 'https://s.tradingview.com', 'https://www.tradingview.com', 'https://www.google.com'],
   },
   crossOriginEmbedderPolicy: false,
 }));

@@ -11,7 +11,7 @@ export const eta = new Eta({
   rmWhitespace: false,
 });
 
-/* render(c, 'pages/home', {...}) — brand + user + csrf are always present
+/* render(c, 'pages/home', {...}) — brand + user + csrf + recaptcha are always present
    so no template has to remember to pass them. */
 export function render(c, template, data = {}) {
   const user = c.get('user');
@@ -21,6 +21,7 @@ export function render(c, template, data = {}) {
     user,
     csrf: c.get('csrf'),
     path: c.req.path,
+    recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY || '',
     brand: {
       name: process.env.BRAND_NAME || 'Marketedge',
       domain: process.env.BRAND_DOMAIN || 'marketedge.com',
@@ -31,5 +32,11 @@ export function render(c, template, data = {}) {
 }
 
 export function partial(c, template, data = {}) {
-  return c.html(eta.render(template, { ...fmt, ...data, user: c.get('user'), csrf: c.get('csrf') }));
+  return c.html(eta.render(template, {
+    ...fmt,
+    ...data,
+    user: c.get('user'),
+    csrf: c.get('csrf'),
+    recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY || '',
+  }));
 }

@@ -227,6 +227,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .btn-danger:hover{background:#FF5C6E;box-shadow:0 8px 32px -8px rgba(240,73,92,.45)}
 .btn-sm{padding:8px 14px;font-size:var(--t-sm);border-radius:var(--r-sm)}
 .btn-block{display:flex;width:100%}
+.btn-login{background:var(--bg-inset);border-color:var(--line);color:var(--ink)}
+.btn-login:hover{background:var(--bg-hover);border-color:var(--blue-line);color:var(--blue-hi)}
 
 /* Badges */
 .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;font-size:var(--t-xs);
@@ -401,18 +403,39 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 /* IMPORTANT: .nav uses isolation:isolate instead of z-index to stay on top
    of page content WITHOUT creating a stacking context that would trap
    position:fixed children like .nav-links.open */
-.nav{position:sticky;top:0;isolation:isolate;background:rgba(8,14,38,.78);
+.nav{position:sticky;top:0;isolation:isolate;background:rgba(8,14,38,.82);
   backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line-soft);
   box-shadow:0 1px 0 rgba(245,184,46,.08)}
-.nav-in{display:flex;align-items:center;gap:var(--s-6);height:68px;
+.nav-in{display:flex;align-items:center;gap:var(--s-6);height:70px;
   width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:var(--s-5)}
 .nav-links{display:flex;align-items:center;gap:var(--s-5)}
-.nav-links a{font-size:var(--t-sm);font-weight:500;color:var(--ink-2);transition:color .15s var(--ease)}
-.nav-links a:hover{color:var(--ink)}
+.nav-links a{font-size:var(--t-sm);font-weight:500;color:var(--ink-2);transition:color .15s var(--ease),background .15s var(--ease);padding:8px 12px;border-radius:var(--r-sm)}
+.nav-links a:hover{color:var(--ink);background:var(--bg-hover)}
+.nav-links a[aria-current]{color:var(--yellow-hi);background:var(--yellow-ghost)}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:var(--s-4)}
-.nav-toggle{width:38px;height:38px;display:none;place-content:center;background:none;
+.nav-right--desktop{display:flex}
+.nav-links-cta{display:none;gap:var(--s-3);padding:var(--s-4);border-top:1px solid var(--line-soft);margin-top:auto}
+.nav-backdrop{position:fixed;inset:0;background:rgba(4,7,26,.55);opacity:0;pointer-events:none;transition:opacity .25s var(--ease);z-index:90}
+.nav-backdrop.show{opacity:1;pointer-events:auto}
+.nav-toggle{width:40px;height:40px;display:none;place-content:center;background:var(--bg-inset);
   border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);cursor:pointer}
-@media(max-width:900px){.nav-links{display:none}.nav-toggle{display:grid}}
+.nav-toggle:hover{background:var(--bg-hover);border-color:var(--blue-line);color:var(--yellow-hi)}
+.nav-logo-sm{display:none;align-items:center;gap:10px;color:var(--ink);font-family:var(--f-display);font-weight:800;font-size:var(--t-md);letter-spacing:-.03em}
+.nav-logo-sm span{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+@media(max-width:900px){
+  .nav-toggle{display:grid}.nav-right--desktop{display:none}
+  .nav-links{position:fixed;top:0;right:0;bottom:0;width:min(300px,86vw);max-width:340px;
+    flex-direction:column;align-items:stretch;gap:0;padding:var(--s-5);padding-top:80px;
+    background:var(--bg-void);border-left:1px solid var(--line-soft);box-shadow:-12px 0 48px rgba(0,0,0,.65);
+    z-index:100;transform:translateX(100%);transition:transform .3s var(--ease);display:flex}
+  .nav-links.open{transform:translateX(0)}
+  .nav-links a{padding:14px 12px;font-size:var(--t-md);border-radius:var(--r-sm);border-bottom:1px solid var(--line-soft)}
+  .nav-links a:last-of-type{border-bottom:none}
+  .nav-links a:hover{background:var(--bg-hover)}
+  .nav-links-cta{display:flex;flex-direction:column}
+  .nav-logo-sm{display:flex;position:absolute;top:18px;left:var(--s-5)}
+  .nav-backdrop.show{opacity:1;pointer-events:auto}
+}
 .logo{display:flex;align-items:center;gap:10px;color:var(--ink);flex:none;
   font-family:var(--f-display);font-weight:800;font-size:var(--t-md);letter-spacing:-.03em}
 .logo span{background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;
@@ -1090,10 +1113,28 @@ code.input{
   .td-actions .btn { min-width: 80px; }
 }
 
-/* ========== Auth layout: ensure card doesn't overflow on small phones ========== */
-.auth-wrap { width: 100%; max-width: 440px; }
+/* ========== Auth layout: premium centered card with glow ========== */
+.auth-page{min-height:100vh;display:grid;place-items:center;padding:34px 18px;position:relative;overflow:hidden;background:radial-gradient(120% 80% at 12% -8%,rgba(59,123,255,.14),transparent 55%),radial-gradient(100% 70% at 92% 4%,rgba(245,184,46,.08),transparent 50%),var(--bg-base)}
+.auth-shell{position:relative;width:100%;max-width:440px;z-index:1}
+.auth-glow{position:absolute;width:760px;height:760px;top:-330px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(59,123,255,.16),rgba(245,184,46,.07) 40%,transparent 62%);pointer-events:none;z-index:-1}
+.auth-card-wrap{width:100%;position:relative}
+.auth-card{padding:var(--s-6)}
+.auth-head{margin-bottom:var(--s-5)}
+.auth-head h2{font-size:var(--t-xl);margin-bottom:var(--s-2)}
+.auth-head p{color:var(--ink-3)}
+.auth-switch{margin-top:var(--s-5);color:var(--ink-3)}
+.auth-switch a{color:var(--blue-hi);font-weight:600}
+.auth-switch a:hover{color:var(--yellow-hi)}
+/* Keep the reCAPTCHA badge visible but away from the live chat */
+.grecaptcha-badge{visibility:visible!important;opacity:.7;transition:opacity .2s var(--ease)}
+.grecaptcha-badge:hover{opacity:1}
+.input-icon{position:relative}
+.input-icon svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-4);pointer-events:none}
+.input-icon .input{padding-left:42px}
+.input-icon .input:focus+svg,.input-icon .input:not(:placeholder-shown)+svg{color:var(--blue-hi)}
 @media (max-width: 480px) {
   .auth-wrap { padding: 0 4px; }
+  .auth-card{padding:var(--s-5)}
 }
 
 /* --- Nav Login button: white outline, always visible on dark nav header --- */
@@ -1109,14 +1150,7 @@ code.input{
   box-shadow: none;
 }
 
-/* ========== Public site nav mobile ========== */
-@media (max-width: 900px) {
-  /* Hide the full nav-links menu on mobile — hamburger removed */
-  .nav-links { display: none; }
-  /* Both CTA buttons side-by-side, compact for small screens */
-  .nav-right { gap: 8px; }
-  .nav-right .btn-sm { padding: 7px 13px; font-size: 0.8rem; white-space: nowrap; }
-}
+
 
 /* ========== Footer responsive ========== */
 @media (max-width: 560px) {

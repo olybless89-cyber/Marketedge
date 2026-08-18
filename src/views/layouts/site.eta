@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-recaptcha-site-key="<%= it.recaptchaSiteKey %>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,6 +13,9 @@
 <meta property="og:title" content="<%= it.brand.name %> — Trade global markets with confidence">
 <meta property="og:type" content="website">
 <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+<% if (it.recaptchaSiteKey) { %>
+<script src="https://www.google.com/recaptcha/api.js?render=<%= it.recaptchaSiteKey %>"></script>
+<% } %>
 </head>
 <body>
 
@@ -23,19 +26,39 @@
         <rect width="32" height="32" rx="8" fill="#3B7BFF"/>
         <path d="M8 22L13 13l4 5 3-4 4 8" stroke="#F5B82E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <%= it.brand.name %>
+      <span><%= it.brand.name %></span>
     </a>
 
+    <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navlinks" data-nav-toggle>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+
+    <div class="nav-backdrop" data-nav-backdrop></div>
     <nav class="nav-links" id="navlinks">
+      <a class="nav-logo-sm" href="/">
+        <svg class="logo-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#3B7BFF"/>
+          <path d="M8 22L13 13l4 5 3-4 4 8" stroke="#F5B82E" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <%= it.brand.name %>
+      </a>
       <a href="/markets" <%= it.path?.startsWith('/markets') ? 'aria-current=page' : '' %>>Markets</a>
       <a href="/copy-trading" <%= it.path === '/copy-trading' ? 'aria-current=page' : '' %>>Copy trading</a>
       <a href="/plans" <%= it.path === '/plans' ? 'aria-current=page' : '' %>>Plans</a>
       <a href="/bots" <%= it.path === '/bots' ? 'aria-current=page' : '' %>>Automation</a>
       <a href="/education" <%= it.path === '/education' ? 'aria-current=page' : '' %>>Education</a>
       <a href="/contact" <%= it.path === '/contact' ? 'aria-current=page' : '' %>>Contact</a>
+      <div class="nav-links-cta">
+        <% if (it.user) { %>
+          <a class="btn btn-primary btn-sm btn-block" href="/dashboard">Open dashboard</a>
+        <% } else { %>
+          <a class="btn btn-login btn-sm btn-block" href="/login">Log in</a>
+          <a class="btn btn-primary btn-sm btn-block" href="/register">Open account</a>
+        <% } %>
+      </div>
     </nav>
 
-    <div class="nav-right">
+    <div class="nav-right nav-right--desktop">
       <% if (it.user) { %>
         <a class="btn btn-primary btn-sm" href="/dashboard">Open dashboard</a>
       <% } else { %>

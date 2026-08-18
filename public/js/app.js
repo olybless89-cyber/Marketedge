@@ -1,5 +1,48 @@
 /* Small, dependency-free. HTMX does the fetching; this handles polish. */
 
+/* ── Google reCAPTCHA v3: execute before form submission ── */
+(function () {
+  const siteKey = document.documentElement.dataset.recaptchaSiteKey;
+  if (!siteKey || typeof grecaptcha === 'undefined') return;
+
+  function execute(form) {
+    const action = form.dataset.action || 'submit';
+    return new Promise((resolve, reject) => {
+      grecaptcha.ready(() => {
+        grecaptcha.execute(siteKey, { action })
+          .then((token) => {
+            const input = form.querySelector('.recaptcha-token');
+            if (input) input.value = token;
+            resolve(token);
+          })
+          .catch(reject);
+      });
+    });
+  }
+
+  document.querySelectorAll('form.recaptcha-form').forEach((form) => {
+    form.addEventListener('submit', async (e) => {
+      if (form.dataset.recaptchaReady === 'true') return;
+      e.preventDefault();
+      try {
+        await execute(form);
+        form.dataset.recaptchaReady = 'true';
+        form.requestSubmit();
+      } catch (err) {
+        console.error('[recaptcha]', err);
+        alert('Could not verify the security check. Please reload the page and try again.');
+      }
+    });
+  });
+
+  // Refresh token on each page load so users can submit again without reload
+  grecaptcha?.ready?.(() => {
+    document.querySelectorAll('form.recaptcha-form').forEach((form) => {
+      execute(form).catch(() => {});
+    });
+  });
+})();
+
 // Live clock in the hero chart bar
 const clock = document.getElementById('clock');
 if (clock) {
@@ -86,6 +129,42 @@ document.addEventListener('keydown', (e) => {
 window.matchMedia('(min-width: 901px)').addEventListener('change', (m) => {
   if (m.matches) closeSide();
 });
+
+/* ── Public site mobile navigation ── */
+(function () {
+  const toggle = document.querySelector('[data-nav-toggle]');
+  const nav = document.getElementById('navlinks');
+  const backdrop = document.querySelector('[data-nav-backdrop]');
+  if (!toggle || !nav) return;
+
+  function closeNav() {
+    nav.classList.remove('open');
+    document.body.classList.remove('nav-open');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openNav() {
+    nav.classList.add('open');
+    document.body.classList.add('nav-open');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  toggle.addEventListener('click', () => {
+    if (nav.classList.contains('open')) closeNav();
+    else openNav();
+  });
+
+  backdrop?.addEventListener('click', closeNav);
+
+  nav.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (a) closeNav();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav.classList.contains('open')) closeNav();
+  });
+})();
 
 // Confirm destructive actions without a library
 document.body.addEventListener('click', (e) => {

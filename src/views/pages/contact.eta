@@ -14,11 +14,15 @@
       <% if (it.sent) { %>
         <div class="notice notice-ok" style="margin-bottom:14px">Message sent — we'll get back to you within the hour.</div>
       <% } %>
-      <form method="post" action="/contact">
+      <% if (it.error) { %>
+        <div class="notice notice-err" style="margin-bottom:14px"><%= it.error %></div>
+      <% } %>
+      <form method="post" action="/contact" class="recaptcha-form" data-action="contact">
         <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-        <div class="field"><label for="n">Name</label><input class="input" id="n" name="name" placeholder="Your name" required></div>
-        <div class="field"><label for="e">Email</label><input class="input" id="e" name="email" type="email" placeholder="you@example.com" required></div>
-        <div class="field"><label for="m">Message</label><textarea class="input" id="m" name="message" rows="5" placeholder="How can we help?" required></textarea></div>
+        <input type="hidden" name="g-recaptcha-response" class="recaptcha-token">
+        <div class="field"><label for="n">Name</label><input class="input" id="n" name="name" value="<%= it.name || '' %>" placeholder="Your name" required></div>
+        <div class="field"><label for="e">Email</label><input class="input" id="e" name="email" type="email" value="<%= it.email || '' %>" placeholder="you@example.com" required></div>
+        <div class="field"><label for="m">Message</label><textarea class="input" id="m" name="message" rows="5" placeholder="How can we help?" required><%= it.message || '' %></textarea></div>
         <button class="btn btn-primary btn-block" type="submit">Send message</button>
       </form>
     </div>

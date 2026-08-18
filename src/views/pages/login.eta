@@ -1,25 +1,35 @@
-<div class="card">
-  <h2 style="font-size:1.5rem">Log in</h2>
-  <p class="small">Welcome back. Your open positions kept running while you were away.</p>
+<div class="card auth-card">
+  <div class="auth-head">
+    <h2>Log in</h2>
+    <p class="small">Welcome back. Your open positions kept running while you were away.</p>
+  </div>
 
   <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
-  <form method="post" action="/login">
+  <form method="post" action="/login" class="recaptcha-form" data-action="login">
     <input type="hidden" name="_csrf" value="<%= it.csrf %>">
     <input type="hidden" name="next" value="<%= it.next || '' %>">
+    <input type="hidden" name="g-recaptcha-response" class="recaptcha-token">
+
     <div class="field">
       <label for="email">Email</label>
-      <input class="input" id="email" name="email" type="email" required autocomplete="email"
-             autofocus value="<%= it.email || '' %>">
+      <div class="input-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l8.5 5.5a2 2 0 002 0L21 7"/></svg>
+        <input class="input" id="email" name="email" type="email" required autocomplete="email"
+               autofocus value="<%= it.email || '' %>" placeholder="you@example.com">
+      </div>
     </div>
     <div class="field">
       <label for="password">Password</label>
-      <input class="input" id="password" name="password" type="password" required autocomplete="current-password">
+      <div class="input-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M8 9V7a4 4 0 018 0v2"/></svg>
+        <input class="input" id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+      </div>
     </div>
     <button class="btn btn-primary btn-block" type="submit">Log in</button>
   </form>
 
-  <p class="small center" style="margin:18px 0 0">
-    No account yet? <a href="/register" style="color:var(--blue-hi);font-weight:600">Open one</a>
+  <p class="small center auth-switch">
+    No account yet? <a href="/register">Open one</a>
   </p>
 </div>
