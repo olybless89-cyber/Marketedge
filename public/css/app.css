@@ -47,8 +47,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opa
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .025 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 body>*{position:relative;z-index:1}
 /* .app and .main must NOT form a stacking context — fixed children
-   (.side.open, .scrim, .mobile-bottom-nav) need to escape the grid. */
-.app,.main{position:static;z-index:auto}
+   (.side.open, .scrim, .mobile-bottom-nav, .nav-links) need to escape.
+   .nav gets position:sticky restored below (line ~402) with isolation:isolate
+   instead of z-index so it stays on top without trapping fixed children. */
+.app,.main,.nav{position:static;z-index:auto}
 h1,h2,h3,h4,h5{font-family:var(--f-display);color:var(--ink);line-height:1.1;letter-spacing:-.02em;font-weight:700}
 h1{font-size:clamp(2.25rem,5.5vw,var(--t-4xl));letter-spacing:-.035em;font-weight:800}
 h1 .num-display,h2 .num-display,.num-serif{font-family:var(--f-serif);font-weight:600;letter-spacing:-.01em}
@@ -396,7 +398,10 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 @keyframes flash-down{0%{background:var(--down-ghost)}100%{background:transparent}}
 
 /* --- Shell: header, ticker, sidebar (single-dash names) ------------------ */
-.nav{position:sticky;top:0;z-index:80;background:rgba(8,14,38,.78);
+/* IMPORTANT: .nav uses isolation:isolate instead of z-index to stay on top
+   of page content WITHOUT creating a stacking context that would trap
+   position:fixed children like .nav-links.open */
+.nav{position:sticky;top:0;isolation:isolate;background:rgba(8,14,38,.78);
   backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line-soft);
   box-shadow:0 1px 0 rgba(245,184,46,.08)}
 .nav-in{display:flex;align-items:center;gap:var(--s-6);height:68px;
