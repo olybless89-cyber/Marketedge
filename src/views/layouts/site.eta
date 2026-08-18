@@ -29,9 +29,16 @@
       <span><%= it.brand.name %></span>
     </a>
 
-    <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navlinks" data-nav-toggle>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-    </button>
+    <div class="nav-right nav-right--mobile">
+      <% if (it.user) { %>
+        <a class="btn btn-primary btn-sm" href="/dashboard">Open dashboard</a>
+      <% } else { %>
+        <a class="btn btn-login btn-sm" href="/login">Log in</a>
+      <% } %>
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navlinks" data-nav-toggle>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
 
     <div class="nav-backdrop" data-nav-backdrop></div>
     <nav class="nav-links" id="navlinks">
@@ -51,8 +58,11 @@
       <div class="nav-links-cta">
         <% if (it.user) { %>
           <a class="btn btn-primary btn-sm btn-block" href="/dashboard">Open dashboard</a>
+          <form method="post" action="/logout" class="btn-block">
+            <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+            <button class="btn btn-ghost btn-sm btn-block" type="submit">Log out</button>
+          </form>
         <% } else { %>
-          <a class="btn btn-login btn-sm btn-block" href="/login">Log in</a>
           <a class="btn btn-primary btn-sm btn-block" href="/register">Open account</a>
         <% } %>
       </div>
