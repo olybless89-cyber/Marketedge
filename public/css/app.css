@@ -272,46 +272,110 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .main{min-width:0;background:var(--bg-base);border-top-left-radius:0}
 @media(min-width:901px){.main{border-top-left-radius:18px;overflow:hidden}}
 
-/* Mobile + tablet: keep the sidebar visible like desktop, but as a slim icon
-   rail so navigation is always reachable. Tapping the rail expands it to a
-   full overlay (with scrim) without ever fully hiding the nav. */
+/* ── Mobile sidebar: persistent icon rail (56px) that slides out to full
+   overlay (260px) when the hamburger is tapped.
+   The rail is ALWAYS visible so users can always see and tap nav items.
+   ────────────────────────────────────────────────────────────────────── */
 @media(max-width:900px){
-  .app{grid-template-columns:0 minmax(0,1fr)}
+
+  /* Grid reserves exactly the rail width */
+  .app{grid-template-columns:56px minmax(0,1fr)}
+
+  /* Rail — always on screen, icons only */
   .side{
-    width:0;min-width:0;
-    padding:0;
-    position:fixed;top:0;left:0;bottom:0;
+    position:sticky;top:0;height:100vh;
+    width:56px;min-width:56px;
+    padding:14px 6px 24px;
     overflow:hidden;
     z-index:120;
-    transition:width .25s var(--ease),padding .25s var(--ease);
+    background:var(--bg-void);
+    border-right:1px solid var(--line-soft);
+    transition:width .26s var(--ease),padding .26s var(--ease),box-shadow .26s var(--ease);
   }
-  /* expand the rail to a full overlay when .open is added */
-  .side.open{
-    width:min(280px,85vw);
-    overflow-y:auto;overflow-x:hidden;
-    box-shadow:10px 0 40px rgba(0,0,0,.6);
-    padding:18px 14px 40px;
+
+  /* Logo: show only the mark on the rail */
+  .side .logo{
+    display:flex;align-items:center;justify-content:center;
+    gap:0;font-size:0;
+    margin-bottom:16px;padding:0 2px;
   }
-  .side .logo{font-size:0;gap:0;justify-content:flex-start;opacity:0;transition:opacity .2s}
-  .side.open .logo{font-size:var(--t-md);gap:10px;opacity:1}
-  .side .logo-mark{width:26px;height:26px;margin:0}
-  .side-grp>p{height:0;overflow:hidden;margin:0;padding:0;visibility:hidden;opacity:0;transition:opacity .2s}
-  .side.open .side-grp>p{height:auto;overflow:visible;visibility:visible;opacity:1;margin-bottom:var(--s-3);padding-inline:var(--s-3)}
-  .side-grp{margin-bottom:14px}
+  .side .logo-mark{width:28px;height:28px;margin:0}
+
+  /* Group labels hidden on rail */
+  .side-grp>p{
+    height:0;overflow:hidden;
+    margin:0;padding:0;
+    visibility:hidden;opacity:0;
+    transition:opacity .18s var(--ease);
+    white-space:nowrap;
+  }
+  .side-grp{margin-bottom:10px}
+
+  /* Nav items: centre the icon, hide label & tag */
   .side-grp>a,.side-logout{
-    justify-content:flex-start;padding:10px var(--s-3);gap:var(--s-3);border-radius:var(--r-sm);
+    justify-content:center;
+    padding:10px 0;
+    gap:0;
+    border-radius:10px;
     white-space:nowrap;
   }
   .side-grp a .label,.side-logout .label{display:none}
-  .side.open .side-grp a .label,.side.open .side-logout .label{display:flex}
   .side-grp>a .tag{display:none}
-  .side.open .side-grp>a .tag{display:inline-flex}
-  /* section separators */
-  .side-grp + .side-grp{border-top:1px solid var(--line-soft);padding-top:14px}
-  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:119;backdrop-filter:blur(3px)}
-  body.side-open{overflow:hidden}
+
+  /* Section dividers */
+  .side-grp+.side-grp{border-top:1px solid var(--line-soft);padding-top:10px}
+
+  /* Close button hidden when rail-only */
   .side-close{display:none}
+
+  /* ── EXPANDED OVERLAY ────────────────────────── */
+  .side.open{
+    position:fixed;top:0;left:0;bottom:0;
+    width:min(260px,82vw);
+    overflow-y:auto;overflow-x:hidden;
+    padding:18px 12px 40px;
+    box-shadow:12px 0 48px rgba(0,0,0,.65);
+    z-index:200;
+  }
+
+  /* Logo: full wordmark when expanded */
+  .side.open .logo{
+    font-size:var(--t-md);gap:10px;
+    justify-content:flex-start;
+    margin-bottom:18px;padding:0 4px;
+  }
+
+  /* Group labels visible when expanded */
+  .side.open .side-grp>p{
+    height:auto;overflow:visible;
+    visibility:visible;opacity:1;
+    margin-bottom:var(--s-3);padding-inline:var(--s-3);
+  }
+  .side.open .side-grp{margin-bottom:14px}
+
+  /* Nav items: left-aligned with icon + label when expanded */
+  .side.open .side-grp>a,
+  .side.open .side-logout{
+    justify-content:flex-start;
+    padding:10px var(--s-3);
+    gap:var(--s-3);
+    border-radius:var(--r-sm);
+  }
+  .side.open .side-grp a .label,
+  .side.open .side-logout .label{display:flex}
+  .side.open .side-grp>a .tag{display:inline-flex}
+
+  /* Show close button when expanded */
   .side.open .side-close{display:flex}
+
+  /* Scrim behind the expanded drawer */
+  .scrim{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.52);
+    z-index:199;
+    backdrop-filter:blur(3px);
+  }
+  body.side-open{overflow:hidden}
 }
 
 
@@ -758,13 +822,17 @@ code.input{
 
 /* ========== Mobile sidebar refinements ========== */
 @media (max-width: 900px) {
-  /* The hamburger toggle is always shown on mobile */
+  /* Hamburger always visible on mobile — expands rail to full drawer */
   [data-side-toggle] {
     display: grid !important;
     place-content: center;
     width: 38px; height: 38px; flex: none;
   }
 
+  /* Content sits right next to the 56px rail */
+  .content { padding-left: 10px; padding-right: 10px; }
+
+  /* Close affordance rendered inside the open drawer */
   .side-close {
     align-items: center; justify-content: space-between; width: 100%;
     margin-bottom: 14px; padding: 4px 6px 12px;
@@ -776,8 +844,9 @@ code.input{
 }
 
 @media (min-width: 901px) {
-  /* Desktop: never show the injected mobile close button */
+  /* Desktop: sidebar always visible, no hamburger or close button needed */
   .side-close { display: none !important; }
+  [data-side-toggle] { display: none !important; }
 }
 
 /* --- Tablet refinement: give content more room 901–1100px --------------- */
