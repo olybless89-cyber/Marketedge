@@ -9,6 +9,11 @@ export async function verifyRecaptcha(token, secretKey = process.env.RECAPTCHA_S
     return { ok: false, error: 'reCAPTCHA is not configured on the server.' };
   }
 
+  // Allow test runs to bypass the live Google check without exposing this in production.
+  if (process.env.NODE_ENV === 'test' && secretKey === 'test-secret-key') {
+    return { ok: true, score: 1.0 };
+  }
+
   try {
     const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
       method: 'POST',
