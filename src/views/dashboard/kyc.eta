@@ -6,7 +6,7 @@
 <% if (it.ok) { %><div class="notice notice-ok">Documents submitted. We'll notify you once review is complete.</div><% } %>
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
-<div class="grid" style="grid-template-columns:1fr 1fr;gap:20px">
+<div class="grid grid-kyc-split">
   <div class="card">
     <div class="card-head"><h3>Submit documents</h3></div>
     <% if (it.user.kycStatus === 'verified') { %>

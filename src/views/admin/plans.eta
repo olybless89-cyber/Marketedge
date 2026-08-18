@@ -3,7 +3,7 @@
 <% if (it.ok === 'edit') { %><div class="notice notice-ok">Plan updated.</div><% } %>
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
-<div class="grid" style="grid-template-columns:1.3fr .7fr;gap:20px">
+<div class="grid grid-admin-split">
   <div class="table-wrap" style="height:fit-content">
     <table>
       <thead><tr><th>Plan</th><th class="num">Rate</th><th>Term</th><th class="num">Range</th><th>Status</th><th></th></tr></thead>

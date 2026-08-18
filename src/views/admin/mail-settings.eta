@@ -5,7 +5,7 @@
 <% if (it.testStatus === 'sent') { %><div class="notice notice-ok"><%= it.testMsg %></div><% } %>
 <% if (it.testStatus === 'failed' || it.testStatus === 'invalid') { %><div class="notice notice-err"><%= it.testMsg %></div><% } %>
 
-<div class="grid" style="grid-template-columns:1.1fr .9fr;gap:20px;align-items:start">
+<div class="grid grid-mail-split">
   <div class="card">
     <div class="card-head"><h3>SMTP account</h3></div>
     <form method="post" action="/admin/mail/settings">

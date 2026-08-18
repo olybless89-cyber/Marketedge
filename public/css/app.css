@@ -661,32 +661,43 @@ code.input{
 .notif__body p{margin:4px 0 0;font-size:var(--t-sm);color:var(--ink-3);line-height:1.5}
 .notif__time{font-size:var(--t-xs);color:var(--ink-4);white-space:nowrap}
 
-/* Make the topbar more compact on mobile like the screenshot */
+/* ── Mobile layout: topbar + content (≤900px) ──────────────────────────── */
 @media (max-width: 900px) {
-  .content { padding: 16px 12px 80px; }
+  /* Content sits right beside the 56px rail; bottom padding for bottom nav */
+  .content { padding: 14px 12px 76px; }
+
+  /* Topbar: compact, single row, no wrapping */
   .topbar {
-    padding: 10px 0 10px;
-    margin-bottom: 16px;
+    padding: 8px 0;
+    margin-bottom: 14px;
     gap: 8px;
     flex-wrap: nowrap;
     overflow: hidden;
   }
+  /* Balance chip: shrink gracefully */
   .balance-chip {
     padding: 6px 10px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     flex-shrink: 1;
     min-width: 0;
     overflow: hidden;
   }
-  .balance-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .balance-chip b { font-size: 0.9rem; }
-  .dash-welcome h1 { font-size: 1.35rem; }
-  .metric-value { font-size: 1.45rem; }
-  .metric-card { padding: 14px 14px; border-radius: 12px; }
-  .stat-v { font-size: 1.4rem; }
-  .stat { padding: 14px; }
-  /* Hide the user name text so topbar fits on narrow screens */
+  .balance-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
+  .balance-chip b { font-size: 0.88rem; }
+
+  /* Hide user name on small screens — avatar + role chip only */
   .topbar .user-name { display: none; }
+
+  /* Page-level typography scale */
+  .dash-welcome h1 { font-size: 1.3rem; }
+  .metric-value { font-size: 1.4rem; }
+  .metric-card { padding: 13px 13px; border-radius: 12px; }
+  .stat-v { font-size: 1.35rem; }
+  .stat { padding: 13px; }
+
+  /* Page head: stack title and actions vertically on very small screens */
+  .page-head { flex-wrap: wrap; gap: 10px; }
+  .page-head form { flex: 0 0 100%; }
 }
 
 
@@ -927,10 +938,43 @@ code.input{
 
 /* ========== Touch-friendly minimum tap targets ========== */
 @media (max-width: 900px) {
-  .btn { min-height: 44px; }
+  .btn, .btn-primary, .btn-quiet, .btn-ghost, .btn-danger { min-height: 44px; }
+  .btn-sm { min-height: 38px; }
   .iconbtn { width: 42px; height: 42px; }
   .side-grp > a, .side-logout { min-height: 44px; }
-  .input, .select { min-height: 46px; font-size: 1rem; }
+  .input, select.input, textarea.input { min-height: 46px; font-size: 1rem; }
+}
+
+/* ========== Admin responsive grid helpers ========== */
+/* Table + form sidebar (plans, traders) */
+.grid-admin-split {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 20px;
+}
+@media (max-width: 860px) {
+  .grid-admin-split { grid-template-columns: 1fr; }
+}
+
+/* Mail settings: form + test/guide panel */
+.grid-mail-split {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .grid-mail-split { grid-template-columns: 1fr; }
+}
+
+/* KYC: form + history */
+.grid-kyc-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 720px) {
+  .grid-kyc-split { grid-template-columns: 1fr; }
 }
 
 /* ========== Mobile bottom navigation bar ========== */
@@ -972,36 +1016,23 @@ code.input{
 }
 
 /* ========== Account / KYC two-col form stays single-col on mobile ========== */
-@media (max-width: 720px) {
-  .grid.g2, .g2 { grid-template-columns: 1fr !important; }
+/* NOTE: g2/g3/g4 base rules already handle responsive columns (lines ~208-212).
+   These overrides only apply to edge cases not covered by the base breakpoints. */
+@media (max-width: 620px) {
+  /* page-head search form takes full width */
+  .page-head form { flex: 0 0 100%; width: 100%; }
+  .page-head form .input { width: 100%; }
+  /* plan cards and stat grid → single column */
+  .plan { padding: 18px 16px; }
+  /* Notice boxes with inline flex direction → stack */
+  .notice { flex-wrap: wrap; }
+  .notice .btn { flex: 0 0 auto; }
 }
 
 /* ========== Page head wraps neatly on phones ========== */
 @media (max-width: 480px) {
   .page-head { flex-direction: column; align-items: flex-start; gap: 10px; }
   .page-head .num { align-self: flex-start; }
-}
-
-/* ========== Plan cards stack gracefully on mobile ========== */
-@media (max-width: 620px) {
-  .grid.g4, .g4 { grid-template-columns: 1fr !important; }
-  .plan { padding: 18px 16px; }
-}
-
-/* ========== Stat grid responsive ========== */
-@media (max-width: 720px) {
-  .grid.g4 { grid-template-columns: repeat(2, 1fr) !important; }
-}
-@media (max-width: 420px) {
-  .grid.g4 { grid-template-columns: 1fr !important; }
-}
-
-/* ========== Notice boxes wrap on mobile ========== */
-@media (max-width: 620px) {
-  .notice[style*="justify-content:space-between"] {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-  }
 }
 
 /* ========== Public site nav mobile ========== */

@@ -2,7 +2,7 @@
   <p class="small" style="margin:4px 0 0">You set identity and risk band. Performance figures are computed from executed trades and cannot be edited here.</p></div></div>
 <% if (it.ok) { %><div class="notice notice-ok">Trader created. Their record fills in as trades are executed.</div><% } %>
 
-<div class="grid" style="grid-template-columns:1.3fr .7fr;gap:20px">
+<div class="grid grid-admin-split">
   <div class="table-wrap" style="height:fit-content">
     <table>
       <thead><tr><th>Trader</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">Net P&amp;L</th><th class="num">Followers</th><th></th></tr></thead>
