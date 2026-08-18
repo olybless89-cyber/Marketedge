@@ -39,7 +39,7 @@
       <% if (it.user) { %>
         <a class="btn btn-primary btn-sm" href="/dashboard">Open dashboard</a>
       <% } else { %>
-        <a class="btn btn-ghost btn-sm" href="/login">Log in</a>
+        <a class="btn btn-quiet btn-sm" href="/login">Log in</a>
         <a class="btn btn-primary btn-sm" href="/register">Open account</a>
       <% } %>
     </div>

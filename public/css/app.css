@@ -1103,14 +1103,12 @@ code.input{
 
   /* Show both CTA buttons side-by-side at all mobile sizes */
   .nav-right {
-    gap: var(--s-2);
-  }
-  .nav-right .btn-ghost {
-    display: flex !important;
+    gap: 8px;
   }
   .nav-right .btn-sm {
-    padding: 7px 14px;
+    padding: 7px 13px;
     font-size: 0.8rem;
+    white-space: nowrap;
   }
 }
 
