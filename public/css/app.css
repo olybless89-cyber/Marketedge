@@ -1096,20 +1096,26 @@ code.input{
   .auth-wrap { padding: 0 4px; }
 }
 
+/* --- Nav Login button: white outline, always visible on dark nav header --- */
+.nav-right .btn-login {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255,255,255,0.38);
+  font-weight: 600;
+}
+.nav-right .btn-login:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.65);
+  box-shadow: none;
+}
+
 /* ========== Public site nav mobile ========== */
 @media (max-width: 900px) {
   /* Hide the full nav-links menu on mobile — hamburger removed */
   .nav-links { display: none; }
-
-  /* Show both CTA buttons side-by-side at all mobile sizes */
-  .nav-right {
-    gap: 8px;
-  }
-  .nav-right .btn-sm {
-    padding: 7px 13px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-  }
+  /* Both CTA buttons side-by-side, compact for small screens */
+  .nav-right { gap: 8px; }
+  .nav-right .btn-sm { padding: 7px 13px; font-size: 0.8rem; white-space: nowrap; }
 }
 
 /* ========== Footer responsive ========== */
