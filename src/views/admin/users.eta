@@ -1,6 +1,7 @@
-<div class="page-head"><h1>Users</h1>
-  <form method="get" style="display:flex;gap:8px">
-    <input class="input" name="q" value="<%= it.q %>" placeholder="Search name or email" style="width:240px">
+<div class="page-head">
+  <h1>Users</h1>
+  <form method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+    <input class="input" name="q" value="<%= it.q %>" placeholder="Search name or email" style="width:220px;min-width:120px;flex:1">
     <button class="btn btn-quiet btn-sm">Search</button>
   </form>
 </div>

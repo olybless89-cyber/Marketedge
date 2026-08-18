@@ -121,9 +121,9 @@
           </div>
           <div class="meter"><i style="width:<%= t.winRate %>%"></i></div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:15px">
-          <a class="btn btn-quiet btn-sm" style="flex:1" href="/copy-trading/<%= t.slug %>">Record</a>
-          <form method="post" action="/dashboard/copy/stop" style="flex:none">
+        <div class="trader-btn-row">
+          <a class="btn btn-quiet btn-sm" href="/copy-trading/<%= t.slug %>">Record</a>
+          <form method="post" action="/dashboard/copy/stop">
             <input type="hidden" name="_csrf" value="<%= it.csrf %>">
             <input type="hidden" name="followId" value="<%= t.followId %>">
             <button class="btn btn-danger btn-sm" data-confirm="Stop copying <%= t.displayName %>? Open positions close at their current value.">Stop</button>

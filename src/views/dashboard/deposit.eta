@@ -29,9 +29,9 @@
       </div>
       <div id="wallet-box" class="field" style="display:none">
         <label>Send to this address</label>
-        <div style="display:flex;gap:8px;align-items:flex-start">
-          <code id="wallet-addr" class="input num" style="white-space:pre-wrap;word-break:break-all;user-select:all"></code>
-          <button type="button" class="btn btn-quiet btn-sm" data-copy="#wallet-addr">Copy</button>
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
+          <code id="wallet-addr" class="input num" style="white-space:pre-wrap;word-break:break-all;user-select:all;flex:1;min-width:0"></code>
+          <button type="button" class="btn btn-quiet btn-sm" data-copy="#wallet-addr" style="flex:none">Copy</button>
         </div>
         <div class="hint">Only send the matching asset to this address. Other networks may lose funds.</div>
       </div>

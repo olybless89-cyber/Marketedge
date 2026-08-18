@@ -1023,24 +1023,77 @@ code.input{
   .mobile-bottom-nav a.on svg { filter: drop-shadow(0 0 6px rgba(245,184,46,.55)); }
 }
 
-/* ========== Account / KYC two-col form stays single-col on mobile ========== */
-/* NOTE: g2/g3/g4 base rules already handle responsive columns (lines ~208-212).
-   These overrides only apply to edge cases not covered by the base breakpoints. */
+/* ========== Mobile polish: forms, tables, notices, public grids ========== */
+
+/* Responsive helpers for public-site pages using inline grid styles */
+.grid-contact-split,
+.grid-public-2col {
+  display: grid;
+  gap: 34px;
+  align-items: start;
+}
+.grid-contact-split  { grid-template-columns: 1fr 1fr; }
+.grid-public-2col    { grid-template-columns: 1.15fr .85fr; }
+@media (max-width: 780px) {
+  .grid-contact-split,
+  .grid-public-2col  { grid-template-columns: 1fr; }
+}
+
+/* Hero grid: stacks chart below copy on mobile */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 40px;
+  align-items: center;
+}
+@media (max-width: 860px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .chart-shell { order: -1; }
+  .tv-widget { height: 260px !important; }
+}
+
+/* Make copy-trading btn row stretch on very small phones */
+.trader-btn-row { display: flex; gap: 8px; margin-top: 15px; }
+.trader-btn-row > a.btn { flex: 1; text-align: center; }
+@media (max-width: 400px) {
+  .trader-btn-row { flex-direction: column; }
+  .trader-btn-row > a.btn,
+  .trader-btn-row > form { width: 100%; }
+  .trader-btn-row > form > button { width: 100%; }
+}
+
+/* Plan-foot CTA button always full-width on mobile */
 @media (max-width: 620px) {
-  /* page-head search form takes full width */
-  .page-head form { flex: 0 0 100%; width: 100%; }
-  .page-head form .input { width: 100%; }
-  /* plan cards and stat grid → single column */
   .plan { padding: 18px 16px; }
-  /* Notice boxes with inline flex direction → stack */
+  .plan-foot .btn { width: 100%; }
+  /* profile form inline action row → stack */
+  .profile-actions { flex-direction: column; }
+  .profile-actions .btn { width: 100%; text-align: center; }
+  /* Notice boxes with inline justify-content → stack naturally */
   .notice { flex-wrap: wrap; }
   .notice .btn { flex: 0 0 auto; }
+  /* page-head search form full width */
+  .page-head form { flex: 0 0 100%; width: 100%; }
+  .page-head form .input { width: 100%; }
 }
 
 /* ========== Page head wraps neatly on phones ========== */
 @media (max-width: 480px) {
   .page-head { flex-direction: column; align-items: flex-start; gap: 10px; }
   .page-head .num { align-self: flex-start; }
+}
+
+/* ========== Admin action buttons in tables — stack on narrow ========== */
+@media (max-width: 600px) {
+  .td-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .td-actions form { display: contents; }
+  .td-actions .btn { min-width: 80px; }
+}
+
+/* ========== Auth layout: ensure card doesn't overflow on small phones ========== */
+.auth-wrap { width: 100%; max-width: 440px; }
+@media (max-width: 480px) {
+  .auth-wrap { padding: 0 4px; }
 }
 
 /* ========== Public site nav mobile ========== */

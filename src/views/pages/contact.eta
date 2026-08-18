@@ -1,5 +1,5 @@
 <section class="section"><div class="wrap">
-  <div class="grid" style="grid-template-columns:1fr 1fr;gap:34px;align-items:start">
+  <div class="grid-contact-split">
     <div>
       <span class="eyebrow blue">Contact</span><h1>Talk to us</h1>
       <p class="lede">Support is staffed around the clock. Account and funding questions are usually answered within the hour.</p>
@@ -11,11 +11,16 @@
     </div>
     <div class="card">
       <div class="card-head"><h3>Send a message</h3></div>
-      <div class="field"><label for="n">Name</label><input class="input" id="n" placeholder="Your name"></div>
-      <div class="field"><label for="e">Email</label><input class="input" id="e" type="email" placeholder="you@example.com"></div>
-      <div class="field"><label for="m">Message</label><textarea class="input" id="m" rows="5" placeholder="How can we help?"></textarea></div>
-      <button class="btn btn-primary btn-block">Send message</button>
-      <p class="hint">Wire this form to your inbox in src/routes/public.js before going live.</p>
+      <% if (it.sent) { %>
+        <div class="notice notice-ok" style="margin-bottom:14px">Message sent — we'll get back to you within the hour.</div>
+      <% } %>
+      <form method="post" action="/contact">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label for="n">Name</label><input class="input" id="n" name="name" placeholder="Your name" required></div>
+        <div class="field"><label for="e">Email</label><input class="input" id="e" name="email" type="email" placeholder="you@example.com" required></div>
+        <div class="field"><label for="m">Message</label><textarea class="input" id="m" name="message" rows="5" placeholder="How can we help?" required></textarea></div>
+        <button class="btn btn-primary btn-block" type="submit">Send message</button>
+      </form>
     </div>
   </div>
 </div></section>

@@ -25,8 +25,8 @@
           <dt>Trades</dt><dd><%= t.trades %></dd>
           <dt>Win rate</dt><dd><%= t.winRate.toFixed(1) %>%</dd>
         </dl>
-        <div style="display:flex;gap:8px;margin-top:15px">
-          <a class="btn btn-quiet btn-sm" style="flex:1" href="/copy-trading/<%= t.slug %>">Full record</a>
+        <div class="trader-btn-row">
+          <a class="btn btn-quiet btn-sm" href="/copy-trading/<%= t.slug %>">Full record</a>
           <form method="post" action="/dashboard/copy/stop">
             <input type="hidden" name="_csrf" value="<%= it.csrf %>">
             <input type="hidden" name="followId" value="<%= t.followId %>">

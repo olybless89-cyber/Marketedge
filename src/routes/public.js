@@ -138,3 +138,15 @@ for (const [route, cfg] of Object.entries(SIMPLE)) {
     return render(c, 'layouts/site', { body, tickerHtml: tick, title: cfg.t });
   });
 }
+
+/* ---- Contact form POST ---- */
+pub.post('/contact', async (c) => {
+  const tick = await tickerHtml();
+  // Best-effort: log the message; swap for an email/DB call before going live
+  try {
+    const data = await c.req.parseBody();
+    console.info('[contact]', { name: data.name, email: data.email, message: String(data.message).slice(0, 500) });
+  } catch (_) {}
+  const body = eta.render('pages/contact', { ...fmt, sent: true });
+  return render(c, 'layouts/site', { body, tickerHtml: tick, title: 'Contact', sent: true });
+});
