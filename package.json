@@ -6,6 +6,7 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "seed": "node src/db/seed.js",
+    "reset-admin": "node src/db/reset-admin.js",
     "migrate": "node src/db/migrate.js"
   },
   "dependencies": {
