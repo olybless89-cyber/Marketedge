@@ -99,11 +99,13 @@ const port = Number(process.env.PORT || 3000);
 // that hides the real error). The DB status is visible on /readyz.
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`[web] listening on :${info.port}`);
-  warmTransporter();
   ensureUploadDir().catch((e) => console.error('[web] uploads dir failed:', e.message));
   migrate()
     .then(() => {
       console.log('[web] schema ready');
+      // Warm the transporter only after migration: getTransporter() reads the
+      // settings table, which doesn't exist yet on a fresh database.
+      warmTransporter().catch((e) => console.error('[mail] transporter warm failed:', e.message));
       if (process.env.RUN_ENGINE !== 'false') startEngine();
     })
     .catch((err) => console.error('[web] migration failed (check DATABASE_URL):', err.message));
