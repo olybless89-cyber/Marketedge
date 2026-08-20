@@ -74,7 +74,7 @@
   </div>
 </div>
 
-<div class="card-head"><h3 style="font-family:var(--ff-display)">Strategies you're copying</h3>
+<div class="card-head"><h3 style="font-family:var(--f-display)">Strategies you're copying</h3>
   <a class="small" style="color:var(--blue-hi)" href="/dashboard/copy">Manage copy trading</a></div>
 <% if (it.copies.length) { %>
   <div class="grid g3">

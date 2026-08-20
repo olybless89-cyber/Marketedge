@@ -12,7 +12,7 @@
     <div class="stat-sub"><%= it.k.active_plans %> active · <%= it.k.open_trades %> open trades</div></div>
 </div>
 
-<div class="card-head"><h3 style="font-family:var(--ff-display)">Review queue</h3>
+<div class="card-head"><h3 style="font-family:var(--f-display)">Review queue</h3>
   <div style="display:flex;gap:8px"><a class="btn btn-quiet btn-sm" href="/admin/deposits">Deposits</a>
   <a class="btn btn-quiet btn-sm" href="/admin/withdrawals">Withdrawals</a></div></div>
 

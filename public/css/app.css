@@ -275,8 +275,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 
 /* App shell */
 .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;background:var(--bg-void)}
-.content{padding:clamp(20px,2.4vw,32px) clamp(16px,2.6vw,40px) 80px;min-width:0;max-width:1280px;margin-inline:auto;width:100%}
-.main{min-width:0;background:var(--bg-base);border-top-left-radius:0}
+.content{padding:clamp(20px,2.4vw,32px) clamp(16px,2.6vw,40px) 80px;min-width:0;width:100%;max-width:1280px;margin-inline:auto}
+.main{min-width:0;overflow-x:hidden;background:var(--bg-base);border-top-left-radius:0}
 @media(min-width:901px){.main{border-top-left-radius:18px;overflow:hidden}}
 
 /* ── Mobile sidebar: persistent icon rail (56px) that slides out to full
@@ -403,6 +403,14 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 /* IMPORTANT: .nav uses isolation:isolate instead of z-index to stay on top
    of page content WITHOUT creating a stacking context that would trap
    position:fixed children like .nav-links.open */
+@media(max-width:900px){
+  /* When the off-canvas menu is closed it sits at right:>viewport and causes
+     document scroll width to expand — collapse it completely instead of
+     sliding it (smooth enough with 300ms transform on display:none/·open). */
+  .nav-links{display:none!important}
+  .nav-links.open{display:flex!important}
+}
+
 .nav{position:sticky;top:0;isolation:isolate;background:rgba(8,14,38,.82);
   backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line-soft);
   box-shadow:0 1px 0 rgba(245,184,46,.08)}
@@ -731,7 +739,7 @@ code.input{
 
   /* Page head: stack title and actions vertically on very small screens */
   .page-head { flex-wrap: wrap; gap: 10px; }
-  .page-head form { flex: 0 0 100%; }
+  .page-head form { width: 100%; flex: none; min-width: 0; }
 }
 
 
@@ -1071,6 +1079,7 @@ code.input{
   grid-template-columns: 1fr 1.1fr;
   gap: 40px;
   align-items: center;
+  min-width: 0;
 }
 @media (max-width: 860px) {
   .hero-grid { grid-template-columns: 1fr; }
@@ -1099,7 +1108,7 @@ code.input{
   .notice { flex-wrap: wrap; }
   .notice .btn { flex: 0 0 auto; }
   /* page-head search form full width */
-  .page-head form { flex: 0 0 100%; width: 100%; }
+  .page-head form { width: 100%; flex: none; min-width: 0; }
   .page-head form .input { width: 100%; }
 }
 
@@ -1118,8 +1127,8 @@ code.input{
 
 /* ========== Auth layout: premium centered card with glow ========== */
 .auth-page{min-height:100vh;display:grid;place-items:center;padding:34px 18px;position:relative;overflow:hidden;background:radial-gradient(120% 80% at 12% -8%,rgba(59,123,255,.14),transparent 55%),radial-gradient(100% 70% at 92% 4%,rgba(245,184,46,.08),transparent 50%),var(--bg-base)}
-.auth-shell{position:relative;width:100%;max-width:440px;z-index:1}
-.auth-glow{position:absolute;width:760px;height:760px;top:-330px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(59,123,255,.16),rgba(245,184,46,.07) 40%,transparent 62%);pointer-events:none;z-index:-1}
+.auth-shell{position:relative;width:100%;max-width:440px;z-index:1;min-width:0}
+.auth-glow{position:absolute;width:min(760px,100vw);height:760px;top:-330px;left:50%;transform:translateX(-50%);background:radial-gradient(circle,rgba(59,123,255,.16),rgba(245,184,46,.07) 40%,transparent 62%);pointer-events:none;z-index:-1}
 .auth-card-wrap{width:100%;position:relative}
 .auth-card{padding:var(--s-6)}
 .auth-head{margin-bottom:var(--s-5)}
@@ -1163,6 +1172,6 @@ code.input{
 /* ========== Topbar: [hamburger] [balance] [spacer] [bell] [avatar] ========== */
 @media (max-width: 900px) {
   .topbar { padding: 10px 0; margin-bottom: 14px; gap: 8px; }
-  .topbar__balance { flex: 1; }
+  .topbar__balance { flex: 1; min-width: 0; }
   .balance-chip { max-width: 100%; }
 }

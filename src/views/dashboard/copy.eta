@@ -8,7 +8,7 @@
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
 <% if (it.mine.length) { %>
-  <div class="card-head"><h3 style="font-family:var(--ff-display)">Active</h3></div>
+  <div class="card-head"><h3 style="font-family:var(--f-display)">Active</h3></div>
   <div class="grid g3" style="margin-bottom:30px">
     <% it.mine.forEach(function(t){ %>
       <div class="card">
@@ -38,7 +38,7 @@
   </div>
 <% } %>
 
-<div class="card-head"><h3 style="font-family:var(--ff-display)">Available strategies</h3></div>
+<div class="card-head"><h3 style="font-family:var(--f-display)">Available strategies</h3></div>
 <div class="grid g3">
   <% if (!it.all.length) { %>
     <div class="card empty" style="grid-column:1/-1"><h4>No other strategies right now</h4>

@@ -18,7 +18,7 @@
       <div class="stat"><div class="stat-k">Copying now</div><div class="stat-v"><%= it.t.followers %></div><div class="stat-sub"><%= it.usd(it.t.aum,0) %> allocated</div></div>
     </div>
 
-    <div class="card-head"><h3 style="font-family:var(--ff-display)">Trade history</h3>
+    <div class="card-head"><h3 style="font-family:var(--f-display)">Trade history</h3>
       <span class="small muted">Last <%= it.trades.length %> closed positions</span></div>
     <div class="table-wrap">
       <table>

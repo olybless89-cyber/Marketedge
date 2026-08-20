@@ -47,7 +47,7 @@
   </div>
 </div>
 
-<div class="card-head"><h3 style="font-family:var(--ff-display)">Your positions</h3></div>
+<div class="card-head"><h3 style="font-family:var(--f-display)">Your positions</h3></div>
 <div class="card card--flush" style="overflow:hidden">
   <div class="table-wrap" style="border:0">
   <table>
