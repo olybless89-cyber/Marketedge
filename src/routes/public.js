@@ -135,7 +135,7 @@ const SIMPLE = {
 for (const [route, cfg] of Object.entries(SIMPLE)) {
   pub.get(route, async (c) => {
     const tick = await tickerHtml();
-    const body = eta.render(cfg.v, { ...fmt });
+    const body = eta.render(cfg.v, { ...fmt, csrf: c.get('csrf') });
     return render(c, 'layouts/site', { body, tickerHtml: tick, title: cfg.t });
   });
 }
@@ -147,6 +147,7 @@ pub.post('/contact', async (c) => {
   const back = (err) => {
     const body = eta.render('pages/contact', {
       ...fmt,
+      csrf: c.get('csrf'),
       error: err,
       name: data.name || '',
       email: data.email || '',
@@ -165,6 +166,6 @@ pub.post('/contact', async (c) => {
   // Best-effort: log the message; swap for an email/DB call before going live
   console.info('[contact]', { name: data.name, email: data.email, message: String(data.message).slice(0, 500) });
 
-  const body = eta.render('pages/contact', { ...fmt, sent: true });
+  const body = eta.render('pages/contact', { ...fmt, csrf: c.get('csrf'), sent: true });
   return render(c, 'layouts/site', { body, tickerHtml: tick, title: 'Contact', sent: true });
 });

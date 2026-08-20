@@ -23,6 +23,7 @@
     <%~ it.body %>
   </div>
 </div>
+<script src="/js/app.js" defer></script>
 <!-- Smartsupp Live Chat script -->
 <script type="text/javascript">
 var _smartsupp = _smartsupp || {};
