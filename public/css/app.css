@@ -116,7 +116,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 .card{background:linear-gradient(180deg,rgba(16,32,74,.86),rgba(10,20,48,.92));
   border:1px solid var(--line);border-radius:var(--r-lg);
-  padding:var(--s-5);box-shadow:var(--shadow-card);backdrop-filter:blur(8px)}
+  padding:var(--s-5);box-shadow:var(--shadow-card);backdrop-filter:blur(8px);
+  /* Without this, a card's auto min-size (= its widest unbreakable child)
+     blows a 1fr grid track past the viewport on phones when splitting grids
+     collapse to one column — the user sees clipped cards off the right edge. */
+  min-width:0}
 .card--pad-lg{padding:var(--s-6)}
 .card--flush{padding:0;overflow:hidden}
 .card--hover{transition:border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease)}
@@ -279,103 +283,75 @@ table.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
 .main{min-width:0;overflow-x:hidden;background:var(--bg-base);border-top-left-radius:0}
 @media(min-width:901px){.main{border-top-left-radius:18px;overflow:hidden}}
 
-/* ── Mobile sidebar: persistent icon rail (56px) that slides out to full
-   overlay (260px) when the hamburger is tapped.
-   The rail is ALWAYS visible so users can always see and tap nav items.
-   ────────────────────────────────────────────────────────────────────── */
+/* ── Mobile sidebar: content is full-width; the sidebar is an off-canvas
+   overlay drawer (left, over a scrim) opened by the hamburger. No persistent
+   icon rail — the bottom nav covers primary navigation, so a rail would only
+   waste ~14% of a phone's width on every screen. ────────────────────────── */
 @media(max-width:900px){
 
-  /* Grid reserves exactly the rail width */
-  .app{grid-template-columns:56px minmax(0,1fr)}
+  /* Grid: single column — content spans the full viewport */
+  .app{grid-template-columns:minmax(0,1fr)}
 
-  /* Rail — always on screen, icons only */
+  /* Drawer — source order puts .side first, so main content must claim the
+     first grid row/column; the fixed drawer then overlaps it harmlessly. */
   .side{
-    position:sticky;top:0;height:100vh;
-    width:56px;min-width:56px;
-    padding:14px 6px 24px;
-    overflow:hidden;
-    z-index:120;
+    position:fixed;top:0;left:0;bottom:0;
+    width:min(264px,82vw);
+    padding:18px 12px 40px;
+    overflow-y:auto;overflow-x:hidden;
+    z-index:200;
     background:var(--bg-void);
     border-right:1px solid var(--line-soft);
-    transition:width .26s var(--ease),padding .26s var(--ease),box-shadow .26s var(--ease);
+    box-shadow:none;
+    transform:translateX(-100%);
+    visibility:hidden;
+    transition:transform .26s var(--ease),visibility 0s linear .26s,box-shadow .26s var(--ease);
   }
+  .main{grid-row:1;grid-column:1}
 
-  /* Logo: show only the mark on the rail */
+  /* Logo: full wordmark inside the drawer */
   .side .logo{
-    display:flex;align-items:center;justify-content:center;
-    gap:0;font-size:0;
-    margin-bottom:16px;padding:0 2px;
+    display:flex;align-items:center;justify-content:flex-start;
+    gap:10px;font-size:var(--t-md);
+    margin-bottom:18px;padding:0 4px;
   }
   .side .logo-mark{width:28px;height:28px;margin:0}
 
-  /* Group labels hidden on rail */
+  /* Group labels visible */
   .side-grp>p{
-    height:0;overflow:hidden;
-    margin:0;padding:0;
-    visibility:hidden;opacity:0;
-    transition:opacity .18s var(--ease);
-    white-space:nowrap;
-  }
-  .side-grp{margin-bottom:10px}
-
-  /* Nav items: centre the icon, hide label & tag */
-  .side-grp>a,.side-logout{
-    justify-content:center;
-    padding:10px 0;
-    gap:0;
-    border-radius:10px;
-    white-space:nowrap;
-  }
-  .side-grp a .label,.side-logout .label{display:none}
-  .side-grp>a .tag{display:none}
-
-  /* Section dividers */
-  .side-grp+.side-grp{border-top:1px solid var(--line-soft);padding-top:10px}
-
-  /* Close button hidden when rail-only */
-  .side-close{display:none}
-
-  /* ── EXPANDED OVERLAY ────────────────────────── */
-  .side.open{
-    position:fixed;top:0;left:0;bottom:0;
-    width:min(260px,82vw);
-    overflow-y:auto;overflow-x:hidden;
-    padding:18px 12px 40px;
-    box-shadow:12px 0 48px rgba(0,0,0,.65);
-    z-index:200;
-  }
-
-  /* Logo: full wordmark when expanded */
-  .side.open .logo{
-    font-size:var(--t-md);gap:10px;
-    justify-content:flex-start;
-    margin-bottom:18px;padding:0 4px;
-  }
-
-  /* Group labels visible when expanded */
-  .side.open .side-grp>p{
     height:auto;overflow:visible;
     visibility:visible;opacity:1;
     margin-bottom:var(--s-3);padding-inline:var(--s-3);
+    white-space:nowrap;
   }
-  .side.open .side-grp{margin-bottom:14px}
+  .side-grp{margin-bottom:14px}
 
-  /* Nav items: left-aligned with icon + label when expanded */
-  .side.open .side-grp>a,
-  .side.open .side-logout{
+  /* Nav items: left-aligned with icon + label inside the drawer */
+  .side-grp>a,.side-logout{
     justify-content:flex-start;
     padding:10px var(--s-3);
     gap:var(--s-3);
     border-radius:var(--r-sm);
+    white-space:nowrap;
   }
-  .side.open .side-grp a .label,
-  .side.open .side-logout .label{display:flex}
-  .side.open .side-grp>a .tag{display:inline-flex}
+  .side-grp a .label,.side-logout .label{display:flex}
+  .side-grp>a .tag{display:inline-flex}
 
-  /* Show close button when expanded */
-  .side.open .side-close{display:flex}
+  /* Section dividers */
+  .side-grp+.side-grp{border-top:1px solid var(--line-soft);padding-top:10px}
 
-  /* Scrim behind the expanded drawer */
+  /* Close button visible inside the drawer */
+  .side-close{display:flex}
+
+  /* ── OPEN STATE ──────────────────────────────── */
+  .side.open{
+    transform:translateX(0);
+    visibility:visible;
+    box-shadow:12px 0 48px rgba(0,0,0,.65);
+    transition:transform .26s var(--ease),visibility 0s,box-shadow .26s var(--ease);
+  }
+
+  /* Scrim behind the open drawer */
   .scrim{
     position:fixed;inset:0;
     background:rgba(0,0,0,.52);
@@ -705,7 +681,7 @@ code.input{
 
 /* ── Mobile layout: topbar + content (≤900px) ──────────────────────────── */
 @media (max-width: 900px) {
-  /* Content sits right beside the 56px rail; bottom padding for bottom nav */
+  /* Full-width content; bottom padding clears the fixed bottom nav */
   .content { padding: 14px 12px 76px; }
 
   /* Topbar: compact, single row, no wrapping */
@@ -882,7 +858,7 @@ code.input{
     width: 38px; height: 38px; flex: none;
   }
 
-  /* Content sits right next to the 56px rail */
+  /* Content spans the full viewport */
   .content { padding-left: 10px; padding-right: 10px; }
 
   /* Close affordance rendered inside the open drawer */
