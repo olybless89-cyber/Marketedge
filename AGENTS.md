@@ -31,6 +31,7 @@ Needs Postgres. Start one, set `DATABASE_URL` in `.env` (use `?sslmode=disable` 
 
 ## Deployment (Railway)
 - `railway.json` (DOCKERFILE builder) + `Dockerfile` (node:22-slim, builds argon2 native binding). `.dockerignore` excludes node_modules/.env/.git/public/uploads.
+- **Auto-deploy: the Railway service is connected to the GitHub repo — every push to `main` triggers a build + deploy automatically.** No manual step. If a push does NOT trigger a build, the repo↔service link is broken: re-connect it in Railway dashboard → service → Settings → Source, or enable "Auto Deploy". Verify a deploy landed by hitting `/healthz` and checking Railway logs.
 - App runs migration on boot (background, non-fatal) so `npm run migrate` is optional. `/healthz` = liveness (no DB), `/readyz` = readiness (DB probe). Docker HEALTHCHECK hits `/healthz`.
 - `PORT` injected by Railway. Required vars: `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`. Optional: `UPLOAD_DIR`, `SMTP_URL`/`MAIL_FROM`.
 - Receipt uploads: saved to `UPLOAD_DIR` (default `public/uploads`). Railway filesystem is ephemeral → mount a Volume at `/data` and set `UPLOAD_DIR=/data/uploads` or receipts vanish on redeploy. Dir is auto-created on boot (before static routes register). Served at `/uploads/*` via serveStatic with rewriteRequestPath.
