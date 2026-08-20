@@ -24,13 +24,20 @@
     form.addEventListener('submit', async (e) => {
       if (form.dataset.recaptchaReady === 'true') return;
       e.preventDefault();
+      if (form.dataset.recaptchaBusy === 'true') return; // double-click guard
+      form.dataset.recaptchaBusy = 'true';
       try {
         await execute(form);
         form.dataset.recaptchaReady = 'true';
-        form.requestSubmit();
+        // requestSubmit is missing on older engines — fall back to a native
+        // submit so the click is never silently swallowed.
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
       } catch (err) {
         console.error('[recaptcha]', err);
         alert('Could not verify the security check. Please reload the page and try again.');
+      } finally {
+        delete form.dataset.recaptchaBusy;
       }
     });
   });

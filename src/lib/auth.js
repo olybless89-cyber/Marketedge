@@ -8,6 +8,10 @@ import { sessions, users } from '../db/schema.js';
 const COOKIE = 'rr_sid';
 const DAYS = 14;
 
+if (!process.env.SESSION_SECRET) {
+  console.warn('[auth] SESSION_SECRET is not set — CSRF tokens fall back to a known secret. Set SESSION_SECRET in production.');
+}
+
 export const hash = (pw) =>
   argon2.hash(pw, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
 

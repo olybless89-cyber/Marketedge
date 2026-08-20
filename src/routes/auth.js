@@ -14,8 +14,12 @@ export const auth = new Hono();
 const shell = (c, view, data = {}, title = '') =>
   render(c, 'layouts/auth', { body: eta.render(view, { ...fmt, csrf: csrfToken(c), recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY || '', ...data }), title });
 
+/* Already-authenticated users go straight to their area. */
+const homeFor = (u) => (u?.role === 'admin' ? '/admin' : '/dashboard');
+
 auth.get('/login', (c) => {
-  if (c.get('user')) return c.redirect('/dashboard');
+  const u = c.get('user');
+  if (u) return c.redirect(homeFor(u));
   return shell(c, 'pages/login', { next: c.req.query('next') || '' }, 'Log in');
 });
 
@@ -28,11 +32,16 @@ auth.post('/login', throttle(8), async (c) => {
   if (!recaptcha.ok) return back(recaptcha.error);
 
   const [u] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  // Same message either way — don't confirm which emails exist.
-  if (!u || !(await verify(u.passwordHash, String(b.password || ''))))
+  // Same message either way — don't confirm which emails exist. The reason is
+  // logged server-side only, so "I can't log in" is diagnosable from app logs.
+  if (!u || !(await verify(u.passwordHash, String(b.password || '')))) {
+    console.warn(`[auth] login failed (${u ? 'bad password' : 'no such user'}): ${email}`);
     return back('That email and password combination did not match an account.');
-  if (u.status !== 'active')
+  }
+  if (u.status !== 'active') {
+    console.warn(`[auth] login blocked (status=${u.status}): ${email}`);
     return back('This account is suspended. Contact support to restore access.');
+  }
 
   await createSession(c, u.id);
   const next = String(b.next || '');
@@ -42,7 +51,8 @@ auth.post('/login', throttle(8), async (c) => {
 });
 
 auth.get('/register', (c) => {
-  if (c.get('user')) return c.redirect('/dashboard');
+  const u = c.get('user');
+  if (u) return c.redirect(homeFor(u));
   return shell(c, 'pages/register', {}, 'Open an account');
 });
 
