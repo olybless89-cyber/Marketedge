@@ -84,9 +84,31 @@ export const csrfGuard = async (c, next) => {
     c.set('body', body);
     const sent = body._csrf;
     const want = csrfToken(c);
-    if (!sent || sent.length !== want.length ||
+    if (typeof sent !== 'string' || sent.length !== want.length ||
         !crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(want))) {
-      return c.text('Your session expired. Reload the page and try again.', 403);
+      console.warn(`[csrf] rejected ${c.req.method} ${c.req.path} (sent ${typeof sent === 'string' ? sent.length + 'ch' : typeof sent}, logged-in: ${!!c.get('user')})`);
+      // Recovery link: reload the page the form was on so the user gets a
+      // fresh token — history.back() would serve the stale cached page and
+      // loop the failure. Only pathname+search are used (no open redirect).
+      let back = '/';
+      try {
+        const ref = new URL(c.req.header('referer') || '', 'http://x');
+        if (ref.pathname) back = ref.pathname + ref.search;
+      } catch { /* keep '/' */ }
+      return c.html(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session expired</title>
+<link rel="stylesheet" href="/css/app.css">
+<div style="min-height:100vh;display:grid;place-items:center;text-align:center;padding:20px">
+  <div style="max-width:420px">
+    <h1 style="font-size:2.4rem;margin:0 0 10px">Session expired</h1>
+    <p class="muted">This page was open for a while, or you signed in or out in another tab, so the form could not be verified. Your account is fine.</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap">
+      <a class="btn btn-primary" href="${back}">Reload and try again</a>
+      <a class="btn btn-ghost" href="/">Back to home</a>
+    </div>
+    <p class="muted small" style="margin-top:18px">Reloading gives the form a fresh session token — then resubmit.</p>
+  </div>
+</div>`, 403);
     }
   }
   await next();
