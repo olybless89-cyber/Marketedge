@@ -15,6 +15,7 @@ Node.js + Hono (web) + Drizzle ORM + Postgres + Eta templates. Single-process.
 - Eta raw output uses `<%~ %>` (needed for JSON in data attributes; `<%= %>` HTML-escapes).
 - Admin routes in `src/routes/admin.js`, user routes in `src/routes/dashboard.js`.
 - Login diagnostics: failed logins are logged server-side (`[auth] login failed (no such user|bad password)`) while the UI stays generic — check app logs before touching the DB. Account recovery: `ADMIN_PASSWORD='New!123' npm run reset-admin` (creates or resets the admin; see `src/db/reset-admin.js`).
+- "Your session expired" 403 = `csrfGuard` token mismatch (not an expired DB session — tokens are HMACs of the cookie's session id, stable for the session's life). Causes: stale tab after sign-in/out elsewhere, browser-back resubmission, or SESSION_SECRET changing between GET and POST. Rejections now log `[csrf] rejected ...` and render a friendly page that links back to the Referer (fresh token on reload). All form POSTs are plain HTML forms (no fetch/htmx mutations); every GET page renders a valid `_csrf` — verified by scanning rendered HTML.
 - Mail: `src/lib/mail.js` renders `.eta` body wrapped by `views/mail/layout.eta`, logs to `mail_log` table, sends via nodemailer SMTP. `getTransporter()` reads `mail_config` from `settings` table first, then `SMTP_URL` env, else log-only. Fire-and-forget with `.catch()`.
 - Settings: `src/lib/settings.js` — key/value store in `settings` table (jsonb). Wallet addresses stored under key `wallet_addresses`.
 
