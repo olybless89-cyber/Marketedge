@@ -14,6 +14,7 @@ Node.js + Hono (web) + Drizzle ORM + Postgres + Eta templates. Single-process.
 - All forms include `<input type="hidden" name="_csrf" value="<%= it.csrf %>">`.
 - Eta raw output uses `<%~ %>` (needed for JSON in data attributes; `<%= %>` HTML-escapes).
 - Admin routes in `src/routes/admin.js`, user routes in `src/routes/dashboard.js`.
+- Login diagnostics: failed logins are logged server-side (`[auth] login failed (no such user|bad password)`) while the UI stays generic — check app logs before touching the DB. Account recovery: `ADMIN_PASSWORD='New!123' npm run reset-admin` (creates or resets the admin; see `src/db/reset-admin.js`).
 - Mail: `src/lib/mail.js` renders `.eta` body wrapped by `views/mail/layout.eta`, logs to `mail_log` table, sends via nodemailer SMTP. `getTransporter()` reads `mail_config` from `settings` table first, then `SMTP_URL` env, else log-only. Fire-and-forget with `.catch()`.
 - Settings: `src/lib/settings.js` — key/value store in `settings` table (jsonb). Wallet addresses stored under key `wallet_addresses`.
 
