@@ -54,11 +54,13 @@ export async function loadUser(c, next) {
 }
 
 export const requireUser = async (c, next) => {
+  if (!c.req.path.startsWith('/dashboard')) return next();
   if (!c.get('user')) return c.redirect(`/login?next=${encodeURIComponent(c.req.path)}`);
   await next();
 };
 
 export const requireAdmin = async (c, next) => {
+  if (!c.req.path.startsWith('/admin')) return next();
   const u = c.get('user');
   if (!u) return c.redirect('/login?next=/admin');
   if (u.role !== 'admin') return c.notFound();   // don't reveal the route exists
