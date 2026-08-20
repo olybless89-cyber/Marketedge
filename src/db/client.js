@@ -19,6 +19,14 @@ if (url && !/-pooler\./.test(url) && /neon\.tech/.test(url)) {
   console.warn('[db] Neon URL is not the pooled endpoint. Use the host containing "-pooler".');
 }
 
+// Supabase: the direct host (db.<ref>.supabase.co) is IPv6-only on current
+// projects, which Railway's network cannot reach. Use the Supavisor session
+// pooler (aws-0-<region>.pooler.supabase.com:5432, user postgres.<ref>) —
+// compatible with this client's prepare:false and multiple connections.
+if (url && /db\.[a-z0-9]+\.supabase\.co/.test(url)) {
+  console.warn('[db] Supabase direct host is IPv6-only and unreachable from most PaaS networks. Use the session pooler: postgresql://postgres.<ref>:<pass>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require');
+}
+
 // Respect sslmode in the URL; default to require for production safety.
 //   sslmode=require  -> ssl: 'require'
 //   sslmode=disable  -> ssl: false   (local dev / testing)

@@ -26,11 +26,22 @@ the leaderboard reordered — because a background engine is writing real rows t
 
 ## Deploy to Railway
 
-### 1. Neon
+### 1. Database (Supabase or Neon)
 
-Create a database and copy the **pooled** connection string — the host contains `-pooler`.
-The direct endpoint will exhaust its connection limit under a warm container.
+**Supabase.** Project Settings → Database → Connection string → **Session pooler** (Supavisor,
+port 5432). It looks like:
 
+```
+postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
+Append `?sslmode=require` when setting it as `DATABASE_URL`. Do **not** use the direct host
+(`db.<ref>.supabase.co`) — it is IPv6-only and unreachable from Railway's network, and do not
+use the transaction pooler (port 6543). The app runs with `prepare: false` and a small
+connection pool, which is exactly what the session pooler expects.
+
+**Neon.** Create a database and copy the **pooled** connection string — the host contains
+`-pooler`. The direct endpoint will exhaust its connection limit under a warm container.
 In Neon's settings, either disable scale-to-zero or accept a ~500 ms cold start on the first
 request after an idle period. For a demo you're showing to someone, disable it.
 
@@ -47,7 +58,7 @@ Set these variables in the Railway dashboard:
 
 | Variable | Value |
 |---|---|
-| `DATABASE_URL` | Neon **pooled** connection string |
+| `DATABASE_URL` | Supabase **session pooler** or Neon **pooled** connection string |
 | `SESSION_SECRET` | `openssl rand -hex 32` |
 | `ADMIN_EMAIL` | your admin login |
 | `ADMIN_PASSWORD` | strong password, change after first login |
@@ -67,6 +78,24 @@ railway run npm run seed      # plans, traders, bots, admin, demo client, trade 
 
 The seed prints the admin and demo credentials. It's idempotent — safe to re-run.
 `migrate` also runs automatically when the app boots, so this step is optional.
+
+### Moving an existing database to a new provider (e.g. Neon → Supabase)
+
+The data layer is plain Postgres — no provider-specific features are used.
+
+```bash
+# 1. Dump from the OLD database
+pg_dump --no-owner --no-privileges -Fc -f marketedge.dump "$OLD_DATABASE_URL"
+
+# 2. Restore into the NEW database (use the pooler/direct host you can reach)
+pg_restore --no-owner --no-privileges -d "$NEW_DATABASE_URL" marketedge.dump
+
+# 3. Point Railway at the new database: Variables → DATABASE_URL → save (redeploys)
+```
+
+If you don't need to keep existing data, skip the dump/restore: just set
+`DATABASE_URL` to the new database — the app creates the schema on boot — then run
+`railway run npm run seed` (fresh content) or `npm run reset-admin` (admin only).
 
 ### 4. Persistent uploads (Volume)
 
