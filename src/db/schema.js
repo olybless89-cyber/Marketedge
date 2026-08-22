@@ -274,3 +274,15 @@ export const settings = pgTable('settings', {
   key: varchar('key', { length: 80 }).primaryKey(),
   value: jsonb('value'),
 });
+
+/* Deposit/withdrawal payment methods — fully admin-managed, no hardcoded
+   list. Slug is a stable identifier stored on transactions.method. */
+export const paymentMethods = pgTable('payment_methods', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 40 }).notNull(),
+  name: varchar('name', { length: 80 }).notNull(),
+  instructions: text('instructions').notNull().default(''),
+  enabled: boolean('enabled').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ slugIdx: uniqueIndex('payment_methods_slug_idx').on(t.slug) }));

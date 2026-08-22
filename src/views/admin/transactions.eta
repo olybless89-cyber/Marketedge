@@ -24,7 +24,7 @@
         <tr>
           <td class="small muted"><%= it.dt(t.created_at) %></td>
           <td><b><%= t.first_name %> <%= t.last_name %></b><div class="small muted"><%= t.email %></div></td>
-          <td class="small"><%= t.method.replace('_',' ').toUpperCase() %></td>
+          <td class="small"><%= (it.methodNames && it.methodNames[t.method]) || t.method.replace(/_/g,' ').toUpperCase() %></td>
           <td class="small num" style="max-width:170px;overflow:hidden;text-overflow:ellipsis"><%= t.address || '—' %></td>
           <td class="num"><%= it.usd(t.amount) %></td>
           <% if (it.type === 'deposit') { %>

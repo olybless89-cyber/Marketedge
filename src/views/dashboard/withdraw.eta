@@ -9,11 +9,11 @@
     <form method="post" action="/dashboard/withdraw">
       <input type="hidden" name="_csrf" value="<%= it.csrf %>">
       <div class="field">
-        <label for="m">Method</label>
-        <select class="input" id="m" name="method">
-          <option value="usdt_trc20">USDT — TRC20</option>
-          <option value="btc">Bitcoin</option>
-          <option value="bank">Bank transfer</option>
+        <label for="m1">Method</label>
+        <select class="input" id="m1" name="method">
+          <% (it.methods || []).forEach(function(pm){ %>
+            <option value="<%= pm.slug %>"><%= pm.name %></option>
+          <% }) %>
         </select>
       </div>
       <div class="field">

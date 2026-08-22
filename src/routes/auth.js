@@ -45,9 +45,8 @@ auth.post('/login', throttle(8), async (c) => {
 
   await createSession(c, u.id);
   const next = String(b.next || '');
-  // New logins land on the deposit page — the first thing a funded client
-  // does is pay in and share a receipt. Admins go to their console.
-  return c.redirect(next.startsWith('/') ? next : (u.role === 'admin' ? '/admin' : '/dashboard/deposit'));
+  // Users land on the overview/welcome page; admins go to their console.
+  return c.redirect(next.startsWith('/') ? next : (u.role === 'admin' ? '/admin' : '/dashboard'));
 });
 
 /* Separate staff entrance — the admin console is deliberately not linked
@@ -127,7 +126,7 @@ auth.post('/register', throttle(6), async (c) => {
   mailWelcome(u).catch((e) => console.error('[mail] welcome failed:', e.message));
 
   await createSession(c, u.id);
-  return c.redirect('/dashboard/deposit');
+  return c.redirect('/dashboard');
 });
 
 auth.post('/logout', async (c) => { await destroySession(c); return c.redirect('/'); });

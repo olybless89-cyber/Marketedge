@@ -254,6 +254,17 @@ const DDL = [
     key varchar(80) primary key,
     value jsonb
   )`,
+
+  `create table if not exists payment_methods (
+    id serial primary key,
+    slug varchar(40) not null,
+    name varchar(80) not null,
+    instructions text not null default '',
+    enabled boolean not null default true,
+    sort_order integer not null default 0,
+    created_at timestamptz not null default now()
+  )`,
+  `create unique index if not exists payment_methods_slug_idx on payment_methods(slug)`,
 ];
 
 export async function migrate() {

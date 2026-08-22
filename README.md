@@ -148,11 +148,16 @@ recipients also get an in-app notification. The contact form forwards messages t
 the support inbox (default `marketedgesupport@gmail.com`, editable under
 **System → Site settings**).
 
-**Option B — environment variable**
+**Option B — environment variable (zero admin-UI steps)**
 
-For infrastructure-as-code, set `SMTP_URL` instead (e.g.
-`smtps://user:pass@smtp.example.com`). The admin UI config takes precedence when
-both are present. `MAIL_FROM` sets the default From header in that mode.
+For infrastructure-as-code, set any one of the following on Railway and the
+config is applied to the database at boot automatically:
+
+- `SMTP_URL` — a full URL like `smtps://marketedgesupport@gmail.com:app-password@smtp.gmail.com`, or
+- the discrete set `SMTP_HOST`, `SMTP_PORT` (default `465`), `SMTP_SECURE` (`true`/`false`), `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `MAIL_FROM_NAME`.
+
+The admin UI remains available to update the config later — saving from the UI
+clears the env-managed marker so the boot step never overrides admin edits.
 
 ### 7. Live chat (Smartsupp)
 

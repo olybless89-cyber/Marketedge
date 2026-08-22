@@ -9,12 +9,19 @@
       <input type="hidden" name="_csrf" value="<%= it.csrf %>">
       <div class="field">
         <label for="m">Method</label>
-        <select class="input" id="m" name="method" data-wallets='<%~ JSON.stringify(it.wallets || {}) %>'>
-          <option value="usdt_trc20">USDT — TRC20</option>
-          <option value="btc">Bitcoin</option>
-          <option value="eth">Ethereum — ERC20</option>
-          <option value="bank">Bank transfer</option>
+        <select class="input" id="m" name="method" data-methods='<%~ JSON.stringify(it.methods || []) %>'>
+          <% (it.methods || []).forEach(function(pm){ %>
+            <option value="<%= pm.slug %>"><%= pm.name %></option>
+          <% }) %>
         </select>
+      </div>
+      <div id="wallet-box" class="field" style="display:none">
+        <label>Send to this address</label>
+        <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
+          <code id="wallet-addr" class="input num" style="white-space:pre-wrap;word-break:break-all;user-select:all;flex:1;min-width:0"></code>
+          <button type="button" class="btn btn-quiet btn-sm" data-copy="#wallet-addr" style="flex:none">Copy</button>
+        </div>
+        <div class="hint">Only send the matching asset to this address. Other networks may lose funds.</div>
       </div>
       <div class="field">
         <label for="a">Amount (USD)</label>
@@ -26,14 +33,6 @@
           <button type="button" data-amt="5000">$5,000</button>
         </div>
         <div class="hint">Minimum deposit is $10. Network fees are paid by the sender.</div>
-      </div>
-      <div id="wallet-box" class="field" style="display:none">
-        <label>Send to this address</label>
-        <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap">
-          <code id="wallet-addr" class="input num" style="white-space:pre-wrap;word-break:break-all;user-select:all;flex:1;min-width:0"></code>
-          <button type="button" class="btn btn-quiet btn-sm" data-copy="#wallet-addr" style="flex:none">Copy</button>
-        </div>
-        <div class="hint">Only send the matching asset to this address. Other networks may lose funds.</div>
       </div>
       <div class="field">
         <label for="rc">Payment receipt</label>
@@ -61,7 +60,7 @@
           <% it.rows.forEach(function(r){ %>
             <tr>
               <td class="small muted"><%= it.ago(r.createdAt) %></td>
-              <td class="small"><%= r.method.replace('_',' ').toUpperCase() %></td>
+              <td class="small"><%= (it.methodNames && it.methodNames[r.method]) || r.method.replace(/_/g,' ').toUpperCase() %></td>
               <td class="num"><%= it.usd(r.amount) %></td>
               <td class="small"><% if (r.proofUrl) { %><a href="<%= r.proofUrl %>" target="_blank" rel="noopener" class="go">View</a><% } else { %><span class="muted">—</span><% } %></td>
               <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>

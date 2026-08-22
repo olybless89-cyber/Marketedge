@@ -132,6 +132,51 @@ async function getTransporter() {
 
 export function refreshTransporter() { transporter = null; }
 
+/* Auto-setup: if no mail_config exists in the DB yet, build one from env
+   (SMTP_HOST or SMTP_URL) so the system works with zero admin UI visits.
+   Runs once per boot after migration. Admin UI saves always win because
+   this only fills the gap left by "nothing configured". */
+export async function autoSetupMail() {
+  const existing = await getMailConfig();
+  if (existing && existing.host) return;   // admin UI or prior env already won
+
+  // Preferred: discrete vars.
+  const host = process.env.SMTP_HOST;
+  if (host) {
+    await setMailConfig({
+      host,
+      port: process.env.SMTP_PORT || 465,
+      secure: process.env.SMTP_SECURE !== 'false',
+      user: process.env.SMTP_USER || '',
+      pass: process.env.SMTP_PASS || '',
+      fromName: process.env.MAIL_FROM_NAME || 'Marketedge Support',
+      fromAddress: process.env.SMTP_FROM || process.env.SMTP_USER || '',
+    });
+    console.log('[mail] auto-configured from SMTP_HOST env');
+    return;
+  }
+
+  // Fallback: a single SMTP_URL (common on managed providers).
+  const url = process.env.SMTP_URL;
+  if (url) {
+    try {
+      const u = new URL(url);
+      await setMailConfig({
+        host: u.hostname,
+        port: u.port || (u.protocol === 'smtps:' ? 465 : 587),
+        secure: u.protocol === 'smtps:',
+        user: decodeURIComponent(u.username || ''),
+        pass: decodeURIComponent(u.password || ''),
+        fromName: process.env.MAIL_FROM_NAME || 'Marketedge Support',
+        fromAddress: process.env.SMTP_FROM || decodeURIComponent(u.username || ''),
+      });
+      console.log('[mail] auto-configured from SMTP_URL env');
+    } catch (e) {
+      console.error('[mail] SMTP_URL parse failed:', e.message);
+    }
+  }
+}
+
 /* Warm the transporter early so the first mail isn't delayed by connection
    setup. Safe to call when SMTP is unconfigured. */
 export async function warmTransporter() {

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { settings as settingsT } from '../db/schema.js';
+import { settings as settingsT, paymentMethods } from '../db/schema.js';
 
 /* Key-value store backed by the `settings` table. Each value is a jsonb
    column, so structured values (objects, arrays) survive a round trip
@@ -75,4 +75,61 @@ export async function setSiteConfig(partial) {
   await setSetting('site_config', next);
   siteCache = { value: next, at: Date.now() };
   return next;
+}
+
+/* Payment methods — admin-managed list used by deposit and withdrawal
+   forms. Slug is derived from the name, stable across renames of the
+   display label only when edited via slug field indirectly (name change
+   keeps original transactions readable because method is just a slug). */
+export async function listPaymentMethods(onlyEnabled = false) {
+  const rows = await db.select().from(paymentMethods).orderBy(paymentMethods.sortOrder, paymentMethods.id);
+  return onlyEnabled ? rows.filter((r) => r.enabled) : rows;
+}
+
+export async function seedDefaultPaymentMethods() {
+  const existing = await db.select({ id: paymentMethods.id }).from(paymentMethods).limit(1);
+  if (existing.length) return false;
+  const defaults = [
+    { slug: 'usdt_trc20', name: 'USDT — TRC20', instructions: '', sortOrder: 0 },
+    { slug: 'btc',        name: 'Bitcoin',      instructions: '', sortOrder: 1 },
+    { slug: 'eth',        name: 'Ethereum — ERC20', instructions: '', sortOrder: 2 },
+    { slug: 'bank',       name: 'Bank transfer', instructions: '', sortOrder: 3 },
+  ];
+  await db.insert(paymentMethods).values(defaults);
+  // Carry over any wallet addresses saved under the old fixed scheme.
+  try {
+    const wallets = await getWallets();
+    for (const d of defaults) {
+      const addr = String(wallets[d.slug] || '').trim();
+      if (addr) await db.update(paymentMethods).set({ instructions: addr }).where(eq(paymentMethods.slug, d.slug));
+    }
+  } catch { /* old keys may not exist — fine */ }
+  return true;
+}
+
+export function slugify(name) {
+  return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'method';
+}
+
+export async function addPaymentMethod({ name, instructions = '' }) {
+  const base = slugify(name);
+  let slug = base;
+  const taken = new Set((await db.select({ slug: paymentMethods.slug }).from(paymentMethods)).map((r) => r.slug));
+  for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
+  const [{ max = -1 }] = await db.select({ max: paymentMethods.id }).from(paymentMethods).catch(() => [{ max: -1 }]);
+  const all = await listPaymentMethods();
+  const sortOrder = all.length ? Math.max(...all.map((m) => m.sortOrder)) + 1 : 0;
+  return db.insert(paymentMethods).values({ slug, name: String(name).trim(), instructions: String(instructions).trim(), sortOrder }).returning();
+}
+
+export async function updatePaymentMethod(id, { name, instructions, enabled }) {
+  await db.update(paymentMethods).set({
+    name: String(name).trim(),
+    instructions: String(instructions ?? '').trim(),
+    enabled: !!enabled && enabled !== 'off',
+  }).where(eq(paymentMethods.id, Number(id)));
+}
+
+export async function deletePaymentMethod(id) {
+  await db.delete(paymentMethods).where(eq(paymentMethods.id, Number(id)));
 }

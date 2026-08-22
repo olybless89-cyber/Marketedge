@@ -14,6 +14,8 @@ import { dash } from './routes/dashboard.js';
 import { admin } from './routes/admin.js';
 import { startEngine } from './workers/engine.js';
 import { migrate } from './db/migrate.js';
+import { autoSetupMail } from './lib/mail.js';
+import { seedDefaultPaymentMethods } from './lib/settings.js';
 import { warmTransporter } from './lib/mail.js';
 import { ensureUploadDir, UPLOAD_DIR } from './lib/uploads.js';
 import { sql } from './db/client.js';
@@ -104,8 +106,10 @@ serve({ fetch: app.fetch, port }, (info) => {
   console.log(`[web] listening on :${info.port}`);
   ensureUploadDir().catch((e) => console.error('[web] uploads dir failed:', e.message));
   migrate()
-    .then(() => {
+    .then(async () => {
       console.log('[web] schema ready');
+      await seedDefaultPaymentMethods().catch((e) => console.error('[settings] payment-method seed failed:', e.message));
+      await autoSetupMail().catch((e) => console.error('[mail] auto-setup failed:', e.message));
       // Warm the transporter only after migration: getTransporter() reads the
       // settings table, which doesn't exist yet on a fresh database.
       warmTransporter().catch((e) => console.error('[mail] transporter warm failed:', e.message));

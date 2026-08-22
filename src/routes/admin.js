@@ -8,7 +8,10 @@ import {
 import { requireAdmin } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { traderStats } from '../lib/stats.js';
-import { getWallets, setWallets, getSiteConfig, setSiteConfig } from '../lib/settings.js';
+import {
+  getWallets, setWallets, getSiteConfig, setSiteConfig,
+  listPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
+} from '../lib/settings.js';
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
   mailKycApproved, mailKycRejected, mailAdminMessage,
@@ -28,7 +31,7 @@ const NAV = [
     { href: '/admin/deposits',    label: 'Deposits',    icon: svg('<path d="M12 3v13M6 11l6 6 6-6M4 21h16"/>') },
     { href: '/admin/withdrawals', label: 'Withdrawals', icon: svg('<path d="M12 21V8M6 13l6-6 6 6M4 3h16"/>') },
     { href: '/admin/plans',       label: 'Plans',       icon: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>') },
-    { href: '/admin/wallets',     label: 'Wallets',     icon: svg('<rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M16 12h4M2 10h20"/>') },
+    { href: '/admin/payment-methods', label: 'Payment methods', icon: svg('<rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M16 12h4M2 10h20"/>') },
   ]},
   { label: 'People', items: [
     { href: '/admin/users',   label: 'Users',   icon: svg('<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.9"/>') },
@@ -78,12 +81,16 @@ admin.get('/admin', async (c) => {
 /* ---------------- transaction review ---------------- */
 const listTx = (type) => async (c) => {
   const status = c.req.query('status') || 'pending';
-  const rows = await sql`
+  const [rows, methods] = await Promise.all([
+    sql`
     select t.*, u.first_name, u.last_name, u.email
     from transactions t join users u on u.id = t.user_id
     where t.type = ${type} ${status === 'all' ? sql`` : sql`and t.status = ${status}`}
-    order by t.created_at desc limit 100`;
-  return shell(c, 'admin/transactions', { rows, type, status }, type === 'deposit' ? 'Deposits' : 'Withdrawals');
+    order by t.created_at desc limit 100`,
+    listPaymentMethods(),
+  ]);
+  const methodNames = Object.fromEntries(methods.map((m) => [m.slug, m.name]));
+  return shell(c, 'admin/transactions', { rows, type, status, methodNames }, type === 'deposit' ? 'Deposits' : 'Withdrawals');
 };
 admin.get('/admin/deposits', listTx('deposit'));
 admin.get('/admin/withdrawals', listTx('withdrawal'));
@@ -320,20 +327,43 @@ admin.post('/admin/users/:id/edit', async (c) => {
   return c.redirect(`/admin/users/${id}?ok=1`);
 });
 
-/* ---------------- wallet addresses ---------------- */
-admin.get('/admin/wallets', async (c) =>
-  shell(c, 'admin/wallets', { wallets: await getWallets(), ok: c.req.query('ok') }, 'Wallet addresses'));
+/* ---------------- payment methods (deposit accounts) ---------------- */
+admin.get('/admin/payment-methods', async (c) =>
+  shell(c, 'admin/payment-methods', {
+    methods: await listPaymentMethods(),
+    ok: c.req.query('ok'), error: c.req.query('e'),
+  }, 'Payment methods'));
 
-admin.post('/admin/wallets', async (c) => {
+admin.post('/admin/payment-methods', async (c) => {
   const b = c.get('body');
-  await setWallets({
-    usdt_trc20: String(b.usdt_trc20 || ''),
-    btc: String(b.btc || ''),
-    eth: String(b.eth || ''),
-    bank: String(b.bank || ''),
-  });
-  return c.redirect('/admin/wallets?ok=1');
+  const name = String(b.name || '').trim();
+  if (!name) return c.redirect('/admin/payment-methods?e=' + encodeURIComponent('Give the method a name.'));
+  const instructions = String(b.instructions || '').trim();
+  await addPaymentMethod({ name, instructions });
+  return c.redirect('/admin/payment-methods?ok=1');
 });
+
+admin.post('/admin/payment-methods/:id', async (c) => {
+  const b = c.get('body');
+  const id = Number(c.req.param('id'));
+  if (b._action === 'delete') {
+    await deletePaymentMethod(id);
+    return c.redirect('/admin/payment-methods?ok=1');
+  }
+  const name = String(b.name || '').trim();
+  if (!name) return c.redirect('/admin/payment-methods?e=' + encodeURIComponent('Name is required.'));
+  await updatePaymentMethod(id, {
+    name,
+    instructions: String(b.instructions || ''),
+    enabled: b.enabled === 'on',
+  });
+  return c.redirect('/admin/payment-methods?ok=1');
+});
+
+// Legacy URL (old fixed wallets form) → the new list. Safe redirect so any
+// bookmark or open tab still lands somewhere useful.
+admin.get('/admin/wallets', (c) => c.redirect('/admin/payment-methods'));
+admin.post('/admin/wallets', (c) => c.redirect('/admin/payment-methods'));
 
 /* ---------------- KYC review ---------------- */
 admin.get('/admin/kyc', async (c) => {

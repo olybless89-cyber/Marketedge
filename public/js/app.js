@@ -179,15 +179,16 @@ document.body.addEventListener('click', (e) => {
   if (el && !confirm(el.dataset.confirm)) { e.preventDefault(); e.stopPropagation(); }
 }, true);
 
-// Deposit page: reveal the wallet address for the chosen method
+// Deposit page: reveal the instructions/address for the chosen method
 const methodSel = document.getElementById('m');
-if (methodSel && methodSel.dataset.wallets) {
-  const wallets = JSON.parse(methodSel.dataset.wallets);
+if (methodSel && methodSel.dataset.methods) {
+  const methods = JSON.parse(methodSel.dataset.methods);
   const box = document.getElementById('wallet-box');
   const addr = document.getElementById('wallet-addr');
   const update = () => {
-    const v = wallets[methodSel.value] || '';
-    if (v) { addr.textContent = v; box.style.display = ''; }
+    const m = (methods || []).find((x) => x.slug === methodSel.value);
+    const text = m ? (m.instructions || '') : '';
+    if (text) { addr.textContent = text; box.style.display = ''; }
     else { box.style.display = 'none'; }
   };
   methodSel.addEventListener('change', update);

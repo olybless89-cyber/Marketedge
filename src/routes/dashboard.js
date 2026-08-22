@@ -10,7 +10,7 @@ import { requireUser, hash, verify } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
 import { mailPlanActivated, mailDepositReceived, mailWithdrawalRequested } from '../lib/mail.js';
-import { getWallets } from '../lib/settings.js';
+import { getWallets, listPaymentMethods } from '../lib/settings.js';
 import { saveReceipt } from '../lib/uploads.js';
 import * as fmt from '../lib/money.js';
 
@@ -77,14 +77,15 @@ dash.get('/dashboard/statement', async (c) => {
 /* ---------------- deposit ---------------- */
 dash.get('/dashboard/deposit', async (c) => {
   const u = c.get('user');
-  const [rows, wallets] = await Promise.all([
+  const [rows, methods] = await Promise.all([
     db.select().from(transactions)
       .where(and(eq(transactions.userId, u.id), eq(transactions.type, 'deposit')))
       .orderBy(desc(transactions.createdAt)).limit(25),
-    getWallets(),
+    listPaymentMethods(true),
   ]);
+  const methodNames = Object.fromEntries(methods.map((m) => [m.slug, m.name]));
   return shell(c, 'dashboard/deposit', {
-    rows, wallets, sent: c.req.query('sent'), error: c.req.query('e'),
+    rows, methods, methodNames, sent: c.req.query('sent'), error: c.req.query('e'),
   }, 'Deposit');
 });
 
@@ -120,13 +121,14 @@ dash.post('/dashboard/deposit', async (c) => {
 /* ---------------- withdraw ---------------- */
 dash.get('/dashboard/withdraw', async (c) => {
   const u = c.get('user');
-  const [rows, bal] = await Promise.all([
+  const [rows, bal, methods] = await Promise.all([
     db.select().from(transactions)
       .where(and(eq(transactions.userId, u.id), eq(transactions.type, 'withdrawal')))
       .orderBy(desc(transactions.createdAt)).limit(25),
     balance(u.id),
+    listPaymentMethods(true),
   ]);
-  return shell(c, 'dashboard/withdraw', { rows, bal, sent: c.req.query('sent'), error: c.req.query('e') }, 'Withdraw');
+  return shell(c, 'dashboard/withdraw', { rows, bal, methods, sent: c.req.query('sent'), error: c.req.query('e') }, 'Withdraw');
 });
 
 dash.post('/dashboard/withdraw', async (c) => {

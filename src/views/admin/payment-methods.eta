@@ -1,0 +1,47 @@
+<div class="page-head"><div><h1>Payment methods</h1>
+  <p class="small" style="margin:4px 0 0">Every method a client can pick on the deposit and withdrawal forms. Add as many as you like — the list is no longer fixed.</p></div></div>
+<% if (it.ok) { %><div class="notice notice-ok">Saved.</div><% } %>
+<% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+<div class="card">
+  <div class="card-head"><h3>Add a method</h3></div>
+  <form method="post" action="/admin/payment-methods" class="row2" style="grid-template-columns:1fr 2fr auto;align-items:end;gap:14px">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <div class="field"><label for="n">Name</label>
+      <input class="input" id="n" name="name" required placeholder="e.g. USDT — TRC20, Zelle, PayPal"></div>
+    <div class="field"><label for="i">Instructions / address <span class="muted">(optional)</span></label>
+      <input class="input" id="i" name="instructions" placeholder="Wallet address, bank details, or notes shown to the client"></div>
+    <button class="btn btn-primary btn-sm">Add</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3><%= it.methods.length %> method<%= it.methods.length === 1 ? '' : 's' %></h3></div>
+  <% if (!it.methods.length) { %><div class="empty"><h4>No methods yet</h4><p class="small">Add one above and it shows up on the deposit and withdrawal pages immediately.</p></div><% } %>
+  <div class="table-wrap" style="border:0">
+    <table>
+      <thead><tr><th>Name</th><th>Instructions / address</th><th>Slug</th><th>Enabled</th><th></th></tr></thead>
+      <tbody>
+        <% it.methods.forEach(function(m){ %>
+          <tr>
+            <form method="post" action="/admin/payment-methods/<%= m.id %>">
+              <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+              <td><input class="input input-sm" name="name" value="<%= m.name %>"></td>
+              <td><textarea class="input input-sm" name="instructions" rows="1"><%= m.instructions %></textarea></td>
+              <td class="small num"><%= m.slug %></td>
+              <td><label class="row" style="gap:6px;align-items:center">
+                <input type="checkbox" name="enabled" <%= m.enabled ? 'checked' : '' %>>
+                <span class="badge <%= m.enabled ? 'badge-live' : 'badge-idle' %>"><%= m.enabled ? 'on' : 'off' %></span>
+              </label></td>
+              <td class="right">
+                <button class="btn btn-quiet btn-sm" type="submit">Save</button>
+                <button class="btn btn-warn btn-sm" type="submit" name="_action" value="delete" data-confirm="Delete “<%= m.name %>”? This removes it from new deposits; existing transactions keep their original method label.">Delete</button>
+              </td>
+            </form>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted" style="margin:10px 0 0">Clients see the <b>Name</b> in the dropdown and the <b>Instructions</b> as the “send to this address” box on the deposit page.</p>
+</div>
