@@ -59,7 +59,7 @@ app.use('*', async (c, next) => { c.set('csrf', csrfToken(c)); await next(); });
 // Site config (support email, chat key) — cached in settings.js, safe before migration.
 app.use('*', async (c, next) => { c.set('site', await getSiteConfig()); await next(); });
 
-app.get('/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
+app.get('/healthz', (c) => c.json({ ok: true, ts: Date.now(), commit: process.env.RAILWAY_GIT_COMMIT_SHA || null }));
 
 // DB readiness probe — separate from liveness so a DB outage doesn't
 // put Railway into a restart loop that prevents you from reading logs.
