@@ -127,7 +127,8 @@ no redeploy required.
    <https://myaccount.google.com/security>
 2. Open **App Passwords** and create one for *Mail*:
    <https://myaccount.google.com/apppasswords>
-3. Sign in as admin → **System → Mail settings** and enter:
+3. Sign in as admin → **System → Mail settings** (the form is prefilled for
+   `marketedgesupport@gmail.com`) and enter:
    - SMTP host: `smtp.gmail.com`
    - Port: `465`, SSL on
    - Username: your full Gmail address
@@ -141,11 +142,32 @@ never in `.env`, and the password field is masked — leave it blank on save to 
 the existing one. Gmail caps sending at ~500/day; for higher volume use a dedicated
 provider (SendGrid, Postmark, Amazon SES) with the same form.
 
+**Sending mail from the admin panel.** **System → Send mail** (`/admin/mail/compose`)
+lets staff email one client or broadcast to every active client; registered
+recipients also get an in-app notification. The contact form forwards messages to
+the support inbox (default `marketedgesupport@gmail.com`, editable under
+**System → Site settings**).
+
 **Option B — environment variable**
 
 For infrastructure-as-code, set `SMTP_URL` instead (e.g.
 `smtps://user:pass@smtp.example.com`). The admin UI config takes precedence when
 both are present. `MAIL_FROM` sets the default From header in that mode.
+
+### 7. Live chat (Smartsupp)
+
+The chat widget key is managed at **System → Site settings**. Create the Smartsupp
+account with `marketedgesupport@gmail.com` at <https://app.smartsupp.com>, copy the
+key from **Settings → Chat box → Installation** (`_smartsupp.key` in the snippet)
+and paste it there. The widget loads on the public site and client dashboard only —
+never on admin pages. Clearing the key disables the widget.
+
+### 8. Admin console
+
+The admin area is fully separate from the client experience: its own layout (no
+client links, no chat widget) and its own sign-in page at **`/admin/login`**, which
+is not linked from the public site. `/login` remains the client entrance; admins
+who sign in there are redirected to `/admin`.
 
 ---
 

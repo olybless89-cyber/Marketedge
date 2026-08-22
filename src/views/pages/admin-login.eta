@@ -1,0 +1,35 @@
+<div class="card auth-card">
+  <div class="auth-head">
+    <h2>Admin console</h2>
+    <p class="small">Staff access only. Client accounts sign in on the <a href="/login">main login page</a>.</p>
+  </div>
+
+  <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
+
+  <form method="post" action="/admin/login" class="recaptcha-form" data-action="admin_login">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <input type="hidden" name="next" value="<%= it.next || '' %>">
+    <input type="hidden" name="g-recaptcha-response" class="recaptcha-token">
+
+    <div class="field">
+      <label for="email">Admin email</label>
+      <div class="input-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 7l8.5 5.5a2 2 0 002 0L21 7"/></svg>
+        <input class="input" id="email" name="email" type="email" required autocomplete="email"
+               autofocus value="<%= it.email || '' %>" placeholder="admin@example.com">
+      </div>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="input-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M8 9V7a4 4 0 018 0v2"/></svg>
+        <input class="input" id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Sign in to console</button>
+  </form>
+
+  <p class="small center auth-switch">
+    Not staff? <a href="/">Back to the site</a>
+  </p>
+</div>

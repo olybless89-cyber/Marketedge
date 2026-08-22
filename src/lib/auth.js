@@ -66,7 +66,7 @@ export const requireUser = async (c, next) => {
 export const requireAdmin = async (c, next) => {
   if (!c.req.path.startsWith('/admin')) return next();
   const u = c.get('user');
-  if (!u) return c.redirect('/login?next=/admin');
+  if (!u) return c.redirect(`/admin/login?next=${encodeURIComponent(c.req.path)}`);
   if (u.role !== 'admin') return c.notFound();   // don't reveal the route exists
   await next();
 };

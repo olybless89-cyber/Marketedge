@@ -22,6 +22,7 @@ export function render(c, template, data = {}) {
     csrf: c.get('csrf'),
     path: c.req.path,
     recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY || '',
+    site: c.get('site') || { supportEmail: 'marketedgesupport@gmail.com', smartsuppKey: '' },
     brand: {
       name: process.env.BRAND_NAME || 'Marketedge',
       domain: process.env.BRAND_DOMAIN || 'marketedge.com',

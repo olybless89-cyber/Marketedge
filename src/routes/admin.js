@@ -7,11 +7,12 @@ import {
 } from '../db/schema.js';
 import { requireAdmin } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
-import { traderStats, balance, unreadCount } from '../lib/stats.js';
-import { getWallets, setWallets } from '../lib/settings.js';
+import { traderStats } from '../lib/stats.js';
+import { getWallets, setWallets, getSiteConfig, setSiteConfig } from '../lib/settings.js';
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
-  mailKycApproved, mailKycRejected, getMailConfig, setMailConfig, sendTestMail,
+  mailKycApproved, mailKycRejected, mailAdminMessage,
+  getMailConfig, setMailConfig, sendTestMail,
 } from '../lib/mail.js';
 import * as fmt from '../lib/money.js';
 
@@ -36,15 +37,21 @@ const NAV = [
   ]},
   { label: 'System', items: [
     { href: '/admin/mail', label: 'Mail outbox', icon: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>') },
+    { href: '/admin/mail/compose', label: 'Send mail', icon: svg('<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>') },
     { href: '/admin/mail/settings', label: 'Mail settings', icon: svg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>') },
+    { href: '/admin/site', label: 'Site settings', icon: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18"/>') },
   ]},
 ];
 
 const shell = async (c, view, data, title) => {
   const u = c.get('user');
-  const [bal, unread] = await Promise.all([balance(u.id), unreadCount(u.id)]);
   const body = eta.render(view, { ...fmt, ...data, user: u, csrf: c.get('csrf') });
-  return render(c, 'layouts/app', { body, title, nav: NAV, bal, unread });
+  // Longest-prefix match so /admin/mail/compose lights "Send mail", not "Mail outbox".
+  const p = c.req.path;
+  const activeHref = NAV.flatMap((g) => g.items).map((i) => i.href)
+    .filter((h) => p === h || p.startsWith(h + '/'))
+    .sort((a, b) => b.length - a.length)[0] || null;
+  return render(c, 'layouts/admin', { body, title, nav: NAV, activeHref });
 };
 
 /* ---------------- overview ---------------- */
@@ -388,7 +395,8 @@ admin.get('/admin/mail', async (c) => {
 admin.get('/admin/mail/settings', async (c) => {
   const cfg = await getMailConfig() || {
     host: 'smtp.gmail.com', port: 465, secure: true,
-    user: '', pass: '', fromName: 'Marketedge', fromAddress: '',
+    user: 'marketedgesupport@gmail.com', pass: '',
+    fromName: 'Marketedge Support', fromAddress: 'marketedgesupport@gmail.com',
   };
   const hasPass = !!(cfg.pass && cfg.pass.length);
   return shell(c, 'admin/mail-settings', {
@@ -425,4 +433,62 @@ admin.post('/admin/mail/test', async (c) => {
     ? `Test email sent to ${to}. Check the inbox (and spam folder).`
     : (r.error || 'Send failed.');
   return c.redirect('/admin/mail/settings?test=' + r.status + '&msg=' + encodeURIComponent(msg));
+});
+
+/* ---------------- compose & send mail ---------------- */
+admin.get('/admin/mail/compose', async (c) => {
+  const rows = await sql`
+    select id, first_name, last_name, email from users
+    where role = 'user' and status = 'active' order by email asc limit 1000`;
+  return shell(c, 'admin/mail-compose', {
+    rows,
+    to: c.req.query('to') || '',
+    subject: c.req.query('subject') || '',
+    ok: c.req.query('ok'), n: c.req.query('n'), error: c.req.query('e'),
+  }, 'Send mail');
+});
+
+admin.post('/admin/mail/compose', async (c) => {
+  const b = c.get('body');
+  const audience = b.audience === 'all' ? 'all' : 'one';
+  const subject = String(b.subject || '').trim().slice(0, 180);
+  const message = String(b.message || '').trim().slice(0, 8000);
+  const fail = (m) => c.redirect('/admin/mail/compose?e=' + encodeURIComponent(m));
+
+  if (!subject) return fail('Subject is required.');
+  if (!message) return fail('Write a message first.');
+
+  if (audience === 'one') {
+    const email = String(b.to || '').trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) return fail('Enter a valid recipient email.');
+    const [row] = await sql`select id, first_name, email from users where email = ${email} limit 1`;
+    const u = row && { id: row.id, firstName: row.first_name, email: row.email };
+    await mailAdminMessage(u || { email }, subject, message);
+    // In-app copy too when the recipient is a registered user.
+    if (u) await db.insert(notifications).values({ userId: u.id, kind: 'info', title: subject, body: message.slice(0, 500) });
+    return c.redirect('/admin/mail/compose?ok=1&n=1');
+  }
+
+  // Broadcast: every active client. Sequential sends keep the SMTP
+  // connection (and Gmail's rate limits) happy.
+  const rows = await sql`select id, first_name, email from users where role = 'user' and status = 'active'`;
+  for (const row of rows) {
+    const u = { id: row.id, firstName: row.first_name, email: row.email };
+    await mailAdminMessage(u, subject, message);
+    await db.insert(notifications).values({ userId: u.id, kind: 'info', title: subject, body: message.slice(0, 500) });
+  }
+  return c.redirect('/admin/mail/compose?ok=1&n=' + rows.length);
+});
+
+/* ---------------- site settings (support email, live chat) ---------------- */
+admin.get('/admin/site', async (c) =>
+  shell(c, 'admin/site', { site: await getSiteConfig(), ok: c.req.query('ok') }, 'Site settings'));
+
+admin.post('/admin/site', async (c) => {
+  const b = c.get('body');
+  await setSiteConfig({
+    supportEmail: String(b.supportEmail || ''),
+    smartsuppKey: String(b.smartsuppKey || ''),
+  });
+  return c.redirect('/admin/site?ok=1');
 });

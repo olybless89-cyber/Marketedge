@@ -1,0 +1,37 @@
+<div class="page-head"><div><h1>Site settings</h1>
+  <p class="small" style="margin:4px 0 0">Support inbox and the Smartsupp live-chat widget shown on the public site and client dashboard.</p></div></div>
+
+<% if (it.ok) { %><div class="notice notice-ok">Site settings saved.</div><% } %>
+
+<div class="grid grid-mail-split">
+  <div class="card">
+    <div class="card-head"><h3>Support &amp; live chat</h3></div>
+    <form method="post" action="/admin/site">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <div class="field"><label for="supportEmail">Support email</label>
+        <input class="input" id="supportEmail" name="supportEmail" type="email" value="<%= it.site.supportEmail %>" placeholder="marketedgesupport@gmail.com" required>
+        <div class="hint">Contact-form messages are forwarded to this inbox.</div></div>
+      <div class="field"><label for="smartsuppKey">Smartsupp chat key</label>
+        <input class="input" id="smartsuppKey" name="smartsuppKey" value="<%= it.site.smartsuppKey %>" placeholder="e.g. 4274d05b1ff81bb5c726ea48b1364f81eb785401" style="font-family:var(--f-mono)">
+        <div class="hint">Paste the key from your Smartsupp account. Leave blank to hide the chat widget. The widget never loads on admin pages.</div></div>
+      <button class="btn btn-primary btn-block btn-sm">Save settings</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h3>Set up Smartsupp with marketedgesupport@gmail.com</h3></div>
+    <ol class="small" style="margin:0;padding-left:18px;line-height:1.7">
+      <li>Go to <a href="https://app.smartsupp.com/app/signup" target="_blank" rel="noopener">app.smartsupp.com/signup</a>
+        and create the account with <b>marketedgesupport@gmail.com</b>.</li>
+      <li>Confirm the email address from the inbox verification message.</li>
+      <li>In Smartsupp, open <b>Settings → Chat box → Installation</b> (or the onboarding wizard)
+        and copy the long key from the snippet — it's the value of <code>_smartsupp.key</code>.</li>
+      <li>Paste the key into the form on the left and save. The chat widget appears on the
+        public site and client dashboard immediately.</li>
+      <li>Optionally install the Smartsupp mobile app and sign in with the same Gmail address
+        to answer chats on the go.</li>
+    </ol>
+    <p class="small muted" style="margin:10px 0 0">Everyone who should answer chats must be invited as an agent
+      inside Smartsupp (Settings → Agents).</p>
+  </div>
+</div>

@@ -7,6 +7,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { compress } from 'hono/compress';
 
 import { loadUser, csrfGuard, csrfToken } from './lib/auth.js';
+import { getSiteConfig } from './lib/settings.js';
 import { pub } from './routes/public.js';
 import { auth } from './routes/auth.js';
 import { dash } from './routes/dashboard.js';
@@ -53,6 +54,8 @@ app.use('/uploads/*', serveStatic({
 app.use('*', loadUser);
 app.use('*', csrfGuard);
 app.use('*', async (c, next) => { c.set('csrf', csrfToken(c)); await next(); });
+// Site config (support email, chat key) — cached in settings.js, safe before migration.
+app.use('*', async (c, next) => { c.set('site', await getSiteConfig()); await next(); });
 
 app.get('/healthz', (c) => c.json({ ok: true, ts: Date.now() }));
 

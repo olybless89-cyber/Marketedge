@@ -50,6 +50,39 @@ auth.post('/login', throttle(8), async (c) => {
   return c.redirect(next.startsWith('/') ? next : (u.role === 'admin' ? '/admin' : '/dashboard/deposit'));
 });
 
+/* Separate staff entrance — the admin console is deliberately not linked
+   from the client-facing login page. */
+auth.get('/admin/login', (c) => {
+  const u = c.get('user');
+  if (u?.role === 'admin') return c.redirect('/admin');
+  if (u) return c.redirect('/dashboard');
+  return shell(c, 'pages/admin-login', { next: c.req.query('next') || '' }, 'Admin sign in');
+});
+
+auth.post('/admin/login', throttle(8), async (c) => {
+  const b = c.get('body');
+  const email = String(b.email || '').trim().toLowerCase();
+  const back = (v) => shell(c, 'pages/admin-login', { error: v, email, next: b.next || '' }, 'Admin sign in');
+
+  const recaptcha = await verifyRecaptcha(b['g-recaptcha-response']);
+  if (!recaptcha.ok) return back(recaptcha.error);
+
+  const [u] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  // One generic message — never reveal whether the account exists or isn't staff.
+  if (!u || u.role !== 'admin' || !(await verify(u.passwordHash, String(b.password || '')))) {
+    console.warn(`[auth] admin login failed (${!u ? 'no such user' : u.role !== 'admin' ? 'not admin' : 'bad password'}): ${email}`);
+    return back('That email and password combination did not match an admin account.');
+  }
+  if (u.status !== 'active') {
+    console.warn(`[auth] admin login blocked (status=${u.status}): ${email}`);
+    return back('This account is suspended. Contact another administrator.');
+  }
+
+  await createSession(c, u.id);
+  const next = String(b.next || '');
+  return c.redirect(next.startsWith('/admin') ? next : '/admin');
+});
+
 auth.get('/register', (c) => {
   const u = c.get('user');
   if (u) return c.redirect(homeFor(u));

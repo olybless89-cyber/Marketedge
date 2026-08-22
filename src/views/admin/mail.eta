@@ -1,5 +1,6 @@
 <div class="page-head"><div><h1>Mail outbox</h1>
-  <p class="small" style="margin:4px 0 0">Every mail the system generates is logged here. Status <b>logged</b> means recorded but SMTP is not configured; <b>sent</b> means delivered.</p></div></div>
+  <p class="small" style="margin:4px 0 0">Every mail the system generates is logged here. Status <b>logged</b> means recorded but SMTP is not configured; <b>sent</b> means delivered.</p></div>
+  <a class="btn btn-primary btn-sm" href="/admin/mail/compose">Compose mail</a></div>
 
 <div class="table-wrap">
   <table>

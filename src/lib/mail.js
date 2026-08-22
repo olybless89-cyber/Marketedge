@@ -28,7 +28,7 @@ import nodemailer from 'nodemailer';
 import { eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { mailLog } from '../db/schema.js';
-import { getSetting, setSetting } from './settings.js';
+import { getSetting, setSetting, getSiteConfig } from './settings.js';
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'views');
 const eta = new Eta({
@@ -51,8 +51,8 @@ const brand = () => ({
    but views mask it via hasPassword. */
 const GMAIL_PRESET = {
   host: 'smtp.gmail.com', port: 465, secure: true,
-  user: '', pass: '',
-  fromName: 'Marketedge', fromAddress: '',
+  user: 'marketedgesupport@gmail.com', pass: '',
+  fromName: 'Marketedge Support', fromAddress: 'marketedgesupport@gmail.com',
 };
 
 export async function getMailConfig() {
@@ -281,4 +281,46 @@ export const mailKycRejected = (u, note) => sendMail({
   userId: u.id, to: u.email, template: 'mail/kyc-rejected',
   subject: 'Identity review — action needed',
   data: { firstName: u.firstName, note: note || '' },
+});
+
+export const mailDepositReceived = (u, t) => sendMail({
+  userId: u.id, to: u.email, template: 'mail/deposit-received',
+  subject: 'Deposit received — under review',
+  data: { firstName: u.firstName, amount: Number(t.amount), method: t.method },
+  refType: 'transaction', refId: t.id,
+});
+
+export const mailWithdrawalRequested = (u, t) => sendMail({
+  userId: u.id, to: u.email, template: 'mail/withdrawal-received',
+  subject: 'Withdrawal request received',
+  data: { firstName: u.firstName, amount: Number(t.amount), method: t.method, address: t.address },
+  refType: 'transaction', refId: t.id,
+});
+
+/* Contact form → support inbox. `to` is the configured support address,
+   not the visitor. */
+export const mailContactMessage = async ({ name, email, message }) => {
+  const site = await getSiteConfig();
+  return sendMail({
+    to: site.supportEmail, template: 'mail/contact',
+    subject: `Contact form — ${name}`,
+    data: { name, email, message: String(message).slice(0, 4000) },
+  });
+};
+
+/* Admin-composed mail. Message is plain text; split into escaped paragraphs
+   here so the template can emit them raw. */
+const escHtml = (s) => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+export const mailAdminMessage = (u, subject, message) => sendMail({
+  userId: u?.id ?? null, to: u.email, template: 'mail/message',
+  subject,
+  data: {
+    subject,
+    firstName: u?.firstName || 'there',
+    paragraphs: String(message).split(/\n\s*\n/)
+      .map((p) => escHtml(p).replace(/\n/g, '<br>')),
+  },
 });

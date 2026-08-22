@@ -4,6 +4,7 @@ import { db } from '../db/client.js';
 import { plans as plansT, traderTrades, traders as tradersT } from '../db/schema.js';
 import { render, partial, eta } from '../lib/view.js';
 import { verifyRecaptcha } from '../lib/recaptcha.js';
+import { mailContactMessage } from '../lib/mail.js';
 import { traderStats, platformStats, livePrices } from '../lib/stats.js';
 import * as fmt from '../lib/money.js';
 
@@ -163,8 +164,11 @@ pub.post('/contact', async (c) => {
   const recaptcha = await verifyRecaptcha(data['g-recaptcha-response']);
   if (!recaptcha.ok) return back(recaptcha.error);
 
-  // Best-effort: log the message; swap for an email/DB call before going live
+  // Log + forward to the support inbox. Fire-and-forget — a mail hiccup
+  // must not cost us the message.
   console.info('[contact]', { name: data.name, email: data.email, message: String(data.message).slice(0, 500) });
+  mailContactMessage({ name: String(data.name).slice(0, 120), email: String(data.email).slice(0, 255), message: data.message })
+    .catch((e) => console.error('[mail] contact forward failed:', e.message));
 
   const body = eta.render('pages/contact', { ...fmt, csrf: c.get('csrf'), sent: true });
   return render(c, 'layouts/site', { body, tickerHtml: tick, title: 'Contact', sent: true });

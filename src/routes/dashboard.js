@@ -9,7 +9,7 @@ import {
 import { requireUser, hash, verify } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
-import { mailPlanActivated } from '../lib/mail.js';
+import { mailPlanActivated, mailDepositReceived, mailWithdrawalRequested } from '../lib/mail.js';
 import { getWallets } from '../lib/settings.js';
 import { saveReceipt } from '../lib/uploads.js';
 import * as fmt from '../lib/money.js';
@@ -104,15 +104,16 @@ dash.post('/dashboard/deposit', async (c) => {
   }
   if (!proofUrl) return back('Attach your payment receipt so admin can confirm the transfer.');
 
-  await db.insert(transactions).values({
+  const [t] = await db.insert(transactions).values({
     userId: u.id, type: 'deposit', method: String(b.method || 'usdt_trc20'),
     amount: String(amount), status: 'pending', proofUrl,
-  });
+  }).returning();
   // No ledger row yet — funds only exist once an admin approves.
   await db.insert(notifications).values({
     userId: u.id, kind: 'info', title: 'Deposit submitted',
     body: `We received your ${fmt.usd(amount)} deposit request with a receipt. It posts to your balance once admin confirms the transfer.`,
   });
+  mailDepositReceived(u, t).catch((e) => console.error('[mail] deposit received failed:', e.message));
   return c.redirect('/dashboard/deposit?sent=1');
 });
 
@@ -138,15 +139,16 @@ dash.post('/dashboard/withdraw', async (c) => {
   if (amount > bal.available)
     return c.redirect('/dashboard/withdraw?e=' + encodeURIComponent(`You can withdraw up to ${fmt.usd(bal.available)} right now.`));
 
-  await db.insert(transactions).values({
+  const [t] = await db.insert(transactions).values({
     userId: u.id, type: 'withdrawal', method: String(b.method || 'usdt_trc20'),
     amount: String(amount), address: String(b.address || ''), status: 'pending',
-  });
+  }).returning();
   // Hold the funds immediately so they can't be spent twice while pending.
   await db.insert(ledger).values({
     userId: u.id, account: 'main', kind: 'withdrawal_hold', amount: String(-amount),
     refType: 'withdrawal', memo: 'Held pending withdrawal review',
   });
+  mailWithdrawalRequested(u, t).catch((e) => console.error('[mail] withdrawal requested failed:', e.message));
   return c.redirect('/dashboard/withdraw?sent=1');
 });
 

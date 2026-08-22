@@ -1,6 +1,9 @@
 <div class="page-head"><div><h1>Edit user</h1>
   <p class="small" style="margin:4px 0 0"><%= it.u.first_name %> <%= it.u.last_name %> · ID <%= it.u.id %></p></div>
-  <a class="btn btn-quiet btn-sm" href="/admin/users">Back to users</a></div>
+  <div class="row" style="gap:8px">
+    <a class="btn btn-primary btn-sm" href="/admin/mail/compose?to=<%= encodeURIComponent(it.u.email) %>">Email this user</a>
+    <a class="btn btn-quiet btn-sm" href="/admin/users">Back to users</a>
+  </div></div>
 
 <% if (it.ok) { %><div class="notice notice-ok">User updated.</div><% } %>
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
