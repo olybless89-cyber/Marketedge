@@ -54,6 +54,18 @@ const DEFAULT_SITE = {
 let siteCache = { value: null, at: 0 };
 const SITE_TTL_MS = 15_000;
 
+/* People often paste the whole `<script>..._smartsupp.key = '...'...</script>`
+   snippet instead of just the hex key. Normalize on every read so the widget
+   works even after a botched paste; also un-escapes HTML entities. */
+function normalizeSmartsuppKey(raw) {
+  let v = String(raw || '')
+    .replace(/&lt;/g, '<').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const snippet = v.match(/_smartsupp\.key\s*=\s*['"]([a-f0-9]{32,})['"]/i);
+  if (snippet) return snippet[1].toLowerCase();
+  if (/^[a-f0-9]{32,}$/i.test(v.trim())) return v.trim().toLowerCase();
+  return v.trim();
+}
+
 /* Cached read for the per-request middleware. Falls back to defaults when
    the settings table isn't readable yet (first boot before migration). */
 export async function getSiteConfig() {
@@ -62,7 +74,9 @@ export async function getSiteConfig() {
   let stored = null;
   try { stored = await getSetting('site_config', null); }
   catch { /* table may not exist yet — defaults are fine */ }
-  siteCache = { value: { ...DEFAULT_SITE, ...(stored || {}) }, at: now };
+  const merged = { ...DEFAULT_SITE, ...(stored || {}) };
+  merged.smartsuppKey = normalizeSmartsuppKey(merged.smartsuppKey);
+  siteCache = { value: merged, at: now };
   return siteCache.value;
 }
 
@@ -70,7 +84,7 @@ export async function setSiteConfig(partial) {
   const prev = await getSiteConfig();
   const next = {
     supportEmail: String(partial.supportEmail ?? prev.supportEmail).trim() || DEFAULT_SITE.supportEmail,
-    smartsuppKey: String(partial.smartsuppKey ?? prev.smartsuppKey).trim(),
+    smartsuppKey: normalizeSmartsuppKey(partial.smartsuppKey ?? prev.smartsuppKey),
   };
   await setSetting('site_config', next);
   siteCache = { value: next, at: Date.now() };
