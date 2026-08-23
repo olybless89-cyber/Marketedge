@@ -1,0 +1,54 @@
+<div class="page-head"><div><h1>Live chat</h1>
+  <p class="small" style="margin:4px 0 0">Support conversations from the built-in chat widget. Reply here — clients see it in the widget instantly (4 s refresh) and registered users also get a notification.</p></div></div>
+
+<% if (it.e === 'empty') { %><div class="notice notice-err">Type a reply before sending.</div><% } %>
+
+<div class="grid chat-admin-grid">
+  <div class="card chat-inbox">
+    <div class="card-head"><h3>Inbox</h3></div>
+    <% if (!it.inbox.length) { %>
+      <p class="small muted" style="padding:6px 0">No conversations yet. The chat widget on every page starts one.</p>
+    <% } %>
+    <div class="chat-inbox-list">
+      <% it.inbox.forEach(function(row){ %>
+        <a class="chat-inbox-item <%= it.openChannel === row.channel ? 'on' : '' %>" href="/admin/chat/<%= row.channel %>">
+          <div style="min-width:0;flex:1">
+            <div class="row" style="justify-content:space-between;gap:8px">
+              <b style="font-size:14px"><%= row.title %></b>
+              <% if (row.unread) { %><span class="badge badge-warn"><%= row.unread %></span><% } %>
+            </div>
+            <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= row.email %></div>
+            <div class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px"><%= (row.last_body || '').slice(0, 60) %></div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+
+  <div class="card chat-thread">
+    <% if (!it.openChannel) { %>
+      <div style="display:grid;place-items:center;min-height:260px;text-align:center">
+        <div><h3 style="margin:0 0 6px">Pick a conversation</h3>
+        <p class="small muted" style="margin:0">Or wait for the first client message.</p></div>
+      </div>
+    <% } else { %>
+      <div class="card-head">
+        <div><h3 style="margin:0"><%= it.label.label %></h3>
+          <div class="small muted"><%= it.label.email %></div></div>
+      </div>
+      <div class="chat-scroll">
+        <% it.rows.forEach(function(m){ %>
+          <div class="chat-msg <%= m.sender === 'admin' ? 'chat-msg-admin' : '' %>">
+            <div class="chat-bubble"><%= m.body %></div>
+            <div class="small muted" style="margin:3px 8px"><%= m.sender === 'admin' ? 'Support' : (it.label ? it.label.label : 'Client') %> · <%= it.ago(m.created_at || m.createdAt) %></div>
+          </div>
+        <% }) %>
+      </div>
+      <form method="post" action="/admin/chat/<%= it.openChannel %>" class="chat-compose">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <input class="input" name="body" placeholder="Write a reply…" autocomplete="off" required autofocus>
+        <button class="btn btn-primary btn-sm" style="flex:none">Send</button>
+      </form>
+    <% } %>
+  </div>
+</div>

@@ -265,6 +265,20 @@ const DDL = [
     created_at timestamptz not null default now()
   )`,
   `create unique index if not exists payment_methods_slug_idx on payment_methods(slug)`,
+  `create table if not exists chat_messages (
+    id serial primary key,
+    channel varchar(90) not null,
+    user_id integer,
+    guest_name varchar(80),
+    guest_email varchar(190),
+    sender varchar(8) not null,
+    body text not null,
+    read_by_admin boolean not null default false,
+    read_by_client boolean not null default false,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists chat_channel_idx on chat_messages(channel, created_at)`,
+  `create index if not exists chat_admin_idx on chat_messages(read_by_admin)`,
 ];
 
 export async function migrate() {

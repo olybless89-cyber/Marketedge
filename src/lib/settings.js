@@ -44,11 +44,9 @@ export async function setWallets(obj) {
 /* Site-wide knobs editable from the admin UI (System → Site settings):
    supportEmail — inbox for contact-form mail; shown to users as the
      support address. Defaults to SUPPORT_EMAIL env, else the shared Gmail.
-   smartsuppKey — Smartsupp live-chat widget key; blank disables the widget.
-     Defaults to SMARTSUPP_KEY env, else the legacy hardcoded key. */
+   (Live chat is built-in — see src/routes/chat.js; no external key needed.) */
 const DEFAULT_SITE = {
   supportEmail: process.env.SUPPORT_EMAIL || 'marketedgesupport@gmail.com',
-  smartsuppKey: process.env.SMARTSUPP_KEY || '4274d05b1ff81bb5c726ea48b1364f81eb785401',
 };
 
 let siteCache = { value: null, at: 0 };
@@ -70,7 +68,6 @@ export async function setSiteConfig(partial) {
   const prev = await getSiteConfig();
   const next = {
     supportEmail: String(partial.supportEmail ?? prev.supportEmail).trim() || DEFAULT_SITE.supportEmail,
-    smartsuppKey: String(partial.smartsuppKey ?? prev.smartsuppKey).trim(),
   };
   await setSetting('site_config', next);
   siteCache = { value: next, at: Date.now() };

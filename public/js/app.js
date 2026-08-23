@@ -246,3 +246,113 @@ document.querySelectorAll('.amount-presets').forEach((group) => {
   amt.addEventListener('input', refresh);
   refresh();
 })();
+
+
+/* ---------------- built-in live chat widget ----------------
+   Polls /chat/unread while closed, /chat/messages while open. */
+(() => {
+  const root = document.getElementById('mechat');
+  if (!root) return;
+  const fab = document.getElementById('mechat-fab');
+  const dot = document.getElementById('mechat-dot');
+  const panel = document.getElementById('mechat-panel');
+  const closeBtn = document.getElementById('mechat-close');
+  const msgs = document.getElementById('mechat-msgs');
+  const form = document.getElementById('mechat-form');
+  const body = document.getElementById('mechat-body');
+  const nameEl = document.getElementById('mechat-name');
+  const emailEl = document.getElementById('mechat-email');
+  const csrf = root.dataset.csrf;
+  const guest = root.dataset.guest === '1';
+  let open = false;
+  let timer = null;
+  let lastId = 0;
+
+  const esc = (s) => s.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const fmtTime = (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  async function pollUnread() {
+    try {
+      const r = await fetch('/chat/unread', { credentials: 'same-origin' });
+      if (!r.ok) return;
+      const j = await r.json();
+      const n = j.count || 0;
+      dot.hidden = n === 0;
+      dot.textContent = n > 99 ? '99+' : String(n);
+    } catch { /* offline etc. */ }
+  }
+
+  async function loadMessages(scrollBottom) {
+    try {
+      const r = await fetch('/chat/messages', { credentials: 'same-origin' });
+      if (r.status === 403) {  // admin view of the widget: show nothing
+        return;
+      }
+      if (!r.ok) return;
+      const j = await r.json();
+      if (!j.messages || !j.messages.length) return;
+      if (j.messages[j.messages.length - 1].id === lastId && msgs.children.length) return;
+      lastId = j.messages[j.messages.length - 1].id;
+      msgs.innerHTML = j.messages.map((m) => `
+        <div class="chat-msg ${m.sender === 'admin' ? 'chat-msg-admin' : ''}">
+          <div class="chat-bubble">${esc(m.body)}</div>
+          <div class="chat-msg-label">${m.sender === 'admin' ? 'Support' : 'You'} · ${fmtTime(m.at)}</div>
+        </div>`).join('');
+      if (scrollBottom !== false) msgs.scrollTop = msgs.scrollHeight;
+    } catch { /* offline etc. */ }
+  }
+
+  async function send(e) {
+    e.preventDefault();
+    const text = body.value.trim();
+    if (!text) return;
+    body.value = '';
+    const payload = new URLSearchParams({ body: text, _csrf: csrf });
+    if (guest && nameEl) {
+      if (nameEl.value.trim()) payload.set('name', nameEl.value.trim());
+      if (emailEl && emailEl.value.trim()) payload.set('email', emailEl.value.trim());
+    }
+    try {
+      const r = await fetch('/chat/send', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload.toString(),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        if (j.error) body.value = text;
+        return;
+      }
+      await loadMessages(true);
+    } catch {
+      body.value = text;
+    }
+  }
+
+  function setOpen(v) {
+    open = v;
+    panel.hidden = !v;
+    fab.setAttribute('aria-expanded', String(v));
+    clearInterval(timer);
+    timer = null;
+    if (v) {
+      loadMessages(true);
+      timer = setInterval(() => { loadMessages(false); pollUnread(); }, 4000);
+    } else {
+      timer = setInterval(pollUnread, 4000);
+      pollUnread();
+    }
+  }
+
+  fab.addEventListener('click', () => setOpen(!open));
+  closeBtn.addEventListener('click', () => setOpen(false));
+  form.addEventListener('submit', send);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) setOpen(false); });
+
+  setOpen(false);
+})();
+

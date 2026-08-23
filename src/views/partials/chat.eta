@@ -1,0 +1,32 @@
+<%/* Built-in live-chat widget — mounted on every page by the four layouts.
+    Polls /chat/messages every 4 s while open, /chat/unread while closed.
+    Guests pass name/email on first send; signed-in clients are identified
+    by their session. CSRF token reuses the page's own (hidden form input). */%>
+<div class="chat" id="mechat" data-csrf="<%= it.csrf %>" data-guest="<%= it.user && it.user.role !== 'admin' ? '0' : '1' %>">
+  <button class="chat-fab" id="mechat-fab" type="button" aria-label="Open live chat">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 11.5a8.4 8.4 0 01-8.5 8.4 8.6 8.6 0 01-3.8-.87L3 21l1.95-4.9A8.4 8.4 0 1112.5 3.1a8.4 8.4 0 018.5 8.4z"/></svg>
+    <span class="chat-dot" id="mechat-dot" hidden>0</span>
+  </button>
+  <div class="chat-panel" id="mechat-panel" hidden>
+    <div class="chat-head">
+      <div>
+        <b>Support</b>
+        <div class="chat-sub">Typically replies within a few minutes</div>
+      </div>
+      <button class="chat-close" id="mechat-close" type="button" aria-label="Close chat">×</button>
+    </div>
+    <% if (!(it.user && it.user.role !== 'admin')) { %>
+      <div class="chat-guest" id="mechat-guest">
+        <input class="input input-sm" id="mechat-name" placeholder="Your name" maxlength="80">
+        <input class="input input-sm" id="mechat-email" type="email" placeholder="Email for follow-up (optional)" maxlength="190">
+      </div>
+    <% } %>
+    <div class="chat-msgs" id="mechat-msgs"><div class="chat-empty">Say hello — we're here to help.</div></div>
+    <form class="chat-form" id="mechat-form">
+      <input class="input input-sm" id="mechat-body" placeholder="Type a message…" maxlength="2000" autocomplete="off" required>
+      <button class="btn btn-primary btn-sm chat-send" type="submit" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+      </button>
+    </form>
+  </div>
+</div>

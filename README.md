@@ -160,13 +160,18 @@ config is applied to the database at boot automatically:
 The admin UI remains available to update the config later — saving from the UI
 clears the env-managed marker so the boot step never overrides admin edits.
 
-### 7. Live chat (Smartsupp)
+### 7. Live chat (built-in)
 
-The chat widget key is managed at **System → Site settings**. Create the Smartsupp
-account with `marketedgesupport@gmail.com` at <https://app.smartsupp.com>, copy the
-key from **Settings → Chat box → Installation** (`_smartsupp.key` in the snippet)
-and paste it there. The widget loads on **every page** — public site, client
-dashboard, auth pages, and the admin console. Clearing the key disables it everywhere.
+The chat widget is part of the platform — no external account, API key, or third-party
+dashboard. It loads on **every page** (public site, auth, client dashboard, admin console).
+
+- Guests open the bubble and send with a name (email optional); signed-in clients chat
+  from their account.
+- Conversations land in **People → Live chat** (`/admin/chat`) with unread counters.
+- Replies appear in the client's widget within ~4 seconds (poll-based) and registered
+  users also get an in-app notification.
+
+Nothing to configure — it's active on boot.
 
 ### 8. Admin console
 
