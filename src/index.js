@@ -33,11 +33,11 @@ app.use('*', secureHeaders({
   // TradingView and Google reCAPTCHA need external scripts; everything else is locked down.
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'", 'https://s3.tradingview.com', 'https://unpkg.com', 'https://www.tradingview-widget.com', 'https://www.google.com', 'https://www.gstatic.com'],
+    scriptSrc: ["'self'", "'unsafe-inline'", 'https://s3.tradingview.com', 'https://unpkg.com', 'https://www.tradingview-widget.com', 'https://www.google.com', 'https://www.gstatic.com', 'https://www.smartsuppchat.com'],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'https:'],
-    connectSrc: ["'self'", 'https://api.binance.com', 'https://api.coingecko.com', 'https://www.google.com', 'https:'],
+    connectSrc: ["'self'", 'https://api.binance.com', 'https://api.coingecko.com', 'https://www.google.com', 'https:', 'wss:', 'https://www.smartsuppchat.com'],
     frameSrc: ['https://www.tradingview-widget.com', 'https://s.tradingview.com', 'https://www.tradingview.com', 'https://www.google.com'],
   },
   crossOriginEmbedderPolicy: false,

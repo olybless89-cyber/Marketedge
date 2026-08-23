@@ -439,9 +439,13 @@ admin.get('/admin/mail/settings', async (c) => {
 
 admin.post('/admin/mail/settings', async (c) => {
   const b = c.get('body');
+  const provider = b.provider === 'smtp' ? 'smtp' : 'builtin';
+  if (provider === 'smtp' && !String(b.host || '').trim())
+    return c.redirect('/admin/mail/settings?test=invalid&msg=' + encodeURIComponent('Enter an SMTP host, or switch back to the built-in web mail.'));
   const port = Number(b.port);
   const secure = b.secure === 'on' || b.secure === 'true' || port === 465;
   await setMailConfig({
+    provider,
     host: String(b.host || ''),
     port: port || 465,
     secure,
@@ -461,7 +465,9 @@ admin.post('/admin/mail/test', async (c) => {
   const r = await sendTestMail(to);
   const msg = r.status === 'sent'
     ? `Test email sent to ${to}. Check the inbox (and spam folder).`
-    : (r.error || 'Send failed.');
+    : r.status === 'logged'
+      ? (r.error || 'Recorded in the outbox.')
+      : (r.error || 'Send failed.');
   return c.redirect('/admin/mail/settings?test=' + r.status + '&msg=' + encodeURIComponent(msg));
 });
 

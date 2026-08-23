@@ -24,7 +24,7 @@
   </div>
 </div>
 <script src="/js/app.js" defer></script>
-<% if (it.site && it.site.smartsuppKey && it.path !== '/admin/login') { %>
+<% if (it.site && it.site.smartsuppKey) { %>
 <!-- Smartsupp Live Chat script -->
 <script type="text/javascript">
 var _smartsupp = _smartsupp || {};

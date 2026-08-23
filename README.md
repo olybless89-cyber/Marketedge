@@ -114,12 +114,13 @@ Mail config and sessions already live in the database, so they persist without a
 Add your domain in Railway's settings. TLS is issued automatically, which also fixes the
 "Not secure" warning in the address bar.
 
-### 6. Transactional email (Gmail)
+### 6. Transactional email
 
-The platform sends welcome, deposit, withdrawal, plan and KYC emails. SMTP is
-**optional at deploy time** — with nothing configured every mail is still logged to
-the outbox (status `logged`); it just isn't delivered. Configure it from the admin UI,
-no redeploy required.
+The platform sends welcome, deposit, withdrawal, plan and KYC mails. The default is the
+**built-in web mail** — no external provider, no setup: every message is recorded in the
+**Mail outbox** (`/admin/mail`) and registered users also get an in-app notification.
+It activates itself on first boot. Real inbox delivery is optional — connect an external
+SMTP at **System → Mail settings** whenever you want it.
 
 **Option A — Gmail App Password (recommended for a quick start)**
 
@@ -164,8 +165,8 @@ clears the env-managed marker so the boot step never overrides admin edits.
 The chat widget key is managed at **System → Site settings**. Create the Smartsupp
 account with `marketedgesupport@gmail.com` at <https://app.smartsupp.com>, copy the
 key from **Settings → Chat box → Installation** (`_smartsupp.key` in the snippet)
-and paste it there. The widget loads on the public site and client dashboard only —
-never on admin pages. Clearing the key disables the widget.
+and paste it there. The widget loads on **every page** — public site, client
+dashboard, auth pages, and the admin console. Clearing the key disables it everywhere.
 
 ### 8. Admin console
 

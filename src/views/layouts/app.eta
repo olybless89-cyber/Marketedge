@@ -115,7 +115,7 @@
   </a>
 </nav>
 <script src="/js/app.js" defer></script>
-<% if (it.site && it.site.smartsuppKey && it.user.role !== 'admin') { %>
+<% if (it.site && it.site.smartsuppKey) { %>
 <!-- Smartsupp Live Chat script -->
 <script type="text/javascript">
 var _smartsupp = _smartsupp || {};

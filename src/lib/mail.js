@@ -62,11 +62,17 @@ export async function getMailConfig() {
 }
 
 /* Merge a partial submission onto the stored config. An empty `pass`
-   means "keep the existing password" so the UI never has to reveal it. */
+   means "keep the existing password" so the UI never has to reveal it.
+   `provider: 'builtin'` selects the platform's own web-mail system (mails
+   recorded in the outbox, no external SMTP); 'smtp' uses the host below. */
 export async function setMailConfig(partial) {
   const prev = (await getMailConfig()) || { ...GMAIL_PRESET };
+  const provider = partial.provider
+    ? (partial.provider === 'smtp' ? 'smtp' : 'builtin')
+    : (prev.provider || (prev.host ? 'smtp' : 'builtin'));
   const next = {
-    host: String(partial.host || prev.host || GMAIL_PRESET.host).trim(),
+    provider,
+    host: provider === 'builtin' ? '' : String(partial.host || prev.host || GMAIL_PRESET.host).trim(),
     port: Number(partial.port) || prev.port || GMAIL_PRESET.port,
     secure: partial.secure === undefined ? prev.secure : !!partial.secure,
     user: String(partial.user ?? prev.user ?? '').trim(),
@@ -109,6 +115,9 @@ function buildFromConfig(cfg) {
 async function getTransporter() {
   if (transporter !== null) return transporter;
   const cfg = await getMailConfig();
+  // Built-in web mail: no external provider — everything is recorded in the
+  // outbox (and mirrored to in-app notifications) instead of leaving the box.
+  if (cfg && cfg.provider === 'builtin') { transporter = false; return transporter; }
   if (cfg && cfg.host) {
     try { transporter = buildFromConfig(cfg); }
     catch (e) {
@@ -138,12 +147,13 @@ export function refreshTransporter() { transporter = null; }
    this only fills the gap left by "nothing configured". */
 export async function autoSetupMail() {
   const existing = await getMailConfig();
-  if (existing && existing.host) return;   // admin UI or prior env already won
+  if (existing && (existing.host || existing.provider)) return;  // admin UI or prior env already won
 
   // Preferred: discrete vars.
   const host = process.env.SMTP_HOST;
   if (host) {
     await setMailConfig({
+      provider: 'smtp',
       host,
       port: process.env.SMTP_PORT || 465,
       secure: process.env.SMTP_SECURE !== 'false',
@@ -162,6 +172,7 @@ export async function autoSetupMail() {
     try {
       const u = new URL(url);
       await setMailConfig({
+        provider: 'smtp',
         host: u.hostname,
         port: u.port || (u.protocol === 'smtps:' ? 465 : 587),
         secure: u.protocol === 'smtps:',
@@ -174,7 +185,18 @@ export async function autoSetupMail() {
     } catch (e) {
       console.error('[mail] SMTP_URL parse failed:', e.message);
     }
+    return;
   }
+
+  // Default: the platform's built-in web mail — no external provider. Mails
+  // are recorded in the admin outbox and users are notified in-app.
+  await setMailConfig({
+    provider: 'builtin',
+    host: '',
+    fromName: process.env.MAIL_FROM_NAME || 'Marketedge Support',
+    fromAddress: process.env.SMTP_FROM || process.env.SUPPORT_EMAIL || GMAIL_PRESET.fromAddress,
+  });
+  console.log('[mail] built-in web mail active (no external provider)');
 }
 
 /* Warm the transporter early so the first mail isn't delayed by connection
@@ -250,8 +272,14 @@ export async function sendTestMail(to) {
     bodyHtml, status: 'logged',
   }).returning({ id: mailLog.id });
 
+  const cfg = await getMailConfig();
   const tx = await getTransporter();
   if (!tx) {
+    if (cfg && cfg.provider === 'builtin') {
+      // Built-in web mail: being recorded in the outbox IS the delivery.
+      return { id: row.id, status: 'logged',
+        error: 'Built-in web mail is active — the message is recorded in the outbox (no external delivery, by design).' };
+    }
     await db.update(mailLog).set({ status: 'failed', error: 'SMTP is not configured.' }).where(eq(mailLog.id, row.id));
     return { id: row.id, status: 'failed', error: 'SMTP is not configured. Fill in the form below first.' };
   }
