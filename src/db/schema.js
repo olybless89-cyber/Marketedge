@@ -275,25 +275,6 @@ export const settings = pgTable('settings', {
   value: jsonb('value'),
 });
 
-/* Built-in live chat — no external provider. One conversation per channel:
-   `u:<userId>` for signed-in clients, `g:<token>` for guests (cookie-issued).
-   sender is 'client' or 'admin'; read flags flip on the counterpart's view. */
-export const chatMessages = pgTable('chat_messages', {
-  id: serial('id').primaryKey(),
-  channel: varchar('channel', { length: 90 }).notNull(),
-  userId: integer('user_id'),
-  guestName: varchar('guest_name', { length: 80 }),
-  guestEmail: varchar('guest_email', { length: 190 }),
-  sender: varchar('sender', { length: 8 }).notNull(),
-  body: text('body').notNull(),
-  readByAdmin: boolean('read_by_admin').notNull().default(false),
-  readByClient: boolean('read_by_client').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  chIdx: index('chat_channel_idx').on(t.channel, t.createdAt),
-  admIdx: index('chat_admin_idx').on(t.readByAdmin),
-}));
-
 /* Deposit/withdrawal payment methods — fully admin-managed, no hardcoded
    list. Slug is a stable identifier stored on transactions.method. */
 export const paymentMethods = pgTable('payment_methods', {

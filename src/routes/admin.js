@@ -12,7 +12,6 @@ import {
   getWallets, setWallets, getSiteConfig, setSiteConfig,
   listPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
 } from '../lib/settings.js';
-import { chatAdminInbox, chatAdminThread, chatAdminReply } from './chat.js';
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
   mailKycApproved, mailKycRejected, mailAdminMessage,
@@ -38,7 +37,6 @@ const NAV = [
     { href: '/admin/users',   label: 'Users',   icon: svg('<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.9"/>') },
     { href: '/admin/kyc',     label: 'KYC review', icon: svg('<path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>') },
     { href: '/admin/traders', label: 'Traders', icon: svg('<path d="M3 17l5-6 4 4 6-8"/><path d="M3 21h18"/>') },
-    { href: '/admin/chat',    label: 'Live chat', icon: svg('<path d="M21 11.5a8.4 8.4 0 01-8.5 8.4 8.6 8.6 0 01-3.8-.87L3 21l1.95-4.9A8.4 8.4 0 1112.5 3.1a8.4 8.4 0 018.5 8.4z"/>') },
   ]},
   { label: 'System', items: [
     { href: '/admin/mail', label: 'Mail outbox', icon: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>') },
@@ -526,11 +524,7 @@ admin.post('/admin/site', async (c) => {
   const b = c.get('body');
   await setSiteConfig({
     supportEmail: String(b.supportEmail || ''),
+    smartsuppKey: String(b.smartsuppKey || ''),
   });
   return c.redirect('/admin/site?ok=1');
 });
-
-/* ---------------- live chat inbox ---------------- */
-admin.get('/admin/chat', chatAdminInbox);
-admin.get('/admin/chat/:channel', chatAdminThread);
-admin.post('/admin/chat/:channel', chatAdminReply);
