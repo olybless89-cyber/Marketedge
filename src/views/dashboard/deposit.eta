@@ -23,6 +23,19 @@
         </div>
         <div class="hint">Only send the matching asset to this address. Other networks may lose funds.</div>
       </div>
+      <% (it.methods || []).forEach(function(pm){ %>
+        <div class="method-fields" data-for="<%= pm.slug %>" style="display:none">
+          <div class="hint" style="margin-bottom:8px">Minimum deposit: <b><%= it.usd(pm.minDeposit) %></b><% if (pm.maxDeposit) { %> · Maximum: <b><%= it.usd(pm.maxDeposit) %></b><% } %></div>
+          <% (pm.depositFields || []).forEach(function(f){ %>
+            <div class="field">
+              <label><%= f.label %><% if (f.required) { %> *<% } %></label>
+              <input class="input" name="f_<%= f.name %>" type="<%= f.type %>"
+                     placeholder="<%= f.placeholder || '' %>" <%= f.required ? 'required' : '' %>>
+              <% if (f.help) { %><div class="hint"><%= f.help %></div><% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% }) %>
       <div class="field">
         <label for="a">Amount (USD)</label>
         <input class="input num" id="a" name="amount" type="number" min="10" step="0.01" required placeholder="500.00">
@@ -32,7 +45,7 @@
           <button type="button" data-amt="1000">$1,000</button>
           <button type="button" data-amt="5000">$5,000</button>
         </div>
-        <div class="hint">Minimum deposit is $10. Network fees are paid by the sender.</div>
+        <div class="hint">Limits depend on the method you pick — shown above the form when you select one. Network fees are paid by the sender.</div>
       </div>
       <div class="field">
         <label for="rc">Payment receipt</label>

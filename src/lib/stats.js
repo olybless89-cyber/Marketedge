@@ -9,20 +9,27 @@ import { db, sql } from '../db/client.js';
    they all come from the same rows.
    ================================================================= */
 
-/** Balance = sum of the ledger. There is no balance column to drift. */
+/** Balance = sum of the ledger. There is no balance column to drift.
+   Buckets: main (account balance), profit, bonus, ref_bonus, locked. */
 export async function balance(userId) {
   const [r] = await sql`
     select
       coalesce(sum(amount) filter (where account = 'main'), 0)::text   as main,
       coalesce(sum(amount) filter (where account = 'profit'), 0)::text as profit,
+      coalesce(sum(amount) filter (where account = 'bonus'), 0)::text as bonus,
+      coalesce(sum(amount) filter (where account = 'ref_bonus'), 0)::text as ref_bonus,
+      coalesce(sum(amount) filter (where account = 'deposit'), 0)::text as deposit,
       coalesce(sum(amount) filter (where account = 'locked'), 0)::text as locked,
       coalesce(sum(amount), 0)::text                                    as total
     from ledger where user_id = ${userId}`;
-  return {
+  const out = {
     main: Number(r.main), profit: Number(r.profit),
+    bonus: Number(r.bonus), refBonus: Number(r.ref_bonus),
+    deposit: Number(r.deposit),
     locked: Number(r.locked), total: Number(r.total),
-    available: Number(r.main) + Number(r.profit),
   };
+  out.available = out.main + out.profit + out.bonus + out.refBonus;
+  return out;
 }
 
 /** Portfolio card figures for the user dashboard. */

@@ -1,0 +1,29 @@
+<div class="page-head"><h1>Confirm withdrawal</h1></div>
+
+<div class="card" style="max-width:520px">
+  <div class="card-head"><h3>Review before submitting</h3></div>
+  <dl class="kv">
+    <dt>Withdrawal method</dt><dd><%= it.method.name %></dd>
+    <dt>Amount</dt><dd class="num"><%= it.usd(it.amount) %></dd>
+    <dt>Fee</dt><dd class="num"><%= it.usd(it.fee) %></dd>
+    <dt>You will receive</dt><dd class="num" style="font-weight:700"><%= it.usd(it.net) %></dd>
+    <dt>Minimum withdrawal</dt><dd class="num"><%= it.usd(it.method.minWithdrawal) %></dd>
+    <dt>Available after</dt><dd class="num"><%= it.usd(it.bal.available - it.amount) %></dd>
+  </dl>
+
+  <form method="post" action="/dashboard/withdraw">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <input type="hidden" name="confirm" value="1">
+    <input type="hidden" name="method" value="<%= it.method.slug %>">
+    <input type="hidden" name="amount" value="<%= it.amount %>">
+    <% Object.entries(it.fields || {}).forEach(function(kv){ %>
+      <% if (kv[0] === '_csrf' || kv[0] === 'method' || kv[0] === 'amount' || kv[0] === 'confirm') return; %>
+      <input type="hidden" name="<%= kv[0] %>" value="<%= typeof kv[1] === 'string' ? kv[1] : '' %>">
+    <% }) %>
+    <div class="row" style="gap:8px">
+      <button class="btn btn-primary" style="flex:1">Confirm withdrawal</button>
+      <a class="btn btn-ghost" href="/dashboard/withdraw">Back</a>
+    </div>
+    <div class="hint" style="margin-top:8px">The amount is held from your balance while the request is reviewed.</div>
+  </form>
+</div>

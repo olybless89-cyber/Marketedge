@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../db/client.js';
+import { db, sql } from '../db/client.js';
 import { settings as settingsT, paymentMethods } from '../db/schema.js';
 
 /* Key-value store backed by the `settings` table. Each value is a jsonb
@@ -49,6 +49,7 @@ export async function setWallets(obj) {
 const DEFAULT_SITE = {
   supportEmail: process.env.SUPPORT_EMAIL || 'marketedgesupport@gmail.com',
   smartsuppKey: process.env.SMARTSUPP_KEY || '4274d05b1ff81bb5c726ea48b1364f81eb785401',
+  withdrawalKycRequired: false,   // enforce KYC approval before withdrawals
 };
 
 let siteCache = { value: null, at: 0 };
@@ -85,6 +86,9 @@ export async function setSiteConfig(partial) {
   const next = {
     supportEmail: String(partial.supportEmail ?? prev.supportEmail).trim() || DEFAULT_SITE.supportEmail,
     smartsuppKey: normalizeSmartsuppKey(partial.smartsuppKey ?? prev.smartsuppKey),
+    withdrawalKycRequired: partial.withdrawalKycRequired !== undefined
+      ? (partial.withdrawalKycRequired === true || partial.withdrawalKycRequired === 'on')
+      : !!prev.withdrawalKycRequired,
   };
   await setSetting('site_config', next);
   siteCache = { value: next, at: Date.now() };
@@ -95,19 +99,38 @@ export async function setSiteConfig(partial) {
    forms. Slug is derived from the name, stable across renames of the
    display label only when edited via slug field indirectly (name change
    keeps original transactions readable because method is just a slug). */
-export async function listPaymentMethods(onlyEnabled = false) {
-  const rows = await db.select().from(paymentMethods).orderBy(paymentMethods.sortOrder, paymentMethods.id);
-  return onlyEnabled ? rows.filter((r) => r.enabled) : rows;
+export async function listPaymentMethods(onlyEnabled = false, forAction = null) {
+  const rows = await db.select().from(paymentMethods)
+    .orderBy(paymentMethods.sortOrder, paymentMethods.id);
+  let out = rows;
+  if (onlyEnabled) out = out.filter((r) => r.enabled && !r.archived);
+  if (forAction === 'deposit') out = out.filter((r) => r.depositEnabled !== false);
+  if (forAction === 'withdrawal') out = out.filter((r) => r.withdrawalEnabled !== false);
+  return out;
+}
+
+export async function getPaymentMethod(slug) {
+  const [m] = await db.select().from(paymentMethods).where(eq(paymentMethods.slug, slug)).limit(1);
+  return m || null;
 }
 
 export async function seedDefaultPaymentMethods() {
   const existing = await db.select({ id: paymentMethods.id }).from(paymentMethods).limit(1);
   if (existing.length) return false;
   const defaults = [
-    { slug: 'usdt_trc20', name: 'USDT — TRC20', instructions: '', sortOrder: 0 },
-    { slug: 'btc',        name: 'Bitcoin',      instructions: '', sortOrder: 1 },
-    { slug: 'eth',        name: 'Ethereum — ERC20', instructions: '', sortOrder: 2 },
-    { slug: 'bank',       name: 'Bank transfer', instructions: '', sortOrder: 3 },
+    { slug: 'usdt_trc20', name: 'USDT — TRC20', type: 'crypto', instructions: '', sortOrder: 0,
+      withdrawalFields: [{ name: 'address', label: 'USDT wallet address (TRC20)', type: 'text', required: true, placeholder: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE' }] },
+    { slug: 'btc', name: 'Bitcoin', type: 'crypto', instructions: '', sortOrder: 1,
+      withdrawalFields: [{ name: 'address', label: 'Bitcoin wallet address', type: 'text', required: true, placeholder: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' }] },
+    { slug: 'eth', name: 'Ethereum — ERC20', type: 'crypto', instructions: '', sortOrder: 2,
+      withdrawalFields: [{ name: 'address', label: 'Ethereum wallet address (ERC20)', type: 'text', required: true, placeholder: '0x71C…' }] },
+    { slug: 'bank', name: 'Bank transfer', type: 'bank', instructions: '', sortOrder: 3,
+      withdrawalFields: [
+        { name: 'bankName', label: 'Bank name', type: 'text', required: true },
+        { name: 'accountName', label: 'Account name', type: 'text', required: true },
+        { name: 'accountNumber', label: 'Account number / IBAN', type: 'text', required: true },
+        { name: 'swift', label: 'SWIFT / routing (optional)', type: 'text', required: false },
+      ] },
   ];
   await db.insert(paymentMethods).values(defaults);
   // Carry over any wallet addresses saved under the old fixed scheme.
@@ -125,25 +148,90 @@ export function slugify(name) {
   return String(name).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'method';
 }
 
-export async function addPaymentMethod({ name, instructions = '' }) {
+const moneyOr = (v, dflt) => {
+  if (v === undefined || v === null || v === '') return dflt;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? String(n) : dflt;
+};
+const moneyOrNull = (v) => {
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? String(n) : null;
+};
+
+/* Dynamic fields arrive as a JSON string from the admin form; each entry is
+   {name,label,type,required,placeholder,help}. Slugify names, cap count. */
+export function parseFields(raw) {
+  if (!raw) return [];
+  let arr;
+  try { arr = JSON.parse(raw); } catch { return null; }   // null = invalid JSON
+  if (!Array.isArray(arr)) return null;
+  return arr.slice(0, 20).map((f) => ({
+    name: slugify(f.name || f.label || 'field'),
+    label: String(f.label || f.name || 'Field').slice(0, 80),
+    type: ['text', 'email', 'number', 'url'].includes(f.type) ? f.type : 'text',
+    required: !!f.required,
+    placeholder: String(f.placeholder || '').slice(0, 120),
+    help: String(f.help || '').slice(0, 160),
+  }));
+}
+
+export function methodValues(b) {
+  const depositFields = parseFields(b.depositFields);
+  const withdrawalFields = parseFields(b.withdrawalFields);
+  return {
+    type: ['crypto', 'bank', 'mobile', 'giftcard', 'gateway', 'manual', 'other'].includes(b.type) ? b.type : 'other',
+    instructions: String(b.instructions || '').trim(),
+    withdrawalInstructions: String(b.withdrawalInstructions || '').trim(),
+    enabled: b.enabled === 'on' || b.enabled === true,
+    depositEnabled: b.depositEnabled === 'on' || b.depositEnabled === true,
+    withdrawalEnabled: b.withdrawalEnabled === 'on' || b.withdrawalEnabled === true,
+    minDeposit: moneyOr(b.minDeposit, '10'),
+    maxDeposit: moneyOrNull(b.maxDeposit),
+    minWithdrawal: moneyOr(b.minWithdrawal, '10'),
+    maxWithdrawal: moneyOrNull(b.maxWithdrawal),
+    feeFixed: moneyOr(b.feeFixed, '0'),
+    feePercent: moneyOr(b.feePercent, '0'),
+    depositFields: depositFields === null ? undefined : depositFields,
+    withdrawalFields: withdrawalFields === null ? undefined : withdrawalFields,
+    sortOrder: Number(b.sortOrder) || 0,
+    fieldsInvalid: depositFields === null || withdrawalFields === null,
+  };
+}
+
+export async function addPaymentMethod(b) {
+  const name = String(b.name || '').trim();
   const base = slugify(name);
   let slug = base;
   const taken = new Set((await db.select({ slug: paymentMethods.slug }).from(paymentMethods)).map((r) => r.slug));
   for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
-  const [{ max = -1 }] = await db.select({ max: paymentMethods.id }).from(paymentMethods).catch(() => [{ max: -1 }]);
   const all = await listPaymentMethods();
   const sortOrder = all.length ? Math.max(...all.map((m) => m.sortOrder)) + 1 : 0;
-  return db.insert(paymentMethods).values({ slug, name: String(name).trim(), instructions: String(instructions).trim(), sortOrder }).returning();
+  const v = methodValues(b);
+  delete v.sortOrder;
+  return db.insert(paymentMethods).values({ slug, name, sortOrder, ...v }).returning();
 }
 
-export async function updatePaymentMethod(id, { name, instructions, enabled }) {
+export async function updatePaymentMethod(id, b) {
+  const v = methodValues(b);
   await db.update(paymentMethods).set({
-    name: String(name).trim(),
-    instructions: String(instructions ?? '').trim(),
-    enabled: !!enabled && enabled !== 'off',
+    name: String(b.name || '').trim(),
+    ...v, updatedAt: new Date(),
   }).where(eq(paymentMethods.id, Number(id)));
 }
 
+/* Hard delete only when nothing references it; otherwise archive so
+   historical transactions keep their method label. */
 export async function deletePaymentMethod(id) {
+  const [m] = await db.select().from(paymentMethods).where(eq(paymentMethods.id, Number(id))).limit(1);
+  if (!m) return { archived: false };
+  const [used] = await sql`select count(*)::int n from transactions where method = ${m.slug}`;
+  if (used.n > 0) {
+    await db.update(paymentMethods)
+      .set({ archived: true, enabled: false, updatedAt: new Date() })
+      .where(eq(paymentMethods.id, Number(id)));
+    return { archived: true };
+  }
   await db.delete(paymentMethods).where(eq(paymentMethods.id, Number(id)));
+  return { archived: false };
 }

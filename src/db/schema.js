@@ -22,6 +22,7 @@ export const users = pgTable('users', {
   kycStatus: varchar('kyc_status', { length: 20 }).notNull().default('unverified'),
   referralCode: varchar('referral_code', { length: 20 }),
   referredBy: integer('referred_by'),
+  withdrawalCodeHash: text('withdrawal_code_hash'), // hashed; admin sets, user enters on withdraw
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   emailIdx: uniqueIndex('users_email_idx').on(t.email),
@@ -33,7 +34,8 @@ export const users = pgTable('users', {
 export const ledger = pgTable('ledger', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull(),
-  account: varchar('account', { length: 24 }).notNull().default('main'), // main | profit | locked
+  account: varchar('account', { length: 24 }).notNull().default('main'),
+  // main | profit | locked | bonus | ref_bonus
   kind: varchar('kind', { length: 32 }).notNull(),
   // deposit | withdrawal | investment_open | investment_payout |
   // copy_open | copy_close | bot_open | bot_close | fee | adjustment | referral
@@ -47,15 +49,39 @@ export const ledger = pgTable('ledger', {
   userIdx: index('ledger_user_idx').on(t.userId, t.createdAt),
 }));
 
+/* Admin financial actions — every credit/debit, deposit/withdrawal decision
+   and account clearing lands here with before/after balances. */
+export const auditLog = pgTable('audit_log', {
+  id: serial('id').primaryKey(),
+  adminId: integer('admin_id'),
+  userId: integer('user_id'),
+  action: varchar('action', { length: 40 }).notNull(),
+  category: varchar('category', { length: 24 }),
+  amount: numeric('amount', { precision: 20, scale: 8 }),
+  balanceBefore: numeric('balance_before', { precision: 20, scale: 8 }),
+  balanceAfter: numeric('balance_after', { precision: 20, scale: 8 }),
+  reason: text('reason'),
+  reference: varchar('reference', { length: 60 }),
+  ip: varchar('ip', { length: 64 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userIdx: index('audit_user_idx').on(t.userId, t.createdAt),
+}));
+
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull(),
   type: varchar('type', { length: 20 }).notNull(), // deposit | withdrawal
-  method: varchar('method', { length: 40 }).notNull(), // btc | usdt_trc20 | bank | card
+  method: varchar('method', { length: 40 }).notNull(), // payment_methods.slug
+  methodName: varchar('method_name', { length: 80 }),   // snapshot at submit time
   amount: numeric('amount', { precision: 20, scale: 8 }).notNull(),
+  fee: numeric('fee', { precision: 20, scale: 8 }).notNull().default('0'),
+  netAmount: numeric('net_amount', { precision: 20, scale: 8 }),
   currency: varchar('currency', { length: 8 }).notNull().default('USD'),
-  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | approved | rejected
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  // pending | processing (withdrawal) | approved | rejected | cancelled
   address: text('address'),
+  details: jsonb('details').$type().default({}),   // dynamic method fields
   proofUrl: text('proof_url'),
   adminNote: text('admin_note'),
   reviewedBy: integer('reviewed_by'),
@@ -276,13 +302,28 @@ export const settings = pgTable('settings', {
 });
 
 /* Deposit/withdrawal payment methods — fully admin-managed, no hardcoded
-   list. Slug is a stable identifier stored on transactions.method. */
+   list. Slug is a stable identifier stored on transactions.method.
+   depositFields/withdrawalFields: arrays of {name,label,type,required,placeholder,help}. */
 export const paymentMethods = pgTable('payment_methods', {
   id: serial('id').primaryKey(),
   slug: varchar('slug', { length: 40 }).notNull(),
   name: varchar('name', { length: 80 }).notNull(),
+  type: varchar('type', { length: 24 }).notNull().default('crypto'),
   instructions: text('instructions').notNull().default(''),
+  withdrawalInstructions: text('withdrawal_instructions').notNull().default(''),
   enabled: boolean('enabled').notNull().default(true),
+  archived: boolean('archived').notNull().default(false),
+  depositEnabled: boolean('deposit_enabled').notNull().default(true),
+  withdrawalEnabled: boolean('withdrawal_enabled').notNull().default(true),
+  minDeposit: numeric('min_deposit', { precision: 20, scale: 8 }).notNull().default('10'),
+  maxDeposit: numeric('max_deposit', { precision: 20, scale: 8 }),
+  minWithdrawal: numeric('min_withdrawal', { precision: 20, scale: 8 }).notNull().default('10'),
+  maxWithdrawal: numeric('max_withdrawal', { precision: 20, scale: 8 }),
+  feeFixed: numeric('fee_fixed', { precision: 20, scale: 8 }).notNull().default('0'),
+  feePercent: numeric('fee_percent', { precision: 8, scale: 4 }).notNull().default('0'),
+  depositFields: jsonb('deposit_fields').$type().default([]),
+  withdrawalFields: jsonb('withdrawal_fields').$type().default([]),
   sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ slugIdx: uniqueIndex('payment_methods_slug_idx').on(t.slug) }));

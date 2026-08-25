@@ -6,49 +6,81 @@
   <div class="card">
     <div class="card-head"><h3>Request a withdrawal</h3>
       <span class="small muted num"><%= it.usd(it.bal.available) %> available</span></div>
-    <form method="post" action="/dashboard/withdraw">
+    <% if (!(it.methods || []).length) { %>
+      <p class="small muted">No withdrawal methods are available right now. Contact support.</p>
+    <% } else { %>
+    <form method="post" action="/dashboard/withdraw" id="wd-form">
       <input type="hidden" name="_csrf" value="<%= it.csrf %>">
       <div class="field">
-        <label for="m1">Method</label>
-        <select class="input" id="m1" name="method">
+        <label for="m1">Withdrawal method</label>
+        <select class="input" id="m1" name="method" data-methods='<%~ JSON.stringify(it.methods.map(function(pm){ return { slug: pm.slug, name: pm.name, min: pm.minWithdrawal, max: pm.maxWithdrawal, feeFixed: pm.feeFixed, feePercent: pm.feePercent, instructions: pm.withdrawalInstructions || '' }; })) %>'>
           <% (it.methods || []).forEach(function(pm){ %>
             <option value="<%= pm.slug %>"><%= pm.name %></option>
           <% }) %>
         </select>
       </div>
-      <div class="field">
-        <label for="ad">Destination address or account</label>
-        <input class="input" id="ad" name="address" required placeholder="TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE">
-        <div class="hint">Double-check this. Transfers to a wrong address cannot be reversed.</div>
-      </div>
+
+      <% (it.methods || []).forEach(function(pm){ %>
+        <div class="method-fields" data-for="<%= pm.slug %>" style="display:none">
+          <div class="hint" style="margin-bottom:8px">
+            Minimum withdrawal: <b><%= it.usd(pm.minWithdrawal) %></b><% if (pm.maxWithdrawal) { %> · Maximum: <b><%= it.usd(pm.maxWithdrawal) %></b><% } %>
+            <% if (Number(pm.feeFixed) || Number(pm.feePercent)) { %>
+              · Fee: <% if (Number(pm.feeFixed)) { %><%= it.usd(pm.feeFixed) %><% } %><% if (Number(pm.feeFixed) && Number(pm.feePercent)) { %> + <% } %><% if (Number(pm.feePercent)) { %><%= Number(pm.feePercent) %>%<% } %>
+            <% } else { %> · No fee<% } %>
+          </div>
+          <% if (pm.withdrawalInstructions) { %><div class="hint" style="margin-bottom:8px"><%= pm.withdrawalInstructions %></div><% } %>
+          <% (pm.withdrawalFields || []).forEach(function(f){ %>
+            <div class="field">
+              <label><%= f.label %><% if (f.required) { %> *<% } %></label>
+              <input class="input" name="f_<%= f.name %>" type="<%= f.type %>"
+                     placeholder="<%= f.placeholder || '' %>" <%= f.required ? 'required' : '' %>>
+              <% if (f.help) { %><div class="hint"><%= f.help %></div><% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% }) %>
+
       <div class="field">
         <label for="a">Amount (USD)</label>
-        <input class="input num" id="a" name="amount" type="number" min="10" step="0.01" max="<%= it.bal.available %>" required>
+        <input class="input num" id="a" name="amount" type="number" min="0.01" step="0.01" max="<%= it.bal.available %>" required>
         <div class="amount-presets" data-target="#a" data-max="<%= it.bal.available %>">
           <button type="button" data-amt="100">$100</button>
           <button type="button" data-amt="500">$500</button>
           <button type="button" data-amt="1000">$1,000</button>
           <button type="button" data-amt="max" data-max>Max</button>
         </div>
+        <div class="hint" id="wd-summary"></div>
       </div>
-      <button class="btn btn-primary btn-block">Request withdrawal</button>
+
+      <% if (it.codeRequired) { %>
+        <div class="field">
+          <label for="wc">Withdrawal code</label>
+          <input class="input" id="wc" name="withdrawalCode" required placeholder="The code support gave you">
+          <div class="hint">Required on your account. Contact support if you lost it.</div>
+        </div>
+      <% } %>
+
+      <button class="btn btn-primary btn-block">Review withdrawal</button>
     </form>
+    <% } %>
   </div>
 
   <div class="card">
     <div class="card-head"><h3>Withdrawal history</h3></div>
     <div class="table-wrap" style="border:0">
       <table>
-        <thead><tr><th>Date</th><th>Destination</th><th class="num">Amount</th><th>Status</th></tr></thead>
+        <thead><tr><th>Date</th><th>Method</th><th class="num">Amount</th><th class="num">Fee</th><th class="num">You receive</th><th>Status</th></tr></thead>
         <tbody>
           <% if (!it.rows.length) { %>
-            <tr><td colspan="4"><div class="empty"><h4>No withdrawals yet</h4></div></td></tr>
+            <tr><td colspan="6"><div class="empty"><h4>No withdrawals yet</h4></div></td></tr>
           <% } %>
           <% it.rows.forEach(function(r){ %>
             <tr>
               <td class="small muted"><%= it.ago(r.createdAt) %></td>
-              <td class="small num" style="max-width:180px;overflow:hidden;text-overflow:ellipsis"><%= r.address || '—' %></td>
+              <td class="small"><%= r.methodName || r.method %></td>
               <td class="num"><%= it.usd(r.amount) %></td>
+              <td class="num muted"><%= it.usd(r.fee) %></td>
+              <td class="num"><%= r.netAmount ? it.usd(r.netAmount) : it.usd(r.amount) %></td>
               <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>
             </tr>
           <% }) %>
@@ -57,3 +89,36 @@
     </div>
   </div>
 </div>
+
+<script>
+// Live min/fee summary under the amount field. Server re-checks everything.
+(() => {
+  const sel = document.getElementById('m1');
+  if (!sel || !sel.dataset.methods) return;
+  const methods = JSON.parse(sel.dataset.methods);
+  const amt = document.getElementById('a');
+  const out = document.getElementById('wd-summary');
+  const panels = document.querySelectorAll('.method-fields[data-for]');
+  const usd = (v) => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const refresh = () => {
+    const m = methods.find((x) => x.slug === sel.value) || {};
+    panels.forEach((p) => {
+      const on = p.dataset.for === sel.value;
+      p.style.display = on ? '' : 'none';
+      p.querySelectorAll('input').forEach((i) => { i.disabled = !on; });
+    });
+    const a = Number(amt.value) || 0;
+    const fee = Number(m.feeFixed || 0) + a * Number(m.feePercent || 0) / 100;
+    let msg = '';
+    let warn = false;
+    if (a > 0 && a < Number(m.min)) { msg = `Minimum withdrawal for ${m.name} is ${usd(m.min)}.`; warn = true; }
+    else if (m.max && a > Number(m.max)) { msg = `Maximum withdrawal for ${m.name} is ${usd(m.max)}.`; warn = true; }
+    else if (a > 0) msg = `Fee: ${usd(fee)} — you receive ${usd(Math.max(0, a - fee))}.`;
+    out.textContent = msg;
+    out.style.color = warn ? 'var(--warn)' : '';
+  };
+  sel.addEventListener('change', refresh);
+  amt.addEventListener('input', refresh);
+  refresh();
+})();
+</script>

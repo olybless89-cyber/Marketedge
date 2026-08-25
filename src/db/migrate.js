@@ -265,6 +265,41 @@ const DDL = [
     created_at timestamptz not null default now()
   )`,
   `create unique index if not exists payment_methods_slug_idx on payment_methods(slug)`,
+  // --- v2: payment-method limits/fees/directions + audit log + withdrawal codes
+  `alter table users add column if not exists withdrawal_code_hash text`,
+  `alter table payment_methods add column if not exists type varchar(24) not null default 'crypto'`,
+  `alter table payment_methods add column if not exists withdrawal_instructions text not null default ''`,
+  `alter table payment_methods add column if not exists archived boolean not null default false`,
+  `alter table payment_methods add column if not exists deposit_enabled boolean not null default true`,
+  `alter table payment_methods add column if not exists withdrawal_enabled boolean not null default true`,
+  `alter table payment_methods add column if not exists min_deposit numeric(20,8) not null default 10`,
+  `alter table payment_methods add column if not exists max_deposit numeric(20,8)`,
+  `alter table payment_methods add column if not exists min_withdrawal numeric(20,8) not null default 10`,
+  `alter table payment_methods add column if not exists max_withdrawal numeric(20,8)`,
+  `alter table payment_methods add column if not exists fee_fixed numeric(20,8) not null default 0`,
+  `alter table payment_methods add column if not exists fee_percent numeric(8,4) not null default 0`,
+  `alter table payment_methods add column if not exists deposit_fields jsonb not null default '[]'`,
+  `alter table payment_methods add column if not exists withdrawal_fields jsonb not null default '[]'`,
+  `alter table payment_methods add column if not exists updated_at timestamptz not null default now()`,
+  `alter table transactions add column if not exists method_name varchar(80)`,
+  `alter table transactions add column if not exists fee numeric(20,8) not null default 0`,
+  `alter table transactions add column if not exists net_amount numeric(20,8)`,
+  `alter table transactions add column if not exists details jsonb not null default '{}'`,
+  `create table if not exists audit_log (
+    id serial primary key,
+    admin_id integer,
+    user_id integer,
+    action varchar(40) not null,
+    category varchar(24),
+    amount numeric(20,8),
+    balance_before numeric(20,8),
+    balance_after numeric(20,8),
+    reason text,
+    reference varchar(60),
+    ip varchar(64),
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists audit_user_idx on audit_log(user_id, created_at)`,
 ];
 
 export async function migrate() {

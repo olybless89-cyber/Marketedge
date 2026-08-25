@@ -179,17 +179,25 @@ document.body.addEventListener('click', (e) => {
   if (el && !confirm(el.dataset.confirm)) { e.preventDefault(); e.stopPropagation(); }
 }, true);
 
-// Deposit page: reveal the instructions/address for the chosen method
+// Deposit page: reveal the instructions/address + method-specific fields for
+// the chosen method. Hidden panels get disabled inputs so HTML required
+// checks never block a submit.
 const methodSel = document.getElementById('m');
 if (methodSel && methodSel.dataset.methods) {
   const methods = JSON.parse(methodSel.dataset.methods);
   const box = document.getElementById('wallet-box');
   const addr = document.getElementById('wallet-addr');
+  const panels = document.querySelectorAll('.method-fields[data-for]');
   const update = () => {
     const m = (methods || []).find((x) => x.slug === methodSel.value);
     const text = m ? (m.instructions || '') : '';
     if (text) { addr.textContent = text; box.style.display = ''; }
     else { box.style.display = 'none'; }
+    panels.forEach((p) => {
+      const on = p.dataset.for === methodSel.value;
+      p.style.display = on ? '' : 'none';
+      p.querySelectorAll('input').forEach((i) => { i.disabled = !on; });
+    });
   };
   methodSel.addEventListener('change', update);
   update();

@@ -13,7 +13,14 @@
         <div class="hint">Contact-form messages are forwarded to this inbox.</div></div>
       <div class="field"><label for="smartsuppKey">Smartsupp chat key</label>
         <input class="input" id="smartsuppKey" name="smartsuppKey" value="<%= it.site.smartsuppKey %>" placeholder="e.g. 4274d05b1ff81bb5c726ea48b1364f81eb785401" style="font-family:var(--f-mono)">
-        <div class="hint">Paste the key from your Smartsupp account. Leave blank to hide the chat widget. The widget never loads on admin pages.</div></div>
+        <div class="hint">Paste the key (or the whole snippet — the key is extracted automatically). Leave blank to hide the chat widget.</div></div>
+      <div class="field">
+        <label class="row" style="gap:8px;align-items:center">
+          <input type="checkbox" name="withdrawalKycRequired" <%= it.site.withdrawalKycRequired ? 'checked' : '' %>>
+          <span>Require approved KYC before clients can withdraw</span>
+        </label>
+        <div class="hint">When on, users with unverified or pending KYC are blocked from withdrawals.</div>
+      </div>
       <button class="btn btn-primary btn-block btn-sm">Save settings</button>
     </form>
   </div>

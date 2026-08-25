@@ -1151,3 +1151,7 @@ code.input{
   .topbar__balance { flex: 1; min-width: 0; }
   .balance-chip { max-width: 100%; }
 }
+
+/* admin user page actions + danger text */
+.action-box{border-top:1px solid var(--line-soft)}
+.text-danger{color:var(--down)}

@@ -1,0 +1,27 @@
+<div class="page-head"><div><h1>Audit log</h1>
+  <p class="small" style="margin:4px 0 0">Every admin financial action: credits, debits, deposit/withdrawal decisions, account clears, password resets.</p></div></div>
+
+<div class="card">
+  <div class="table-wrap" style="border:0">
+    <table>
+      <thead><tr><th>When</th><th>Admin</th><th>User</th><th>Action</th><th>Category</th><th class="num">Amount</th><th class="num">Before</th><th class="num">After</th><th>Reference</th><th>Reason</th></tr></thead>
+      <tbody>
+        <% if (!it.rows.length) { %><tr><td colspan="10" class="muted small">Nothing logged yet.</td></tr><% } %>
+        <% it.rows.forEach(function(r){ %>
+          <tr>
+            <td class="small muted"><%= it.dt(r.created_at) %></td>
+            <td class="small"><%= r.admin_email || '—' %></td>
+            <td class="small"><% if (r.user_id) { %><a class="go" href="/admin/users/<%= r.user_id %>"><%= r.user_email || ('#' + r.user_id) %></a><% } else { %>—<% } %></td>
+            <td class="small"><%= r.action %></td>
+            <td class="small"><%= r.category || '—' %></td>
+            <td class="num"><%= r.amount ? it.usd(r.amount) : '—' %></td>
+            <td class="num muted"><%= r.balance_before ? it.usd(r.balance_before) : '—' %></td>
+            <td class="num"><%= r.balance_after ? it.usd(r.balance_after) : '—' %></td>
+            <td class="small" style="font-family:var(--f-mono)"><%= r.reference || '—' %></td>
+            <td class="small muted"><%= (r.reason || '').slice(0, 60) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

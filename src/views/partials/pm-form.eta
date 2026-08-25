@@ -1,0 +1,57 @@
+<%/* Shared payment-method form. it.m is null for "add new". */%>
+<% const m = it.m || {}; %>
+
+<div class="row2">
+  <div class="field"><label>Method name</label>
+    <input class="input" name="name" value="<%= m.name || '' %>" required placeholder="USDC — ETH Network"></div>
+  <div class="field"><label>Type</label>
+    <select class="input" name="type">
+      <% it.TYPES.forEach(function(t){ %>
+        <option value="<%= t[0] %>" <%= (m.type || 'crypto') === t[0] ? 'selected' : '' %>><%= t[1] %></option>
+      <% }) %>
+    </select></div>
+</div>
+
+<div class="field">
+  <div class="row" style="gap:16px;flex-wrap:wrap">
+    <label class="row" style="gap:6px;align-items:center"><input type="checkbox" name="enabled" <%= !m.id || m.enabled ? 'checked' : '' %>> Active</label>
+    <label class="row" style="gap:6px;align-items:center"><input type="checkbox" name="depositEnabled" <%= !m.id || m.depositEnabled ? 'checked' : '' %>> Deposits</label>
+    <label class="row" style="gap:6px;align-items:center"><input type="checkbox" name="withdrawalEnabled" <%= !m.id || m.withdrawalEnabled ? 'checked' : '' %>> Withdrawals</label>
+  </div>
+</div>
+
+<div class="row2">
+  <div class="field"><label>Min deposit (USD)</label>
+    <input class="input num" name="minDeposit" type="number" min="0" step="0.01" value="<%= m.minDeposit !== undefined ? m.minDeposit : '10' %>"></div>
+  <div class="field"><label>Max deposit (USD, blank = none)</label>
+    <input class="input num" name="maxDeposit" type="number" min="0" step="0.01" value="<%= m.maxDeposit ?? '' %>"></div>
+</div>
+<div class="row2">
+  <div class="field"><label>Min withdrawal (USD)</label>
+    <input class="input num" name="minWithdrawal" type="number" min="0" step="0.01" value="<%= m.minWithdrawal !== undefined ? m.minWithdrawal : '10' %>"></div>
+  <div class="field"><label>Max withdrawal (USD, blank = none)</label>
+    <input class="input num" name="maxWithdrawal" type="number" min="0" step="0.01" value="<%= m.maxWithdrawal ?? '' %>"></div>
+</div>
+<div class="row2">
+  <div class="field"><label>Fixed withdrawal fee (USD)</label>
+    <input class="input num" name="feeFixed" type="number" min="0" step="0.01" value="<%= m.feeFixed !== undefined ? m.feeFixed : '0' %>"></div>
+  <div class="field"><label>Percentage withdrawal fee (%)</label>
+    <input class="input num" name="feePercent" type="number" min="0" max="100" step="0.01" value="<%= m.feePercent !== undefined ? m.feePercent : '0' %>"></div>
+</div>
+
+<div class="field"><label>Deposit instructions (address / where to send)</label>
+  <textarea class="input" name="instructions" rows="2" placeholder="Send USDC (ERC20) to 0x71C…"><%= m.instructions || '' %></textarea></div>
+<div class="field"><label>Withdrawal instructions (shown to client)</label>
+  <textarea class="input" name="withdrawalInstructions" rows="2" placeholder="Processed within 24 hours to the address you provide."><%= m.withdrawalInstructions || '' %></textarea></div>
+
+<div class="row2">
+  <div class="field"><label>Deposit required fields (JSON)</label>
+    <textarea class="input" name="depositFields" rows="3" style="font-family:var(--f-mono);font-size:12px" placeholder="[{&quot;name&quot;:&quot;txnHash&quot;,&quot;label&quot;:&quot;Transaction hash&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:false}]"><%= JSON.stringify(m.depositFields || []) %></textarea>
+    <div class="hint">Fields clients must fill on the deposit form.</div></div>
+  <div class="field"><label>Withdrawal required fields (JSON)</label>
+    <textarea class="input" name="withdrawalFields" rows="3" style="font-family:var(--f-mono);font-size:12px" placeholder="[{&quot;name&quot;:&quot;address&quot;,&quot;label&quot;:&quot;Wallet address&quot;,&quot;type&quot;:&quot;text&quot;,&quot;required&quot;:true}]"><%= JSON.stringify(m.withdrawalFields || []) %></textarea>
+    <div class="hint">Destination fields: wallet address, bank name, account number…</div></div>
+</div>
+
+<div class="field"><label>Sort order</label>
+  <input class="input num" name="sortOrder" type="number" value="<%= m.sortOrder ?? 0 %>" style="max-width:120px"></div>

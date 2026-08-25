@@ -8,39 +8,55 @@
 </div>
 
 <div class="tabs">
-  <% ['pending','approved','rejected','all'].forEach(function(s){ %>
+  <% const statuses = it.type === 'withdrawal' ? ['pending','processing','approved','rejected','all'] : ['pending','approved','rejected','all']; %>
+  <% statuses.forEach(function(s){ %>
     <a href="/admin/<%= it.type %>s?status=<%= s %>" <%= it.status===s?'aria-current=page':'' %>><%= s.replace(/^./,x=>x.toUpperCase()) %></a>
   <% }) %>
 </div>
 
 <div class="table-wrap">
   <table>
-    <thead><tr><th>Date</th><th>Client</th><th>Method</th><th>Destination</th><th class="num">Amount</th><% if (it.type === 'deposit') { %><th>Receipt</th><% } %><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Date</th><th>Client</th><th>Method</th><th>Destination</th><th class="num">Amount</th><% if (it.type === 'withdrawal') { %><th class="num">Fee</th><th class="num">Net</th><% } %><% if (it.type === 'deposit') { %><th>Receipt</th><% } %><th>Status</th><th></th></tr></thead>
     <tbody>
       <% if (!it.rows.length) { %>
-        <tr><td colspan="<%= it.type === 'deposit' ? 8 : 7 %>"><div class="empty"><h4>Nothing in this view</h4></div></td></tr>
+        <tr><td colspan="<%= it.type === 'deposit' ? 8 : 9 %>"><div class="empty"><h4>Nothing in this view</h4></div></td></tr>
       <% } %>
       <% it.rows.forEach(function(t){ %>
         <tr>
           <td class="small muted"><%= it.dt(t.created_at) %></td>
-          <td><b><%= t.first_name %> <%= t.last_name %></b><div class="small muted"><%= t.email %></div></td>
-          <td class="small"><%= (it.methodNames && it.methodNames[t.method]) || t.method.replace(/_/g,' ').toUpperCase() %></td>
-          <td class="small num" style="max-width:170px;overflow:hidden;text-overflow:ellipsis"><%= t.address || '—' %></td>
+          <td><b><a class="go" href="/admin/users/<%= t.user_id %>"><%= t.first_name %> <%= t.last_name %></a></b><div class="small muted"><%= t.email %></div></td>
+          <td class="small"><%= t.method_name || (it.methodNames && it.methodNames[t.method]) || t.method.replace(/_/g,' ').toUpperCase() %></td>
+          <td class="small num" style="max-width:170px;overflow:hidden;text-overflow:ellipsis">
+            <%= t.address || '—' %>
+            <% if (t.details && Object.keys(t.details).length) { %>
+              <div class="small muted"><% Object.entries(t.details).forEach(function(kv){ if (kv[0] !== 'address' && kv[1]) { %><%= kv[0] %>: <%= kv[1] %> · <% } }) %></div>
+            <% } %>
+          </td>
           <td class="num"><%= it.usd(t.amount) %></td>
+          <% if (it.type === 'withdrawal') { %>
+            <td class="num muted"><%= it.usd(t.fee) %></td>
+            <td class="num"><%= t.net_amount ? it.usd(t.net_amount) : it.usd(t.amount) %></td>
+          <% } %>
           <% if (it.type === 'deposit') { %>
             <td class="small"><% if (t.proof_url) { %><a href="<%= t.proof_url %>" target="_blank" rel="noopener" class="go">View receipt</a><% } else { %><span class="muted">—</span><% } %></td>
           <% } %>
           <td><span class="badge <%= t.status==='approved'?'badge-live':t.status==='rejected'?'badge-warn':'badge-idle' %>"><%= t.status %></span></td>
           <td style="text-align:right;white-space:nowrap">
-            <% if (t.status === 'pending') { %>
+            <% if (['pending','processing'].includes(t.status)) { %>
+              <% if (it.type === 'withdrawal' && t.status === 'pending') { %>
+                <form method="post" action="/admin/transactions/<%= t.id %>/process" style="display:inline">
+                  <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                  <button class="btn btn-quiet btn-sm">Processing</button>
+                </form>
+              <% } %>
               <form method="post" action="/admin/transactions/<%= t.id %>/approve" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-                <button class="btn btn-primary btn-sm" data-confirm="Approve <%= it.usd(t.amount) %> for <%= t.first_name %>?">Approve</button>
+                <button class="btn btn-primary btn-sm" data-confirm="Approve <%= it.usd(t.amount) %> for <%= t.first_name %>?"><%= it.type === 'withdrawal' ? 'Complete' : 'Approve' %></button>
               </form>
               <form method="post" action="/admin/transactions/<%= t.id %>/reject" style="display:inline">
                 <input type="hidden" name="_csrf" value="<%= it.csrf %>">
                 <input type="hidden" name="note" value="Declined after review">
-                <button class="btn btn-danger btn-sm" data-confirm="Decline this request?">Decline</button>
+                <button class="btn btn-danger btn-sm" data-confirm="Decline this request? <%= it.type === 'withdrawal' ? 'Held funds return to the client.' : '' %>">Decline</button>
               </form>
             <% } else { %>
               <span class="small muted"><%= t.admin_note || '—' %></span>

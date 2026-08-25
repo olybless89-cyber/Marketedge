@@ -1,14 +1,153 @@
-<div class="page-head"><div><h1>Edit user</h1>
-  <p class="small" style="margin:4px 0 0"><%= it.u.first_name %> <%= it.u.last_name %> · ID <%= it.u.id %></p></div>
-  <div class="row" style="gap:8px">
-    <a class="btn btn-primary btn-sm" href="/admin/mail/compose?to=<%= encodeURIComponent(it.u.email) %>">Email this user</a>
+<div class="page-head"><div><h1><%= it.u.first_name %> <%= it.u.last_name %></h1>
+  <p class="small" style="margin:4px 0 0"><%= it.u.email %> · ID <%= it.u.id %> ·
+    <span class="badge <%= it.u.status==='active'?'badge-live':'badge-warn' %>"><%= it.u.status %></span>
+    <span class="badge <%= it.u.kyc_status==='verified'?'badge-live':it.u.kyc_status==='pending'?'badge-idle':'badge-warn' %>">KYC: <%= it.u.kyc_status %></span>
+  </p></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap">
+    <a class="btn btn-primary btn-sm" href="/admin/mail/compose?to=<%= encodeURIComponent(it.u.email) %>">Send email</a>
     <a class="btn btn-quiet btn-sm" href="/admin/users">Back to users</a>
   </div></div>
 
-<% if (it.ok) { %><div class="notice notice-ok">User updated.</div><% } %>
+<% if (it.ok) { %><div class="notice notice-ok"><%= it.okMsg || 'Done.' %></div><% } %>
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
-<div class="grid g2" style="max-width:1000px">
+<%/* ---- staged credit/debit confirmation ---- */%>
+<% if (it.cdConfirm) {
+     const cur = it.cdConfirm.bucket === 'main' ? it.bal.main
+       : it.cdConfirm.bucket === 'profit' ? it.bal.profit
+       : it.cdConfirm.bucket === 'bonus' ? it.bal.bonus
+       : it.cdConfirm.bucket === 'ref_bonus' ? it.bal.refBonus
+       : it.bal.deposit;
+     const next = it.cdConfirm.direction === 'credit' ? cur + it.cdConfirm.amount : cur - it.cdConfirm.amount; %>
+  <div class="notice notice-warn" style="display:block">
+    <b>Confirm:</b> You are about to <b><%= it.cdConfirm.direction.toUpperCase() %>
+    <%= it.usd(it.cdConfirm.amount) %></b>
+    <%= it.cdConfirm.direction === 'credit' ? 'to' : 'from' %>
+    <b><%= it.u.first_name %> <%= it.u.last_name %></b>'s
+    <b><%= it.buckets[it.cdConfirm.bucket] %></b>.<br>
+    <span class="small">Current: <%= it.usd(cur) %> → New: <%= it.usd(next) %> · Reason: <%= it.cdConfirm.reason %></span>
+    <div class="row" style="gap:8px;margin-top:10px">
+      <form method="post" action="/admin/users/<%= it.u.id %>/credit-debit">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <input type="hidden" name="bucket" value="<%= it.cdConfirm.bucket %>">
+        <input type="hidden" name="direction" value="<%= it.cdConfirm.direction %>">
+        <input type="hidden" name="amount" value="<%= it.cdConfirm.amount %>">
+        <input type="hidden" name="reason" value="<%= it.cdConfirm.reason %>">
+        <input type="hidden" name="confirm" value="1">
+        <button class="btn btn-primary btn-sm">Confirm <%= it.cdConfirm.direction %></button>
+      </form>
+      <a class="btn btn-ghost btn-sm" href="/admin/users/<%= it.u.id %>">Cancel</a>
+    </div>
+  </div>
+<% } %>
+
+<%/* ---- financial summary ---- */%>
+<div class="grid g4" style="margin-bottom:20px">
+  <div class="card stat"><div class="stat-k">Account Balance</div><div class="stat-v num"><%= it.usd(it.bal.main) %></div></div>
+  <div class="card stat"><div class="stat-k">Profit</div><div class="stat-v num"><%= it.usd(it.bal.profit) %></div></div>
+  <div class="card stat"><div class="stat-k">Bonus</div><div class="stat-v num"><%= it.usd(it.bal.bonus) %></div></div>
+  <div class="card stat"><div class="stat-k">Referral Bonus</div><div class="stat-v num"><%= it.usd(it.bal.refBonus) %></div></div>
+  <div class="card stat"><div class="stat-k">Deposit Credits</div><div class="stat-v num"><%= it.usd(it.bal.deposit) %></div></div>
+</div>
+<div class="grid g4" style="margin-bottom:20px">
+  <div class="card stat"><div class="stat-k">Available</div><div class="stat-v num"><%= it.usd(it.bal.available) %></div></div>
+  <div class="card stat"><div class="stat-k">Deposited (approved)</div><div class="stat-v num"><%= it.usd(it.pf.deposited) %></div></div>
+  <div class="card stat"><div class="stat-k">Withdrawn (approved)</div><div class="stat-v num"><%= it.usd(it.pf.withdrawn) %></div></div>
+  <div class="card stat"><div class="stat-k">Active plans</div><div class="stat-v num"><%= it.pf.activePlans %> · <%= it.usd(it.pf.staked) %></div></div>
+  <div class="card stat"><div class="stat-k">Closed trades</div><div class="stat-v num"><%= it.pf.closedTrades %> · <%= it.usd(it.pf.realised) %></div></div>
+</div>
+
+<div class="grid g2">
+  <div class="card">
+    <div class="card-head"><h3>Actions</h3></div>
+
+    <details class="action-box">
+      <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Credit / Debit account</b><span class="muted">▾</span></summary>
+      <form method="post" action="/admin/users/<%= it.u.id %>/credit-debit" style="margin-top:8px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label>Amount (USD)</label>
+          <input class="input num" name="amount" type="number" min="0.01" step="0.01" required placeholder="500.00"></div>
+        <div class="field"><label>Where to credit/debit</label>
+          <select class="input" name="bucket" required>
+            <% Object.entries(it.buckets).forEach(function(kv){ %>
+              <option value="<%= kv[0] %>"><%= kv[1] %></option>
+            <% }) %>
+          </select></div>
+        <div class="field"><label>Operation</label>
+          <select class="input" name="direction" required>
+            <option value="credit">Credit (add funds)</option>
+            <option value="debit">Debit (remove funds)</option>
+          </select></div>
+        <div class="field"><label>Reason (shown to client)</label>
+          <input class="input" name="reason" required placeholder="Goodwill credit, ticket #1204"></div>
+        <button class="btn btn-primary btn-block btn-sm">Review &amp; confirm</button>
+      </form>
+    </details>
+
+    <details class="action-box">
+      <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Set withdrawal code</b><span class="muted">▾</span></summary>
+      <form method="post" action="/admin/users/<%= it.u.id %>/withdrawal-code" style="margin-top:8px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label>Code (4–32 chars)</label>
+          <input class="input" name="code" minlength="4" maxlength="32" placeholder="<%= it.u.has_withdrawal_code ? 'Code is set — enter a new one to replace' : 'e.g. WD-8F42' %>"></div>
+        <div class="row" style="gap:8px">
+          <button class="btn btn-quiet btn-sm" style="flex:1">Set code</button>
+          <% if (it.u.has_withdrawal_code) { %>
+            <button class="btn btn-ghost btn-sm" name="_action" value="clear" data-confirm="Remove the withdrawal code for <%= it.u.first_name %>?">Remove</button>
+          <% } %>
+        </div>
+        <div class="hint">Stored hashed. The client must enter it to withdraw. Share the code securely.</div>
+      </form>
+    </details>
+
+    <details class="action-box">
+      <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Notify client dashboard</b><span class="muted">▾</span></summary>
+      <form method="post" action="/admin/users/<%= it.u.id %>/notify" style="margin-top:8px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label>Title</label><input class="input" name="title" maxlength="160" required placeholder="Your payout is on its way"></div>
+        <div class="field"><label>Message</label><textarea class="input" name="body" rows="2" maxlength="1000" required></textarea></div>
+        <button class="btn btn-quiet btn-block btn-sm">Post notification</button>
+      </form>
+    </details>
+
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
+      <form method="post" action="/admin/users/<%= it.u.id %>/impersonate">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <button class="btn btn-quiet btn-sm" data-confirm="Sign in as <%= it.u.first_name %>? You'll see their dashboard as they do.">Login as user</button>
+      </form>
+      <form method="post" action="/admin/users/<%= it.u.id %>/reset-password">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <button class="btn btn-quiet btn-sm" data-confirm="Reset <%= it.u.first_name %>'s password and sign them out everywhere?">Reset password</button>
+      </form>
+      <form method="post" action="/admin/users/<%= it.u.id %>/status">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <input type="hidden" name="status" value="<%= it.u.status==='active'?'suspended':'active' %>">
+        <button class="btn <%= it.u.status==='active'?'btn-danger':'btn-quiet' %> btn-sm"
+                data-confirm="<%= it.u.status==='active'?'Suspend':'Reactivate' %> <%= it.u.first_name %>?">
+          <%= it.u.status==='active'?'Ban / suspend':'Reactivate' %>
+        </button>
+      </form>
+    </div>
+
+    <details class="action-box" style="margin-top:14px">
+      <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Clear account</b><span class="muted">▾</span></summary>
+      <form method="post" action="/admin/users/<%= it.u.id %>/clear-account" style="margin-top:8px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label>Reason (required, audit-logged)</label>
+          <input class="input" name="reason" required placeholder="Duplicate account cleanup"></div>
+        <button class="btn btn-danger btn-block btn-sm"
+                data-confirm="Clear ALL of <%= it.u.first_name %>'s balances to zero? Ledger history is kept and audit-logged.">Clear account (zero all balances)</button>
+        <div class="hint">Zeros every bucket with compensating ledger rows — financial history is never deleted.</div>
+      </form>
+    </details>
+
+    <form method="post" action="/admin/users/<%= it.u.id %>/delete" style="margin-top:10px">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <button class="btn btn-ghost btn-sm"
+              data-confirm="Permanently delete <%= it.u.first_name %>'s account? Only possible when the balance is zero and no ledger history exists.">Delete user</button>
+    </form>
+  </div>
+
   <div class="card">
     <div class="card-head"><h3>Profile</h3></div>
     <form method="post" action="/admin/users/<%= it.u.id %>/edit">
@@ -37,34 +176,46 @@
       <button class="btn btn-primary btn-block btn-sm">Save changes</button>
     </form>
   </div>
+</div>
 
-  <div class="card">
-    <div class="card-head"><h3>Account summary</h3></div>
-    <dl class="kv">
-      <dt>Balance</dt><dd style="font-family:var(--ff-mono)"><%= it.usd(it.u.balance) %></dd>
-      <dt>KYC</dt><dd><span class="badge <%= it.u.kyc_status==='verified'?'badge-live':it.u.kyc_status==='pending'?'badge-idle':'badge-warn' %>"><%= it.u.kyc_status %></span></dd>
-      <dt>Referral code</dt><dd style="font-family:var(--ff-mono)"><%= it.u.referral_code || '—' %></dd>
-      <dt>Joined</dt><dd><%= it.dt(it.u.created_at) %></dd>
-    </dl>
+<div class="card" style="margin-top:20px">
+  <div class="card-head"><h3>Recent deposits &amp; withdrawals</h3></div>
+  <div class="table-wrap" style="border:0">
+    <table>
+      <thead><tr><th>Date</th><th>Type</th><th>Method</th><th class="num">Amount</th><th class="num">Fee</th><th class="num">Net</th><th>Status</th></tr></thead>
+      <tbody>
+        <% if (!it.recentTx.length) { %><tr><td colspan="7" class="muted small">No transactions yet.</td></tr><% } %>
+        <% it.recentTx.forEach(function(t){ %>
+          <tr>
+            <td class="small muted"><%= it.dt(t.created_at) %></td>
+            <td class="small"><%= t.type %></td>
+            <td class="small"><%= t.method_name || t.method %></td>
+            <td class="num"><%= it.usd(t.amount) %></td>
+            <td class="num muted"><%= it.usd(t.fee) %></td>
+            <td class="num"><%= t.net_amount ? it.usd(t.net_amount) : '—' %></td>
+            <td><span class="badge <%= t.status==='approved'?'badge-live':t.status==='rejected'?'badge-warn':'badge-idle' %>"><%= t.status %></span></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-    <div class="card-head" style="margin:0 -20px -20px;border-top:1px solid var(--line-soft)"><h3>Balance adjustment</h3></div>
-    <p class="small" style="margin:8px 0 12px">Writes a ledger line with your email attached — visible in the client's statement.</p>
-    <form method="post" action="/admin/users/<%= it.u.id %>/adjust">
-      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-      <div class="field"><label for="am">Amount (+/−)</label><input class="input num" id="am" name="amount" type="number" step="0.01" required></div>
-      <div class="field"><label for="mm">Reason</label><input class="input" id="mm" name="memo" required placeholder="Goodwill credit, ticket #1204"></div>
-      <button class="btn btn-quiet btn-block btn-sm">Post adjustment</button>
-    </form>
-
-    <div style="margin-top:14px">
-      <form method="post" action="/admin/users/<%= it.u.id %>/status">
-        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-        <input type="hidden" name="status" value="<%= it.u.status==='active'?'suspended':'active' %>">
-        <button class="btn <%= it.u.status==='active'?'btn-danger':'btn-quiet' %> btn-block btn-sm"
-                data-confirm="<%= it.u.status==='active'?'Suspend':'Reactivate' %> <%= it.u.first_name %>?">
-          <%= it.u.status==='active'?'Suspend account':'Reactivate account' %>
-        </button>
-      </form>
-    </div>
+<div class="card" style="margin-top:20px">
+  <div class="card-head"><h3>Login activity</h3></div>
+  <div class="table-wrap" style="border:0">
+    <table>
+      <thead><tr><th>When</th><th>IP</th><th>Device</th></tr></thead>
+      <tbody>
+        <% if (!it.sessions.length) { %><tr><td colspan="3" class="muted small">No sessions on record.</td></tr><% } %>
+        <% it.sessions.forEach(function(s){ %>
+          <tr>
+            <td class="small muted"><%= it.dt(s.created_at) %></td>
+            <td class="small" style="font-family:var(--f-mono)"><%= s.ip || '—' %></td>
+            <td class="small muted"><%= (s.user_agent || '—').slice(0, 80) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
   </div>
 </div>

@@ -10,7 +10,7 @@ import { requireUser, hash, verify } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
 import { mailPlanActivated, mailDepositReceived, mailWithdrawalRequested } from '../lib/mail.js';
-import { getWallets, listPaymentMethods } from '../lib/settings.js';
+import { getWallets, listPaymentMethods, getPaymentMethod, getSiteConfig } from '../lib/settings.js';
 import { saveReceipt } from '../lib/uploads.js';
 import * as fmt from '../lib/money.js';
 
@@ -75,13 +75,23 @@ dash.get('/dashboard/statement', async (c) => {
 });
 
 /* ---------------- deposit ---------------- */
+const fieldErrors = (fields, b) => {
+  for (const f of fields || []) {
+    if (f.required && !String(b['f_' + f.name] || '').trim())
+      return `${f.label} is required.`;
+  }
+  return null;
+};
+const collectFields = (fields, b) =>
+  Object.fromEntries((fields || []).map((f) => [f.name, String(b['f_' + f.name] || '').trim().slice(0, 500)]));
+
 dash.get('/dashboard/deposit', async (c) => {
   const u = c.get('user');
   const [rows, methods] = await Promise.all([
     db.select().from(transactions)
       .where(and(eq(transactions.userId, u.id), eq(transactions.type, 'deposit')))
       .orderBy(desc(transactions.createdAt)).limit(25),
-    listPaymentMethods(true),
+    listPaymentMethods(true, 'deposit'),
   ]);
   const methodNames = Object.fromEntries(methods.map((m) => [m.slug, m.name]));
   return shell(c, 'dashboard/deposit', {
@@ -92,9 +102,19 @@ dash.get('/dashboard/deposit', async (c) => {
 dash.post('/dashboard/deposit', async (c) => {
   const u = c.get('user');
   const b = c.get('body');
-  const amount = Number(b.amount);
+  const amount = Math.round(Number(b.amount) * 100) / 100;
   const back = (msg) => c.redirect('/dashboard/deposit?e=' + encodeURIComponent(msg));
   if (!(amount > 0)) return back('Enter an amount greater than zero.');
+
+  const method = await getPaymentMethod(String(b.method || ''));
+  if (!method || !method.enabled || method.archived || !method.depositEnabled)
+    return back('That payment method is currently unavailable.');
+  if (amount < Number(method.minDeposit))
+    return back(`Minimum deposit for ${method.name} is ${fmt.usd(method.minDeposit)}.`);
+  if (method.maxDeposit && amount > Number(method.maxDeposit))
+    return back(`Maximum deposit for ${method.name} is ${fmt.usd(method.maxDeposit)}.`);
+  const ferr = fieldErrors(method.depositFields, b);
+  if (ferr) return back(ferr);
 
   // A receipt is required — admin can't verify a deposit without proof.
   let proofUrl;
@@ -106,19 +126,23 @@ dash.post('/dashboard/deposit', async (c) => {
   if (!proofUrl) return back('Attach your payment receipt so admin can confirm the transfer.');
 
   const [t] = await db.insert(transactions).values({
-    userId: u.id, type: 'deposit', method: String(b.method || 'usdt_trc20'),
+    userId: u.id, type: 'deposit', method: method.slug, methodName: method.name,
     amount: String(amount), status: 'pending', proofUrl,
+    details: collectFields(method.depositFields, b),
   }).returning();
   // No ledger row yet — funds only exist once an admin approves.
   await db.insert(notifications).values({
     userId: u.id, kind: 'info', title: 'Deposit submitted',
-    body: `We received your ${fmt.usd(amount)} deposit request with a receipt. It posts to your balance once admin confirms the transfer.`,
+    body: `We received your ${fmt.usd(amount)} deposit request via ${method.name}. It posts to your balance once admin confirms the transfer.`,
   });
   mailDepositReceived(u, t).catch((e) => console.error('[mail] deposit received failed:', e.message));
   return c.redirect('/dashboard/deposit?sent=1');
 });
 
 /* ---------------- withdraw ---------------- */
+const cents = (v) => Math.round(Number(v) * 100);          // financial math in integer cents
+const fromCents = (v) => v / 100;
+
 dash.get('/dashboard/withdraw', async (c) => {
   const u = c.get('user');
   const [rows, bal, methods] = await Promise.all([
@@ -126,29 +150,86 @@ dash.get('/dashboard/withdraw', async (c) => {
       .where(and(eq(transactions.userId, u.id), eq(transactions.type, 'withdrawal')))
       .orderBy(desc(transactions.createdAt)).limit(25),
     balance(u.id),
-    listPaymentMethods(true),
+    listPaymentMethods(true, 'withdrawal'),
   ]);
-  return shell(c, 'dashboard/withdraw', { rows, bal, methods, sent: c.req.query('sent'), error: c.req.query('e') }, 'Withdraw');
+  return shell(c, 'dashboard/withdraw', {
+    rows, bal, methods,
+    codeRequired: !!u.withdrawalCodeHash,
+    sent: c.req.query('sent'), error: c.req.query('e'),
+  }, 'Withdraw');
 });
 
+/* Step 1: validate and render the confirmation summary. Step 2: confirm=1
+   executes. The hold is written only in step 2. */
 dash.post('/dashboard/withdraw', async (c) => {
   const u = c.get('user');
   const b = c.get('body');
-  const amount = Number(b.amount);
-  const bal = await balance(u.id);
+  const back = (msg) => c.redirect('/dashboard/withdraw?e=' + encodeURIComponent(msg));
 
-  if (!(amount > 0)) return c.redirect('/dashboard/withdraw?e=' + encodeURIComponent('Enter an amount greater than zero.'));
-  if (amount > bal.available)
-    return c.redirect('/dashboard/withdraw?e=' + encodeURIComponent(`You can withdraw up to ${fmt.usd(bal.available)} right now.`));
+  const amountC = cents(b.amount);
+  if (!(amountC > 0)) return back('Enter an amount greater than zero.');
+
+  if (u.status !== 'active')
+    return back('Your account is currently disabled. Contact support.');
+
+  const method = await getPaymentMethod(String(b.method || ''));
+  if (!method || !method.enabled || method.archived || !method.withdrawalEnabled)
+    return back('Withdrawal method is currently unavailable.');
+
+  const minC = cents(method.minWithdrawal);
+  if (amountC < minC)
+    return back(`Minimum withdrawal for ${method.name} is ${fmt.usd(method.minWithdrawal)}.`);
+  if (method.maxWithdrawal && amountC > cents(method.maxWithdrawal))
+    return back(`Maximum withdrawal for ${method.name} is ${fmt.usd(method.maxWithdrawal)}.`);
+
+  const ferr = fieldErrors(method.withdrawalFields, b);
+  if (ferr) return back(ferr);
+
+  // Fee: fixed + percentage of the request. Integer cents throughout.
+  const feeC = cents(method.feeFixed) + Math.round(amountC * Number(method.feePercent) / 100);
+  const netC = amountC - feeC;
+  if (netC <= 0) return back('The withdrawal fee exceeds the amount.');
+
+  const site = await getSiteConfig();
+  if (site.withdrawalKycRequired && u.kycStatus !== 'verified')
+    return back('Please complete your KYC verification before withdrawing.');
+
+  if (u.withdrawalCodeHash) {
+    if (!b.withdrawalCode) return back('Enter your withdrawal code.');
+    if (!await verify(u.withdrawalCodeHash, String(b.withdrawalCode)))
+      return back('That withdrawal code is incorrect.');
+  }
+
+  const bal = await balance(u.id);
+  if (fromCents(amountC) > bal.available)
+    return back('Insufficient available balance.');
+
+  const details = collectFields(method.withdrawalFields, b);
+  // Backward compat: keep the primary destination in transactions.address.
+  const address = details.address || String(b.address || '').slice(0, 400);
+
+  if (b.confirm !== '1') {
+    return shell(c, 'dashboard/withdraw-confirm', {
+      method, bal,
+      amount: fromCents(amountC), fee: fromCents(feeC), net: fromCents(netC),
+      codeRequired: !!u.withdrawalCodeHash,
+      fields: b,
+    }, 'Confirm withdrawal');
+  }
 
   const [t] = await db.insert(transactions).values({
-    userId: u.id, type: 'withdrawal', method: String(b.method || 'usdt_trc20'),
-    amount: String(amount), address: String(b.address || ''), status: 'pending',
+    userId: u.id, type: 'withdrawal', method: method.slug, methodName: method.name,
+    amount: String(fromCents(amountC)), fee: String(fromCents(feeC)),
+    netAmount: String(fromCents(netC)), address, details, status: 'pending',
   }).returning();
   // Hold the funds immediately so they can't be spent twice while pending.
   await db.insert(ledger).values({
-    userId: u.id, account: 'main', kind: 'withdrawal_hold', amount: String(-amount),
-    refType: 'withdrawal', memo: 'Held pending withdrawal review',
+    userId: u.id, account: 'main', kind: 'withdrawal_hold', amount: String(-fromCents(amountC)),
+    refType: 'withdrawal', refId: t.id, memo: `Held pending withdrawal review (${method.name})`,
+  });
+  await db.insert(notifications).values({
+    userId: u.id, kind: 'info', title: 'Withdrawal submitted',
+    body: `Your ${fmt.usd(fromCents(amountC))} withdrawal via ${method.name} is under review. You will receive ${fmt.usd(fromCents(netC))} after the ${fmt.usd(fromCents(feeC))} fee.`,
   });
   mailWithdrawalRequested(u, t).catch((e) => console.error('[mail] withdrawal requested failed:', e.message));
   return c.redirect('/dashboard/withdraw?sent=1');
