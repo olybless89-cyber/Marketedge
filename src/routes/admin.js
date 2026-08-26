@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
-import crypto from 'node:crypto';
 import { db, sql } from '../db/client.js';
 import {
   users, transactions, ledger, plans as plansT, traders as tradersT,
@@ -424,23 +423,26 @@ admin.post('/admin/users/:id/credit-debit', async (c) => {
 /* ---------------- other user actions ---------------- */
 admin.post('/admin/users/:id/reset-password', async (c) => {
   const id = Number(c.req.param('id'));
+  const b = c.get('body');
   const me = c.get('user');
   const [u] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   if (!u) return c.notFound();
-  const temp = crypto.randomBytes(5).toString('hex');   // 10 hex chars
-  await db.update(users).set({ passwordHash: await hash(temp) }).where(eq(users.id, id));
+  const pw = String(b.password || '');
+  if (pw.length < 8)
+    return c.redirect(`/admin/users/${id}?e=` + encodeURIComponent('Enter a new password of at least 8 characters.'));
+  await db.update(users).set({ passwordHash: await hash(pw) }).where(eq(users.id, id));
   await db.delete(sessions).where(eq(sessions.userId, id));   // force re-login
   await sql`insert into audit_log (admin_id, user_id, action, reason, ip)
     values (${me.id}, ${id}, 'reset_password', ${'Password reset by admin'},
             ${c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || null})`;
   await db.insert(notifications).values({
-    userId: id, kind: 'warn', title: 'Password reset',
-    body: 'Your password was reset by support. Sign in with the new password you were given.',
+    userId: id, kind: 'warn', title: 'Password changed',
+    body: 'Your password was changed by support. If you did not expect this, contact support immediately.',
   });
-  mailAdminMessage(u, 'Your password was reset',
-    `Your ${process.env.BRAND_NAME || 'Marketedge'} password was reset by support.\n\nNew password: ${temp}\n\nSign in and change it immediately under Account → Password.`)
+  mailAdminMessage(u, 'Your password was changed',
+    `Your ${process.env.BRAND_NAME || 'Marketedge'} password was changed by support.\n\nIf you did not expect this change, contact support immediately.`)
     .catch((e) => console.error('[mail] reset pw failed:', e.message));
-  return c.redirect(`/admin/users/${id}?ok=1&m=` + encodeURIComponent(`Password reset. New password (share securely, shown once): ${temp}`));
+  return c.redirect(`/admin/users/${id}?ok=1&m=` + encodeURIComponent('Password updated and the user was signed out everywhere.'));
 });
 
 admin.post('/admin/users/:id/withdrawal-code', async (c) => {

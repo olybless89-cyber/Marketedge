@@ -110,14 +110,20 @@
       </form>
     </details>
 
+    <details class="action-box" style="margin-top:14px">
+      <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Reset password</b><span class="muted">▾</span></summary>
+      <form method="post" action="/admin/users/<%= it.u.id %>/reset-password" style="margin-top:8px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label>New password</label><input class="input" type="password" name="password" minlength="8" required autocomplete="new-password"></div>
+        <p class="small muted">Sets the password immediately and signs the user out of all sessions. It is not emailed — share it with the client yourself.</p>
+        <button class="btn btn-quiet btn-block btn-sm" data-confirm="Set a new password for <%= it.u.first_name %> and sign them out everywhere?">Set new password</button>
+      </form>
+    </details>
+
     <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:14px">
       <form method="post" action="/admin/users/<%= it.u.id %>/impersonate">
         <input type="hidden" name="_csrf" value="<%= it.csrf %>">
         <button class="btn btn-quiet btn-sm" data-confirm="Sign in as <%= it.u.first_name %>? You'll see their dashboard as they do.">Login as user</button>
-      </form>
-      <form method="post" action="/admin/users/<%= it.u.id %>/reset-password">
-        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-        <button class="btn btn-quiet btn-sm" data-confirm="Reset <%= it.u.first_name %>'s password and sign them out everywhere?">Reset password</button>
       </form>
       <form method="post" action="/admin/users/<%= it.u.id %>/status">
         <input type="hidden" name="_csrf" value="<%= it.csrf %>">
