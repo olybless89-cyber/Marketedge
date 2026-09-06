@@ -408,14 +408,27 @@ dash.post('/dashboard/kyc', async (c) => {
     .where(and(eq(kycSubmissions.userId, u.id), eq(kycSubmissions.status, 'pending'))).limit(1);
   if (pending) return back('A submission is already under review. We\'ll notify you when it\'s done.');
 
+  // Uploads are required for the front of the document and the selfie - admin
+  // can't verify identity without them. Back is optional for passports.
+  // Each file can also be supplied as a hosted link via the fallback URL fields.
+  let frontUrl, backUrl, selfieUrl;
+  try {
+  frontUrl = await saveReceipt(b.front, { link: b.frontUrl });
+  backUrl = await saveReceipt(b.back, { link: b.backUrl });
+  selfieUrl = await saveReceipt(b.selfie, { link: b.selfieUrl });
+  } catch (e) {
+    return back(e.message);
+  }
+  if (!frontUrl || !selfieUrl) return back('Upload the front of your document and a selfie.');
+
   await db.insert(kycSubmissions).values({
     userId: u.id,
     documentType,
     documentNumber: String(b.documentNumber || '').trim() || null,
     country: String(b.country || u.country || '').trim() || null,
-    frontUrl: String(b.frontUrl || '').trim() || null,
-    backUrl: String(b.backUrl || '').trim() || null,
-    selfieUrl: String(b.selfieUrl || '').trim() || null,
+    frontUrl,
+    backUrl,
+    selfieUrl,
   });
   await db.update(users).set({ kycStatus: 'pending' }).where(eq(users.id, u.id));
   await db.insert(notifications).values({

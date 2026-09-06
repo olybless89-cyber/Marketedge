@@ -17,7 +17,7 @@
         <p class="small">Your last submission is being reviewed. You'll get a notification when it's done.</p></div>
     <% } else { %>
       <p class="small" style="margin:0 0 14px">Verify your identity to unlock withdrawals and higher limits. Review usually takes under 24 hours.</p>
-      <form method="post" action="/dashboard/kyc">
+      <form method="post" action="/dashboard/kyc" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<%= it.csrf %>">
         <div class="field"><label for="dt">Document type</label>
           <select class="input" id="dt" name="documentType" required>
@@ -30,10 +30,12 @@
           <div class="field"><label for="dn">Document number</label><input class="input" id="dn" name="documentNumber" placeholder="A1234567B"></div>
           <div class="field"><label for="co">Issuing country</label><input class="input" id="co" name="country" value="<%= it.user.country || '' %>" placeholder="Nigeria"></div>
         </div>
-        <div class="field"><label for="fu">Front of document (link)</label><input class="input" id="fu" name="frontUrl" placeholder="https://..."></div>
-        <div class="field"><label for="bu">Back of document (link)</label><input class="input" id="bu" name="backUrl" placeholder="https://..."></div>
-        <div class="field"><label for="su">Selfie holding document (link)</label><input class="input" id="su" name="selfieUrl" placeholder="https://...">
-          <div class="hint">Paste a link to a hosted image. Make sure all four corners are visible and the text is readable.</div></div>
+        <div class="field"><label for="fu">Front of document</label><input class="input" id="fu" name="front" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf">
+          <div class="hint">Upload a clear photo/scan. Face and all corners should be visible if it's a photo of an ID card.</div></div>
+        <div class="field"><label for="bu">Back of document</label><input class="input" id="bu" name="back" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf">
+          <div class="hint">Upload the back side. Optional for passports.</div></div>
+        <div class="field"><label for="su">Selfie holding document</label><input class="input" id="su" name="selfie" type="file" accept="image/png,image/jpeg,image/webp,image/gif" capture="user">
+          <div class="hint">Take a selfie of yourself holding your document. Face and all four corners must be clearly visible. The photo is uploaded securely — you don't need a hosted link.</div></div>
         <button class="btn btn-primary btn-block">Submit for review</button>
       </form>
     <% } %>
