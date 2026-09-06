@@ -322,19 +322,39 @@ dash.post('/dashboard/copy/stop', async (c) => {
     .where(and(eq(copyFollows.id, id), eq(copyFollows.userId, u.id))).limit(1);
   if (!f || f.status !== 'active') return c.redirect('/dashboard/copy');
 
-  // Close open slices at their entry price — no phantom P&L on stop.
-  const [{ pnl }] = await sql`
-    select coalesce(sum(pnl), 0)::text pnl from copy_positions
-    where follow_id = ${id} and status = 'closed'`;
-  await sql`update copy_positions set status = 'closed', closed_at = now(), pnl = coalesce(pnl, 0)
-            where follow_id = ${id} and status = 'open'`;
-  await db.update(copyFollows).set({ status: 'stopped', stoppedAt: new Date() }).where(eq(copyFollows.id, id));
+  // Settle open slices at the current market price, then post the realised P&L
+  // to the ledger `profit` bucket so copy results flow into Profit & Loss automatically.
+  // Only the allocation principal comes back to available (no P&L double-count).)
 
+  const [{ pnl: closedPnl }] = await sql`
+    with closed as (
+      update copy_positions c
+      set status = 'closed', closed_at = now(),
+          exit_price = coalesce(p.price,c.entry_price),
+          pnl = case when c.side = 'buy'
+            then (coalesce(p.price,c.entry_price) - c.entry_price) / c.entry_price * c.size_usd
+            else (c.entry_price - coalesce(p.price,c.entry_price)) / c.entry_price * c.size_usd end
+      from prices p
+      where p.symbol = c.symbol
+        and c.follow_id = ${id}and c.status = 'open'
+      returning pnl
+    )
+    select coalesce(sum(pnl::numeric), 0)::text pnl from closed`;
+
+  const settledPnl = Number(closedPnl);
+  if (settledPnl !==0) {
+    await db.insert(ledger).values({
+      userId: u.id, account: 'profit', kind: 'copy_close', amount: String(settledPnl),
+      refType: 'copy_position', refId: id, memo: 'Copy trade settled',
+    });
+  }
+  await db.update(copyFollows).set({ status: 'stopped', stoppedAt: new Date() }).where(eq(copyFollows.id, id));
   const alloc = Number(f.allocation);
   await db.insert(ledger).values([
     { userId: u.id, account: 'locked', kind: 'copy_close', amount: String(-alloc), refType: 'follow', refId: id, memo: 'Allocation released' },
-    { userId: u.id, account: 'main',   kind: 'copy_close', amount: String(alloc + Number(pnl)), refType: 'follow', refId: id, memo: `Copy closed, P&L ${fmt.signedUsd(pnl)}` },
+    { userId: u.id, account: 'main',   kind: 'copy_close', amount: String(alloc),     refType: 'follow', refId: id, memo: 'Copy closed' },
   ]);
+
   return c.redirect('/dashboard/copy?ok=stopped');
 });
 

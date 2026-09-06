@@ -131,7 +131,20 @@ async function closeTrade(tradeId) {
       pnl = case when side = 'buy'
                  then (${t.mark}::numeric - entry_price) / entry_price * size_usd
                  else (entry_price - ${t.mark}::numeric) / entry_price * size_usd end
-    where trader_trade_id = ${tradeId} and status = 'open'`;
+    where trader_trade_id = ${tradeId}and status = 'open'`;
+
+  // Auto-post every follower's realised P&L to the ledger `profit` bucket —
+  // copy gains/losses must show up in Profit & Loss automatically, without
+  // waiting for the follower to stop copying. The allocation principal itself
+  // stays locked until the follow stops, so the equity is complete either way.
+
+  await sql`
+    insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo)
+    select user_id, 'profit', 'copy_close', pnl,
+           'copy_position', id, 'Copy trade settled: ' || round(pnl::numeric, 2)::text
+    from copy_positions
+    where trader_trade_id = ${tradeId} and status = 'closed'
+      and pnl <> 0`;
 }
 
 export async function runMarket() {
