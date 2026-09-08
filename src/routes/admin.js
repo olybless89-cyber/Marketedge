@@ -15,7 +15,7 @@ import {
 import { BUCKETS, creditDebit, clearAccount, setWithdrawalCode, clearWithdrawalCode } from '../lib/finance.js';
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
-  mailKycApproved, mailKycRejected, mailAdminMessage,
+  mailKycApproved, mailKycRejected, mailAdminMessage, mailPlanEnded, retryMail,
   getMailConfig, setMailConfig, sendTestMail,
 } from '../lib/mail.js';
 import * as fmt from '../lib/money.js';
@@ -31,6 +31,7 @@ const NAV = [
   { label: 'Money', items: [
     { href: '/admin/deposits',    label: 'Deposits',    icon: svg('<path d="M12 3v13M6 11l6 6 6-6M4 21h16"/>') },
     { href: '/admin/withdrawals', label: 'Withdrawals', icon: svg('<path d="M12 21V8M6 13l6-6 6 6M4 3h16"/>') },
+    { href: '/admin/investments', label: 'Investments', icon: svg('<path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/>') },
     { href: '/admin/plans',       label: 'Plans',       icon: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>') },
     { href: '/admin/payment-methods', label: 'Payment methods', icon: svg('<rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M16 12h4M2 10h20"/>') },
   ]},
@@ -230,6 +231,60 @@ admin.post('/admin/users/:id/adjust', async (c) => {
     body: `${fmt.signedUsd(amount)} — ${memo}`,
   });
   return c.redirect('/admin/users');
+});
+
+/* ---------------- investments (admin end control) ---------------- */
+admin.get('/admin/investments', async (c) => {
+  const status = c.req.query('status') || 'active';
+  const rows = await sql`
+    select i.*, p.name plan_name, p.roi_percent::text roi,
+           u.first_name, u.last_name, u.email
+    from investments i
+    join plans p on p.id = i.plan_id
+    join users u on u.id = i.user_id
+    ${status === 'all' ? sql`` : sql`where i.status = ${status}`}
+    order by i.started_at desc limit 100`;
+  return shell(c, 'admin/investments', { rows, status, ok: c.req.query('ok') }, 'Investments');
+});
+
+/* Manually end an active investment ahead of its own maturity date.
+   Requires an explicit confirm=1 in the form post (see admin/investments.eta,
+   which also confirms client-side via data-confirm). Principal + whatever
+   has accrued so far are returned to the user's balance, exactly like a
+   normal maturity — nothing about how the money is handled differs, only
+   that an admin triggered it early. */
+admin.post('/admin/investments/:id/end', async (c) => {
+  const id = Number(c.req.param('id'));
+  const me = c.get('user');
+  const b = c.get('body');
+  if (b.confirm !== '1') return c.redirect('/admin/investments?e=' + encodeURIComponent('Confirmation is required to end an investment.'));
+
+  const [inv] = await sql`
+    select i.*, p.name plan_name from investments i join plans p on p.id = i.plan_id
+    where i.id = ${id}`;
+  if (!inv) return c.notFound();
+  if (inv.status !== 'active') return c.redirect('/admin/investments?e=' + encodeURIComponent('That investment is not active.'));
+
+  const [u] = await db.select().from(users).where(eq(users.id, inv.user_id)).limit(1);
+  const principal = Number(inv.principal);
+  const accrued = Number(inv.accrued);
+
+  await sql`update investments set status = 'ended', ended_at = now(), ended_by = ${me.id} where id = ${id}`;
+
+  await db.insert(ledger).values([
+    { userId: inv.user_id, account: 'locked', kind: 'investment_payout', amount: String(-principal), refType: 'investment', refId: id, memo: `${inv.plan_name} ended by admin — principal released` },
+    { userId: inv.user_id, account: 'main',   kind: 'investment_payout', amount: String(principal + accrued), refType: 'investment', refId: id, memo: `${inv.plan_name} ended by admin (by ${me.email})` },
+  ]);
+
+  await db.insert(notifications).values({
+    userId: inv.user_id, kind: 'info', title: 'Investment plan ended',
+    body: `Your "${inv.plan_name}" plan was ended by an administrator. ${fmt.usd(principal + accrued)} is back in your balance.`,
+  });
+
+  if (u) mailPlanEnded(u, inv.plan_name, principal, accrued)
+    .catch((e) => console.error('[mail] plan ended failed:', e.message));
+
+  return c.redirect('/admin/investments?ok=1');
 });
 
 /* ---------------- traders ---------------- */
@@ -631,7 +686,15 @@ admin.get('/admin/mail', async (c) => {
     select m.*, u.first_name, u.last_name
     from mail_log m left join users u on u.id = m.user_id
     order by m.created_at desc limit 100`;
-  return shell(c, 'admin/mail', { rows }, 'Mail outbox');
+  return shell(c, 'admin/mail', { rows, retried: c.req.query('retried') }, 'Mail outbox');
+});
+
+/* Retry a single failed send. Re-sends the exact subject/body that were
+   already logged — no re-render, so what goes out matches what failed. */
+admin.post('/admin/mail/:id/retry', async (c) => {
+  const id = Number(c.req.param('id'));
+  const result = await retryMail(id);
+  return c.redirect('/admin/mail?retried=' + result.status);
 });
 
 /* ---------------- mail settings (SMTP / Gmail) ---------------- */

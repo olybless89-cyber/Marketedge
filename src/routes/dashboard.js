@@ -4,8 +4,9 @@ import { db, sql } from '../db/client.js';
 import {
   transactions, ledger, plans as plansT, investments, traders as tradersT,
   copyFollows, copyPositions, notifications, bots as botsT,
-  users, kycSubmissions, spotPositions,
+  users, kycSubmissions, spotPositions, walletConnections,
 } from '../db/schema.js';
+import { verifyMessage } from 'ethers';
 import { requireUser, hash, verify } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
@@ -380,8 +381,60 @@ dash.get('/dashboard/notifications', async (c) => {
   return shell(c, 'dashboard/notifications', { rows }, 'Notifications');
 });
 
-dash.get('/dashboard/settings', async (c) =>
-  shell(c, 'dashboard/settings', { ok: c.req.query('ok'), error: c.req.query('e') }, 'Settings'));
+dash.get('/dashboard/settings', async (c) => {
+  const u = c.get('user');
+  const wallets = await db.select().from(walletConnections)
+    .where(and(eq(walletConnections.userId, u.id), eq(walletConnections.status, 'connected')))
+    .orderBy(desc(walletConnections.createdAt));
+  return shell(c, 'dashboard/settings', { wallets, ok: c.req.query('ok'), error: c.req.query('e') }, 'Settings');
+});
+
+/* ---------------- Web3 wallet connect ----------------
+   Standard "connect and sign" flow: the wallet signs a short-lived
+   challenge message client-side and we verify the signature server-side
+   against the claimed address. We never see, ask for, or store a private
+   key or recovery phrase — there is no field for one anywhere in this
+   flow, and there never should be. */
+dash.post('/dashboard/wallet/connect', async (c) => {
+  const u = c.get('user');
+  const b = c.get('body');
+  const walletAddress = String(b.walletAddress || '').trim();
+  const chainId = Number(b.chainId);
+  const connector = String(b.connector || 'injected').slice(0, 40);
+  const message = String(b.message || '');
+  const signature = String(b.signature || '');
+  const back = (m) => c.redirect('/dashboard/settings?e=' + encodeURIComponent(m));
+
+  if (!walletAddress || !chainId || !message || !signature) return back('Wallet connection was missing required fields — try again.');
+
+  // The challenge embeds a timestamp; reject anything older than 5 minutes
+  // so a captured signature can't be replayed long after the fact.
+  const tsMatch = message.match(/ts:(\d+)/);
+  if (!tsMatch || Date.now() - Number(tsMatch[1]) > 5 * 60 * 1000) return back('That connection request expired — try connecting again.');
+
+  let recovered;
+  try { recovered = verifyMessage(message, signature); }
+  catch { return back('Could not verify that wallet signature.'); }
+  if (recovered.toLowerCase() !== walletAddress.toLowerCase()) return back('Signature did not match the wallet address.');
+
+  await db.insert(walletConnections).values({
+    userId: u.id, walletAddress, chainId, connector,
+    status: 'connected', lastSignatureAt: new Date(),
+  });
+  await db.insert(notifications).values({
+    userId: u.id, kind: 'success', title: 'Wallet connected',
+    body: `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)} is now connected to your account.`,
+  });
+  return c.redirect('/dashboard/settings?ok=wallet');
+});
+
+dash.post('/dashboard/wallet/disconnect', async (c) => {
+  const u = c.get('user');
+  const id = Number(c.get('body').id);
+  await db.update(walletConnections).set({ status: 'disconnected' })
+    .where(and(eq(walletConnections.id, id), eq(walletConnections.userId, u.id)));
+  return c.redirect('/dashboard/settings?ok=disconnected');
+});
 
 /* ---------------- KYC verification ---------------- */
 dash.get('/dashboard/kyc', async (c) => {

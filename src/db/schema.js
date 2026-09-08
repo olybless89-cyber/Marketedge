@@ -121,6 +121,8 @@ export const investments = pgTable('investments', {
   startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
   lastAccrualAt: timestamp('last_accrual_at', { withTimezone: true }),
   maturesAt: timestamp('matures_at', { withTimezone: true }).notNull(),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  endedBy: integer('ended_by'),
 }, (t) => ({ userIdx: index('inv_user_idx').on(t.userId, t.status) }));
 
 /* User spot positions. A buy debits USD from the main account and opens a
@@ -295,6 +297,21 @@ export const notifications = pgTable('notifications', {
   readAt: timestamp('read_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ uIdx: index('notif_user_idx').on(t.userId, t.readAt) }));
+
+/* Web3 wallet connections. Public address + a verified-signature timestamp
+   only — this app never asks for or stores a private key or recovery
+   phrase. A wallet is "connected" by signing a one-time challenge message;
+   see src/routes/dashboard.js for the verification. */
+export const walletConnections = pgTable('wallet_connections', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull(),
+  walletAddress: varchar('wallet_address', { length: 100 }).notNull(),
+  chainId: integer('chain_id').notNull(),
+  connector: varchar('connector', { length: 40 }).notNull().default('injected'),
+  status: varchar('status', { length: 20 }).notNull().default('connected'), // connected | disconnected
+  lastSignatureAt: timestamp('last_signature_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ userIdx: index('wc_user_idx').on(t.userId, t.status) }));
 
 export const settings = pgTable('settings', {
   key: varchar('key', { length: 80 }).primaryKey(),

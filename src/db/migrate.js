@@ -84,9 +84,13 @@ const DDL = [
     status varchar(20) not null default 'active',
     started_at timestamptz not null default now(),
     last_accrual_at timestamptz,
-    matures_at timestamptz not null default now()
+    matures_at timestamptz not null default now(),
+    ended_at timestamptz,
+    ended_by integer
   )`,
   `create index if not exists inv_user_idx on investments(user_id, status)`,
+  `alter table investments add column if not exists ended_at timestamptz`,
+  `alter table investments add column if not exists ended_by integer`,
 
   `create table if not exists spot_positions (
     id serial primary key,
@@ -249,6 +253,18 @@ const DDL = [
   )`,
   `create index if not exists mail_user_idx on mail_log(user_id, created_at)`,
   `create index if not exists mail_tpl_idx on mail_log(template, created_at)`,
+
+  `create table if not exists wallet_connections (
+    id serial primary key,
+    user_id integer not null,
+    wallet_address varchar(100) not null,
+    chain_id integer not null,
+    connector varchar(40) not null default 'injected',
+    status varchar(20) not null default 'connected',
+    last_signature_at timestamptz,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists wc_user_idx on wallet_connections(user_id, status)`,
 
   `create table if not exists settings (
     key varchar(80) primary key,

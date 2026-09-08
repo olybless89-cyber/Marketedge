@@ -397,3 +397,36 @@ export const mailAdminMessage = (u, subject, message) => sendMail({
       .map((p) => escHtml(p).replace(/\n/g, '<br>')),
   },
 });
+
+/* Admin manually ended an active investment before maturity — distinct from
+   mailPlanClosed (which is the plan reaching its own maturity date). */
+export const mailPlanEnded = (u, planName, principal, accrued) => sendMail({
+  userId: u.id, to: u.email, template: 'mail/plan-ended',
+  subject: `Investment plan ended — ${planName}`,
+  data: { firstName: u.firstName, planName, principal: Number(principal), accrued: Number(accrued) },
+  refType: 'investment',
+});
+
+/* Re-send a previously logged mail (used by the admin "Retry" action on a
+   failed row in the mail outbox). Re-uses the exact bodyHtml/subject that
+   were already rendered and stored — no template re-render, so it sends
+   what was actually generated the first time. */
+export async function retryMail(logId) {
+  const [row] = await db.select().from(mailLog).where(eq(mailLog.id, logId)).limit(1);
+  if (!row) throw new Error('Mail log entry not found');
+
+  const tx = await getTransporter();
+  if (!tx) {
+    await db.update(mailLog).set({ status: 'failed', error: 'SMTP is not configured.' }).where(eq(mailLog.id, logId));
+    return { id: logId, status: 'failed', error: 'SMTP is not configured.' };
+  }
+  try {
+    await tx.sendMail({ from: await fromHeader(), to: row.toEmail, subject: row.subject, html: row.bodyHtml });
+    await db.update(mailLog).set({ status: 'sent', error: null }).where(eq(mailLog.id, logId));
+    return { id: logId, status: 'sent' };
+  } catch (e) {
+    const msg = String(e.message || e).slice(0, 500);
+    await db.update(mailLog).set({ status: 'failed', error: msg }).where(eq(mailLog.id, logId));
+    return { id: logId, status: 'failed', error: msg };
+  }
+}

@@ -14,6 +14,86 @@
   <div class="card">
     <div class="card-head"><h3>Security</h3></div>
     <p class="small">Your password is stored as an Argon2id hash and is never recoverable — only replaceable.</p>
-    <a class="btn btn-quiet btn-block" href="/dashboard/settings#password">Change password</a>
+    <a class="btn btn-quiet btn-block" href="/dashboard/account/password">Change password</a>
+  </div>
+
+  <div class="card" style="grid-column:1/-1">
+    <div class="card-head"><h3>Web3 wallet</h3></div>
+    <p class="small" style="margin:0 0 12px">
+      Connect a wallet to link its public address to your account. This only ever asks your wallet
+      to sign a short message to prove ownership — it never asks for your seed phrase or private
+      key, and we have no field anywhere that would collect one. If anything calling itself
+      Marketedge ever asks you for your recovery phrase, it isn't us.
+    </p>
+
+    <% if (it.wallets && it.wallets.length) { %>
+      <div class="table-wrap" style="margin-bottom:14px">
+        <table>
+          <thead><tr><th>Address</th><th>Network</th><th>Connector</th><th></th></tr></thead>
+          <tbody>
+            <% it.wallets.forEach(function(w){ %>
+              <tr>
+                <td class="small" style="font-family:var(--ff-mono)"><%= w.walletAddress.slice(0,6) %>…<%= w.walletAddress.slice(-4) %></td>
+                <td class="small"><%= w.chainId === 1 ? 'Ethereum' : 'Chain ' + w.chainId %></td>
+                <td class="small muted"><%= w.connector %></td>
+                <td style="text-align:right">
+                  <form method="post" action="/dashboard/wallet/disconnect" style="display:inline">
+                    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+                    <input type="hidden" name="id" value="<%= w.id %>">
+                    <button class="btn btn-quiet btn-sm" data-confirm="Disconnect this wallet?">Disconnect</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+    <button class="btn btn-primary btn-sm" id="wallet-connect-btn" type="button">Connect wallet</button>
+    <p class="small muted" id="wallet-status" style="margin-top:8px"></p>
   </div>
 </div>
+
+<form id="wallet-connect-form" method="post" action="/dashboard/wallet/connect" style="display:none">
+  <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+  <input type="hidden" name="walletAddress" id="wc-address">
+  <input type="hidden" name="chainId" id="wc-chain">
+  <input type="hidden" name="connector" value="injected">
+  <input type="hidden" name="message" id="wc-message">
+  <input type="hidden" name="signature" id="wc-signature">
+</form>
+<script>
+(function () {
+  var btn = document.getElementById('wallet-connect-btn');
+  var status = document.getElementById('wallet-status');
+  if (!btn) return;
+  btn.addEventListener('click', async function () {
+    if (typeof window.ethereum === 'undefined') {
+      status.textContent = 'No Web3 wallet found. Install MetaMask or another browser wallet extension first.';
+      return;
+    }
+    try {
+      status.textContent = 'Requesting connection…';
+      var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      var address = accounts[0];
+      var chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+      var chainId = parseInt(chainIdHex, 16);
+
+      var message = 'Sign in to Marketedge\naddress:' + address + '\nts:' + Date.now();
+      status.textContent = 'Check your wallet to sign the message…';
+      var signature = await window.ethereum.request({
+        method: 'personal_sign', params: [message, address],
+      });
+
+      document.getElementById('wc-address').value = address;
+      document.getElementById('wc-chain').value = chainId;
+      document.getElementById('wc-message').value = message;
+      document.getElementById('wc-signature').value = signature;
+      document.getElementById('wallet-connect-form').submit();
+    } catch (e) {
+      status.textContent = (e && e.message) ? e.message : 'Wallet connection was cancelled.';
+    }
+  });
+})();
+</script>
