@@ -16,30 +16,8 @@
   </div>
 <% } %>
 
-<div class="metric-stack">
-  <div class="metric-card">
-    <div class="metric-label">TOTAL EQUITY</div>
-    <div class="metric-value"><%= it.usd(it.pf.equity) %></div>
-    <div class="metric-desc">Cash, locked capital and accrued returns</div>
-  </div>
-
-  <div class="metric-card">
-    <div class="metric-label">AVAILABLE</div>
-    <div class="metric-value"><%= it.usd(it.pf.available) %></div>
-    <div class="metric-desc">Free to invest or withdraw</div>
-  </div>
-
-  <div class="metric-card">
-    <div class="metric-label">REALISED P&L</div>
-    <div class="metric-value <%= it.dir(it.pf.realised) %>"><%= it.signedUsd(it.pf.realised) %></div>
-    <div class="metric-desc"><%= it.pf.closedTrades %> closed trades · <%= it.pf.winRate.toFixed(1) %>% win rate</div>
-  </div>
-
-  <div class="metric-card hide-on-mobile">
-    <div class="metric-label">IN STRATEGIES</div>
-    <div class="metric-value"><%= it.usd(it.pf.staked + it.pf.exposure) %></div>
-    <div class="metric-desc"><%= it.pf.activePlans %> plans · <%= it.pf.openTrades %> open positions</div>
-  </div>
+<div class="metric-stack" hx-get="/dashboard/partials/overview-stats" hx-trigger="every 20s" hx-swap="innerHTML">
+  <%~ include('../partials/dashboard-stats', { pf: it.pf }) %>
 </div>
 
 <% if (it.pf.pending > 0) { %>

@@ -249,10 +249,14 @@ admin.get('/admin/investments', async (c) => {
 
 /* Manually end an active investment ahead of its own maturity date.
    Requires an explicit confirm=1 in the form post (see admin/investments.eta,
-   which also confirms client-side via data-confirm). Principal + whatever
-   has accrued so far are returned to the user's balance, exactly like a
-   normal maturity — nothing about how the money is handled differs, only
-   that an admin triggered it early. */
+   which also confirms client-side via data-confirm).
+
+   Money handling matches runAccrual()'s own maturity path exactly: accrued
+   returns were already posted to the 'profit' ledger bucket period by
+   period as they happened (see src/workers/engine.js), so only the locked
+   principal moves — back to 'main'. Re-crediting `accrued` here on top of
+   that would double count it, since it's already reflected in the user's
+   profit balance. */
 admin.post('/admin/investments/:id/end', async (c) => {
   const id = Number(c.req.param('id'));
   const me = c.get('user');
@@ -273,12 +277,12 @@ admin.post('/admin/investments/:id/end', async (c) => {
 
   await db.insert(ledger).values([
     { userId: inv.user_id, account: 'locked', kind: 'investment_payout', amount: String(-principal), refType: 'investment', refId: id, memo: `${inv.plan_name} ended by admin — principal released` },
-    { userId: inv.user_id, account: 'main',   kind: 'investment_payout', amount: String(principal + accrued), refType: 'investment', refId: id, memo: `${inv.plan_name} ended by admin (by ${me.email})` },
+    { userId: inv.user_id, account: 'main',   kind: 'investment_payout', amount: String(principal), refType: 'investment', refId: id, memo: `${inv.plan_name} ended by admin (by ${me.email})` },
   ]);
 
   await db.insert(notifications).values({
     userId: inv.user_id, kind: 'info', title: 'Investment plan ended',
-    body: `Your "${inv.plan_name}" plan was ended by an administrator. ${fmt.usd(principal + accrued)} is back in your balance.`,
+    body: `Your "${inv.plan_name}" plan was ended by an administrator. ${fmt.usd(principal)} principal is back in your balance (${fmt.usd(accrued)} in returns was already credited as it accrued).`,
   });
 
   if (u) mailPlanEnded(u, inv.plan_name, principal, accrued)

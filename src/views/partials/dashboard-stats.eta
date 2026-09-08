@@ -1,0 +1,29 @@
+<div class="metric-card">
+  <div class="metric-label">ACCOUNT BALANCE</div>
+  <div class="metric-value" data-watch><%= it.usd(it.pf.main) %></div>
+  <div class="metric-desc">Cash available in your account</div>
+</div>
+
+<div class="metric-card">
+  <div class="metric-label">TOTAL PROFIT</div>
+  <div class="metric-value <%= it.dir(it.pf.profit) %>" data-watch><%= it.signedUsd(it.pf.profit) %></div>
+  <div class="metric-desc">Gains from trades, copy positions and plans</div>
+</div>
+
+<div class="metric-card">
+  <div class="metric-label">TOTAL DEPOSIT</div>
+  <div class="metric-value" data-watch><%= it.usd(it.pf.deposited) %></div>
+  <div class="metric-desc">Approved deposits, all-time</div>
+</div>
+
+<div class="metric-card">
+  <div class="metric-label">TOTAL WITHDRAWAL</div>
+  <div class="metric-value" data-watch><%= it.usd(it.pf.withdrawn) %></div>
+  <div class="metric-desc">Approved withdrawals, all-time</div>
+</div>
+
+<div class="metric-card">
+  <div class="metric-label">BONUS</div>
+  <div class="metric-value" data-watch><%= it.usd(it.pf.bonus) %></div>
+  <div class="metric-desc">Promotional and referral credit</div>
+</div>

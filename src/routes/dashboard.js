@@ -8,7 +8,7 @@ import {
 } from '../db/schema.js';
 import { verifyMessage } from 'ethers';
 import { requireUser, hash, verify } from '../lib/auth.js';
-import { render, eta } from '../lib/view.js';
+import { render, eta, partial } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
 import { mailPlanActivated, mailDepositReceived, mailWithdrawalRequested } from '../lib/mail.js';
 import { getWallets, listPaymentMethods, getPaymentMethod, getSiteConfig } from '../lib/settings.js';
@@ -64,6 +64,11 @@ dash.get('/dashboard', async (c) => {
 dash.get('/dashboard/partials/balance', async (c) => {
   const bal = await balance(c.get('user').id);
   return c.html(`<span>Available balance</span><b class="num" data-watch>${fmt.usd(bal.available)}</b>`);
+});
+
+dash.get('/dashboard/partials/overview-stats', async (c) => {
+  const pf = await portfolio(c.get('user').id);
+  return partial(c, 'partials/dashboard-stats', { pf });
 });
 
 /* ---------------- statement ---------------- */

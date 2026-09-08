@@ -799,7 +799,7 @@ code.input{
   .metric-stack { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 1100px) {
-  .metric-stack { grid-template-columns: repeat(4, 1fr); }
+  .metric-stack { grid-template-columns: repeat(5, 1fr); }
   .hide-on-mobile { display: flex !important; }
 }
 
