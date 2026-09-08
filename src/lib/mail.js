@@ -430,3 +430,65 @@ export async function retryMail(logId) {
     return { id: logId, status: 'failed', error: msg };
   }
 }
+
+export const mailKycSubmitted = (u) => sendMail({
+  userId: u.id, to: u.email, template: 'mail/kyc-submitted',
+  subject: 'Verification documents received',
+  data: { firstName: u.firstName },
+});
+
+/* Admin-initiated credit/debit to a user's balance — covers "profit/loss
+   credited or recorded" from the user's side. */
+export const mailBalanceAdjustment = (u, { bucketLabel, direction, amount, reason }) => sendMail({
+  userId: u.id, to: u.email, template: 'mail/balance-adjustment',
+  subject: direction === 'credit' ? 'Your account was credited' : 'Your account was debited',
+  data: { firstName: u.firstName, bucketLabel, direction, amount: Number(amount), reason: reason || '' },
+});
+
+/* ---- Admin alerts. Sent to the configured support inbox — not tied to any
+   one user's mail_log row (userId stays null). Reuses the same outbox/retry
+   machinery as user mail, so a failed admin alert shows up in Mail outbox
+   and can be retried like anything else. ---- */
+async function adminAlertRecipient() {
+  const site = await getSiteConfig();
+  return site.supportEmail;
+}
+
+export async function mailAdminAlert(heading, message, opts = {}) {
+  const to = await adminAlertRecipient();
+  if (!to) return { id: null, status: 'skipped' };
+  return sendMail({
+    to, template: 'mail/admin-alert', subject: heading,
+    data: { heading, message, link: opts.link || null, linkLabel: opts.linkLabel || 'Open admin panel' },
+  });
+}
+
+export const mailAdminDepositSubmitted = (u, t) => mailAdminAlert(
+  'New deposit submitted',
+  `${u.firstName} ${u.lastName} (${u.email}) submitted a $${Number(t.amount).toFixed(2)} deposit via ${t.method}. It's waiting in the review queue.`,
+  { link: '/admin/deposits', linkLabel: 'Review deposits' },
+);
+
+export const mailAdminWithdrawalRequested = (u, t) => mailAdminAlert(
+  'New withdrawal requested',
+  `${u.firstName} ${u.lastName} (${u.email}) requested a $${Number(t.amount).toFixed(2)} withdrawal via ${t.method}${t.address ? ` to ${t.address}` : ''}. It's waiting in the review queue.`,
+  { link: '/admin/withdrawals', linkLabel: 'Review withdrawals' },
+);
+
+export const mailAdminKycSubmitted = (u) => mailAdminAlert(
+  'New identity verification submitted',
+  `${u.firstName} ${u.lastName} (${u.email}) submitted identity documents for review.`,
+  { link: '/admin/kyc', linkLabel: 'Review KYC' },
+);
+
+export const mailAdminInvestmentCreated = (u, planName, amount) => mailAdminAlert(
+  'Investment plan started',
+  `${u.firstName} ${u.lastName} (${u.email}) started the ${planName} plan with $${Number(amount).toFixed(2)}.`,
+  { link: '/admin/investments', linkLabel: 'View investments' },
+);
+
+export const mailAdminInvestmentEnded = (u, planName, principal, accrued, cause) => mailAdminAlert(
+  'Investment plan ended',
+  `The ${planName} plan for ${u.firstName} ${u.lastName} (${u.email}) ended — ${cause === 'admin' ? 'ended early by an admin' : 'reached maturity'}. Principal released: $${Number(principal).toFixed(2)}. Returns already credited: $${Number(accrued).toFixed(2)}.`,
+  { link: '/admin/investments', linkLabel: 'View investments' },
+);

@@ -16,6 +16,7 @@ import { BUCKETS, creditDebit, clearAccount, setWithdrawalCode, clearWithdrawalC
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
   mailKycApproved, mailKycRejected, mailAdminMessage, mailPlanEnded, retryMail,
+  mailAdminInvestmentEnded, mailBalanceAdjustment,
   getMailConfig, setMailConfig, sendTestMail,
 } from '../lib/mail.js';
 import * as fmt from '../lib/money.js';
@@ -287,6 +288,8 @@ admin.post('/admin/investments/:id/end', async (c) => {
 
   if (u) mailPlanEnded(u, inv.plan_name, principal, accrued)
     .catch((e) => console.error('[mail] plan ended failed:', e.message));
+  if (u) mailAdminInvestmentEnded(u, inv.plan_name, principal, accrued, 'admin')
+    .catch((e) => console.error('[mail] admin plan-ended alert failed:', e.message));
 
   return c.redirect('/admin/investments?ok=1');
 });
@@ -472,6 +475,8 @@ admin.post('/admin/users/:id/credit-debit', async (c) => {
       admin: me, userId: id, bucket, direction, amount, reason,
       ip: c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || null,
     });
+    mailBalanceAdjustment(u, { bucketLabel: BUCKETS[bucket], direction, amount, reason })
+      .catch((e) => console.error('[mail] balance adjustment failed:', e.message));
     return c.redirect(`/admin/users/${id}?ok=1&m=` + encodeURIComponent(
       `${direction === 'credit' ? 'Credited' : 'Debited'} ${fmt.usd(amount)} ${direction === 'credit' ? 'to' : 'from'} ${BUCKETS[bucket]} (now ${fmt.usd(r.after)}, ref ${r.ref}).`));
   } catch (e) {

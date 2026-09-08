@@ -10,7 +10,10 @@ import { verifyMessage } from 'ethers';
 import { requireUser, hash, verify } from '../lib/auth.js';
 import { render, eta, partial } from '../lib/view.js';
 import { portfolio, balance, traderStats, myCopyPositions, unreadCount, livePrices } from '../lib/stats.js';
-import { mailPlanActivated, mailDepositReceived, mailWithdrawalRequested } from '../lib/mail.js';
+import {
+  mailPlanActivated, mailDepositReceived, mailWithdrawalRequested, mailKycSubmitted,
+  mailAdminDepositSubmitted, mailAdminWithdrawalRequested, mailAdminKycSubmitted, mailAdminInvestmentCreated,
+} from '../lib/mail.js';
 import { getWallets, listPaymentMethods, getPaymentMethod, getSiteConfig } from '../lib/settings.js';
 import { saveReceipt } from '../lib/uploads.js';
 import * as fmt from '../lib/money.js';
@@ -142,6 +145,7 @@ dash.post('/dashboard/deposit', async (c) => {
     body: `We received your ${fmt.usd(amount)} deposit request via ${method.name}. It posts to your balance once admin confirms the transfer.`,
   });
   mailDepositReceived(u, t).catch((e) => console.error('[mail] deposit received failed:', e.message));
+  mailAdminDepositSubmitted(u, t).catch((e) => console.error('[mail] admin deposit alert failed:', e.message));
   return c.redirect('/dashboard/deposit?sent=1');
 });
 
@@ -238,6 +242,7 @@ dash.post('/dashboard/withdraw', async (c) => {
     body: `Your ${fmt.usd(fromCents(amountC))} withdrawal via ${method.name} is under review. You will receive ${fmt.usd(fromCents(netC))} after the ${fmt.usd(fromCents(feeC))} fee.`,
   });
   mailWithdrawalRequested(u, t).catch((e) => console.error('[mail] withdrawal requested failed:', e.message));
+  mailAdminWithdrawalRequested(u, t).catch((e) => console.error('[mail] admin withdrawal alert failed:', e.message));
   return c.redirect('/dashboard/withdraw?sent=1');
 });
 
@@ -283,6 +288,8 @@ dash.post('/dashboard/invest', async (c) => {
   // Plan activation mail.
   mailPlanActivated(u, plan.name, amount, maturesAt)
     .catch((e) => console.error('[mail] plan activated failed:', e.message));
+  mailAdminInvestmentCreated(u, plan.name, amount)
+    .catch((e) => console.error('[mail] admin investment alert failed:', e.message));
 
   return c.redirect('/dashboard/invest?ok=1');
 });
@@ -493,6 +500,8 @@ dash.post('/dashboard/kyc', async (c) => {
     userId: u.id, kind: 'info', title: 'Verification submitted',
     body: 'We received your documents. Review usually takes under 24 hours.',
   });
+  mailKycSubmitted(u).catch((e) => console.error('[mail] kyc submitted failed:', e.message));
+  mailAdminKycSubmitted(u).catch((e) => console.error('[mail] admin kyc alert failed:', e.message));
   return c.redirect('/dashboard/kyc?ok=1');
 });
 
