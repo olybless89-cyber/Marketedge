@@ -1,5 +1,6 @@
 import { sql } from '../db/client.js';
-import { mailPlanClosed, mailAdminInvestmentEnded } from '../lib/mail.js';
+import { mailPlanClosed, mailAdminInvestmentEnded, mailProfitLossDigest } from '../lib/mail.js';
+import { getSetting, setSetting } from '../lib/settings.js';
 
 /* =================================================================
    Three loops, all writing rows. Nothing here touches the UI —
@@ -145,6 +146,21 @@ async function closeTrade(tradeId) {
     from copy_positions
     where trader_trade_id = ${tradeId} and status = 'closed'
       and pnl <> 0`;
+
+  // In-app notification per settled position — immediate, every time. The
+  // once-daily email roll-up (runProfitLossDigest) is separate; per-event
+  // emails here would be far too frequent (positions can close many times
+  // a day per follower).
+  await sql`
+    insert into notifications (user_id, kind, title, body)
+    select user_id,
+           case when pnl >= 0 then 'success' else 'warn' end,
+           'Copy trade closed',
+           (case when pnl >= 0 then '+' else '-' end) || '$' ||
+             to_char(abs(pnl), 'FM999,999,990.00') || ' on ' || symbol
+    from copy_positions
+    where trader_trade_id = ${tradeId} and status = 'closed'
+      and pnl <> 0`;
 }
 
 export async function runMarket() {
@@ -201,6 +217,13 @@ export async function runAccrual() {
       values (${i.user_id}, 'profit', 'investment_payout', ${payout}, 'investment', ${i.id},
               ${`${i.name} return, period ${i.periods_paid + 1}/${i.duration_periods}`})`;
 
+    // In-app notification for every payout (not just the final one) — the
+    // once-daily email roll-up (runProfitLossDigest) is separate; emailing
+    // on every accrual would be far too frequent for short-period plans.
+    await sql`insert into notifications (user_id, kind, title, body)
+      values (${i.user_id}, 'success', 'Investment return credited',
+              ${`+$${payout.toFixed(2)} credited to your ${i.name} plan (period ${i.periods_paid + 1}/${i.duration_periods})`})`;
+
     // Final period: release the principal and close the plan.
     if (i.periods_paid + 1 >= i.duration_periods) {
       await sql`update investments set status = 'matured' where id = ${i.id}`;
@@ -227,6 +250,54 @@ export async function runAccrual() {
   return due.length;
 }
 
+/* ---------- 4. daily profit/loss digest ---------- */
+/* Once-a-day roll-up email of the automated P/L sources (investment
+   accrual + copy-trade closes) — every individual event already gets an
+   in-app notification the moment it posts (see runAccrual/closeTrade
+   above); this is just the once-daily summary for users who had any
+   qualifying activity in the last 24 hours. */
+export async function runProfitLossDigest() {
+  const rows = await sql`
+    select l.user_id, u.email, u.first_name,
+           coalesce(sum(l.amount) filter (where l.kind = 'investment_payout'), 0)::text investment_total,
+           count(*) filter (where l.kind = 'investment_payout')::int investment_count,
+           coalesce(sum(l.amount) filter (where l.kind = 'copy_close'), 0)::text copy_total,
+           count(*) filter (where l.kind = 'copy_close')::int copy_count
+    from ledger l
+    join users u on u.id = l.user_id
+    where l.kind in ('investment_payout', 'copy_close')
+      and l.created_at >= now() - interval '24 hours'
+    group by l.user_id, u.email, u.first_name`;
+
+  for (const r of rows) {
+    const owner = { id: r.user_id, email: r.email, firstName: r.first_name };
+    mailProfitLossDigest(owner, {
+      investmentTotal: r.investment_total, investmentCount: r.investment_count,
+      copyTotal: r.copy_total, copyCount: r.copy_count,
+    }).catch((e) => console.error('[mail] pl digest failed:', owner.email, e.message));
+  }
+  return rows.length;
+}
+
+/* Fires once per UTC calendar day, at PL_DIGEST_HOUR_UTC (default 8am UTC).
+   `last_pl_digest_date` in the settings table makes this idempotent across
+   restarts and across the 30-min poll interval — it's only ever run once
+   per date, set AFTER a successful run so a crash mid-run doesn't skip a
+   whole day. */
+async function maybeRunDailyDigest() {
+  const targetHour = Number(process.env.PL_DIGEST_HOUR_UTC ?? 8);
+  const now = new Date();
+  if (now.getUTCHours() !== targetHour) return;
+
+  const today = now.toISOString().slice(0, 10);
+  const last = await getSetting('last_pl_digest_date', null);
+  if (last === today) return;
+
+  const n = await runProfitLossDigest();
+  await setSetting('last_pl_digest_date', today);
+  console.log(`[digest] daily P/L digest sent to ${n} user(s)`);
+}
+
 /* ---------- scheduler ---------- */
 export function startEngine() {
   const every = Number(process.env.PRICE_POLL_MS || 15000);
@@ -246,5 +317,7 @@ export function startEngine() {
   tick();
   setInterval(tick, every);
   setInterval(() => runAccrual().catch((e) => console.error('[accrual]', e.message)), 60000);
-  console.log(`[engine] running — prices every ${every / 1000}s, accrual every 60s`);
+  maybeRunDailyDigest().catch((e) => console.error('[digest] failed:', e.message));
+  setInterval(() => maybeRunDailyDigest().catch((e) => console.error('[digest] failed:', e.message)), 30 * 60 * 1000);
+  console.log(`[engine] running — prices every ${every / 1000}s, accrual every 60s, digest check every 30m`);
 }

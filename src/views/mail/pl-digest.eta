@@ -1,0 +1,31 @@
+<h1 style="margin:0 0 8px;font-family:Space Grotesk,Arial,sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em;color:#fff">Your daily activity summary</h1>
+<p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#B8C5DA">Hi <%= it.firstName %>, here's what posted to your account over the last 24 hours.</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px">
+  <tr><td style="background:#060C20;border:1px solid #1B2D5C;border-radius:10px;padding:18px 20px">
+    <p style="margin:0 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#7E8FBF;font-weight:600">Net for the day</p>
+    <p style="margin:0;font-family:Space Grotesk,Arial,sans-serif;font-size:26px;font-weight:700;color:<%= it.netTotal >= 0 ? '#16C784' : '#F5482E' %>"><%= it.netTotal >= 0 ? '+' : '-' %>$<%= Math.abs(it.netTotal).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) %></p>
+  </td></tr>
+</table>
+
+<% if (it.investmentCount > 0) { %>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px">
+  <tr><td style="padding:12px 16px;border:1px solid #1B2D5C;border-radius:10px">
+    <p style="margin:0 0 2px;font-size:13px;color:#8FA0BD">Investment returns · <%= it.investmentCount %> payout<%= it.investmentCount === 1 ? '' : 's' %></p>
+    <p style="margin:0;font-family:Space Grotesk,Arial,sans-serif;font-size:16px;font-weight:700;color:#16C784">+$<%= it.investmentTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) %></p>
+  </td></tr>
+</table>
+<% } %>
+
+<% if (it.copyCount > 0) { %>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px">
+  <tr><td style="padding:12px 16px;border:1px solid #1B2D5C;border-radius:10px">
+    <p style="margin:0 0 2px;font-size:13px;color:#8FA0BD">Copy-trade closes · <%= it.copyCount %> position<%= it.copyCount === 1 ? '' : 's' %></p>
+    <p style="margin:0;font-family:Space Grotesk,Arial,sans-serif;font-size:16px;font-weight:700;color:<%= it.copyTotal >= 0 ? '#16C784' : '#F5482E' %>"><%= it.copyTotal >= 0 ? '+' : '-' %>$<%= Math.abs(it.copyTotal).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) %></p>
+  </td></tr>
+</table>
+<% } %>
+
+<p style="margin:0 0 22px;font-size:13px;line-height:1.6;color:#8FA0BD">Every individual event was also posted to your notifications as it happened — this is just the daily roll-up.</p>
+
+<a href="<%= it.base %>/dashboard" style="display:inline-block;background:linear-gradient(90deg,#3B7BFF 0%,#3B7BFF 55%,#F5B82E 100%);color:#080E26;font-weight:700;font-size:14px;text-decoration:none;padding:13px 26px;border-radius:9px">View dashboard</a>

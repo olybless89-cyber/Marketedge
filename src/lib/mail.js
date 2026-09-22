@@ -445,6 +445,23 @@ export const mailBalanceAdjustment = (u, { bucketLabel, direction, amount, reaso
   data: { firstName: u.firstName, bucketLabel, direction, amount: Number(amount), reason: reason || '' },
 });
 
+/* Once-a-day roll-up of the *automated* profit/loss sources (investment
+   accrual payouts + copy-trade closes) — those fire far too often for a
+   per-event email (accrual checks run every 60s, copy trades can close many
+   times a day), so each event gets an in-app notification immediately
+   (see engine.js) and this digest is the once-daily email. Only sent to
+   users who actually had qualifying activity in the window. */
+export const mailProfitLossDigest = (u, { investmentTotal, investmentCount, copyTotal, copyCount }) => sendMail({
+  userId: u.id, to: u.email, template: 'mail/pl-digest',
+  subject: 'Your daily activity summary',
+  data: {
+    firstName: u.firstName,
+    investmentTotal: Number(investmentTotal), investmentCount: Number(investmentCount),
+    copyTotal: Number(copyTotal), copyCount: Number(copyCount),
+    netTotal: Number(investmentTotal) + Number(copyTotal),
+  },
+});
+
 /* ---- Admin alerts. Sent to the configured support inbox — not tied to any
    one user's mail_log row (userId stays null). Reuses the same outbox/retry
    machinery as user mail, so a failed admin alert shows up in Mail outbox
