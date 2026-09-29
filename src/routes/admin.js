@@ -197,7 +197,8 @@ admin.get('/admin/users', async (c) => {
   const rows = await sql`
     select u.id, u.first_name, u.last_name, u.email, u.country, u.status, u.role,
            u.kyc_status, u.created_at,
-           coalesce((select sum(amount) from ledger where user_id = u.id), 0)::text balance,
+           coalesce((select sum(amount) from ledger where user_id = u.id
+                     and account in ('main','profit','bonus','ref_bonus')), 0)::text balance,
            coalesce((select sum(amount) from transactions
                      where user_id = u.id and type='deposit' and status='approved'), 0)::text deposited
     from users u
