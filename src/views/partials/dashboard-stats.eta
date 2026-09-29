@@ -1,7 +1,7 @@
 <div class="metric-card">
   <div class="metric-label">ACCOUNT BALANCE</div>
-  <div class="metric-value" data-watch><%= it.usd(it.pf.main) %></div>
-  <div class="metric-desc">Cash available in your account</div>
+  <div class="metric-value" data-watch><%= it.usd(it.pf.available) %></div>
+  <div class="metric-desc">Total balance available in your account</div>
 </div>
 
 <div class="metric-card">
