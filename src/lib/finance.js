@@ -37,16 +37,17 @@ export async function creditDebit({ admin, userId, bucket, direction, amount, re
       throw new Error(`Debit exceeds the current ${BUCKETS[bucket].toLowerCase()} (${before.toFixed(2)} available).`);
     const after = before + sign * amount;
 
+    // Ledger memo is user-facing (shown verbatim in the statement/activity
+    // table's REFERENCE column) — it must never read as an admin action.
+    // The full picture (who, when, ref, before/after) still lands in
+    // audit_log, which only admins ever see.
     await tx`insert into ledger (user_id, account, kind, amount, ref_type, memo)
       values (${userId}, ${bucket}, 'adjustment', ${String(sign * amount)}, 'admin_adjustment',
-              ${`${direction === 'credit' ? 'Admin credit' : 'Admin debit'} — ${reason} (ref ${ref}, by ${admin.email})`})`;
+              ${reason || 'Balance adjustment'})`;
     await tx`insert into audit_log (admin_id, user_id, action, category, amount, balance_before, balance_after, reason, reference, ip)
       values (${admin.id}, ${userId}, ${direction}, ${bucket}, ${String(amount)},
               ${String(before)}, ${String(after)}, ${reason}, ${ref}, ${ip})`;
-    await tx`insert into notifications (user_id, kind, title, body)
-      values (${userId}, 'info',
-              ${direction === 'credit' ? 'Account credited' : 'Account debited'},
-              ${`${direction === 'credit' ? '+' : '-'}$${amount.toFixed(2)} ${BUCKETS[bucket]} — ${reason}`})`;
+    // No user notification for admin credit/debit — these should be silent.
     return { before, after, ref };
   });
 }
@@ -61,16 +62,17 @@ export async function clearAccount({ admin, userId, reason, ip }) {
       from ledger where user_id = ${userId} group by account having sum(amount) <> 0`;
     for (const r of rows) {
       const bal = Number(r.s);
+      // See the comment in creditDebit(): the ledger memo is user-facing
+      // and must not read as an admin action. audit_log keeps the full
+      // record (admin, reason, ref) for admin eyes only.
       await tx`insert into ledger (user_id, account, kind, amount, ref_type, memo)
         values (${userId}, ${r.account}, 'adjustment', ${String(-bal)}, 'admin_clear',
-                ${`Account cleared — ${reason} (ref ${ref}, by ${admin.email})`})`;
+                ${reason || 'Balance adjustment'})`;
       await tx`insert into audit_log (admin_id, user_id, action, category, amount, balance_before, balance_after, reason, reference, ip)
         values (${admin.id}, ${userId}, 'clear_account', ${r.account}, ${String(bal)},
                 ${String(bal)}, '0', ${reason}, ${ref}, ${ip})`;
     }
-    await tx`insert into notifications (user_id, kind, title, body)
-      values (${userId}, 'warn', 'Account cleared',
-              ${'Your account balances were reset by support. Contact us if you have questions.'})`;
+    // No user notification for admin clear-account — silent like credit/debit.
     return { cleared: rows.length, ref };
   });
 }
