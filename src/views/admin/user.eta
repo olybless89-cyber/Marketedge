@@ -43,7 +43,7 @@
 
 <%/* ---- financial summary ---- */%>
 <div class="grid g4" style="margin-bottom:20px">
-  <div class="card stat"><div class="stat-k">Account Balance</div><div class="stat-v num"><%= it.usd(it.bal.main) %></div></div>
+  <div class="card stat"><div class="stat-k">Account Balance</div><div class="stat-v num"><%= it.usd(it.bal.available) %></div></div>
   <div class="card stat"><div class="stat-k">Profit</div><div class="stat-v num"><%= it.usd(it.bal.profit) %></div></div>
   <div class="card stat"><div class="stat-k">Bonus</div><div class="stat-v num"><%= it.usd(it.bal.bonus) %></div></div>
   <div class="card stat"><div class="stat-k">Referral Bonus</div><div class="stat-v num"><%= it.usd(it.bal.refBonus) %></div></div>
