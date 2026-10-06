@@ -51,7 +51,7 @@
           <div style="padding-bottom:13px;border-bottom:1px solid var(--line-soft)">
             <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
               <b style="font-size:.92rem"><%= i.plan_name %></b>
-              <span class="num small up"><%= it.signedUsd(i.accrued) %></span>
+              <span class="num small <%= Number(i.accrued) >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(i.accrued) %></span>
             </div>
             <div class="small muted" style="display:flex;justify-content:space-between;margin:5px 0 4px">
               <span class="num"><%= it.usd(i.principal) %> principal</span>

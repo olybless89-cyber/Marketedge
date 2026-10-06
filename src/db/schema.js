@@ -92,8 +92,11 @@ export const transactions = pgTable('transactions', {
   statusIdx: index('tx_status_idx').on(t.status),
 }));
 
-/* Investment plans. roiPercent is per period, not "per trade" — a
-   period has an explicit length so maturity is computable.          */
+/* Investment plans. roiPercent is the headline rate shown to clients; the
+   actual per-period return is drawn from the profit/loss ranges below,
+   using winProbability to decide win vs loss. A period has an explicit
+   length (periodHours) and count (durationPeriods) so maturity is
+   computable. See src/lib/pl-engine.js for the generation rules.        */
 export const plans = pgTable('plans', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 80 }).notNull(),
@@ -105,6 +108,12 @@ export const plans = pgTable('plans', {
   minAmount: numeric('min_amount', { precision: 20, scale: 2 }).notNull(),
   maxAmount: numeric('max_amount', { precision: 20, scale: 2 }).notNull(),
   principalReturned: boolean('principal_returned').notNull().default(true),
+  // --- automated profit/loss generation ---
+  winProbability: numeric('win_probability', { precision: 5, scale: 2 }).notNull().default('65'),
+  profitMinPercent: numeric('profit_min_percent', { precision: 8, scale: 4 }).notNull().default('0.50'),
+  profitMaxPercent: numeric('profit_max_percent', { precision: 8, scale: 4 }).notNull().default('2.00'),
+  lossMinPercent: numeric('loss_min_percent', { precision: 8, scale: 4 }).notNull().default('0.20'),
+  lossMaxPercent: numeric('loss_max_percent', { precision: 8, scale: 4 }).notNull().default('1.50'),
   features: jsonb('features').$type().default([]),
   active: boolean('active').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
@@ -124,6 +133,34 @@ export const investments = pgTable('investments', {
   endedAt: timestamp('ended_at', { withTimezone: true }),
   endedBy: integer('ended_by'),
 }, (t) => ({ userIdx: index('inv_user_idx').on(t.userId, t.status) }));
+
+/* One generated profit/loss outcome per investment period. This is the
+   audit trail the admin asked for: it records the plan parameters that
+   were in force when the result was drawn, the win/loss decision, the
+   percentage applied, the resulting amount and the balance before/after.
+   `mode` is 'live' (posted to the ledger) or 'sim' (dry-run preview). */
+export const investmentResults = pgTable('investment_results', {
+  id: serial('id').primaryKey(),
+  investmentId: integer('investment_id'),
+  planId: integer('plan_id'),
+  userId: integer('user_id'),
+  periodNumber: integer('period_number').notNull().default(1),
+  outcome: varchar('outcome', { length: 8 }).notNull(), // win | loss
+  percent: numeric('percent', { precision: 8, scale: 4 }).notNull(), // signed
+  amount: numeric('amount', { precision: 20, scale: 8 }).notNull(),  // signed
+  principal: numeric('principal', { precision: 20, scale: 8 }).notNull(),
+  balanceBefore: numeric('balance_before', { precision: 20, scale: 8 }),
+  balanceAfter: numeric('balance_after', { precision: 20, scale: 8 }),
+  mode: varchar('mode', { length: 8 }).notNull().default('live'), // live | sim
+  // snapshot of the plan config at draw time, so a later edit can't rewrite history
+  params: jsonb('params').$type().default({}),
+  reason: text('reason'), // human-readable explanation of the calculation
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  planIdx: index('ires_plan_idx').on(t.planId, t.createdAt),
+  userIdx: index('ires_user_idx').on(t.userId, t.createdAt),
+  invIdx: index('ires_inv_idx').on(t.investmentId, t.periodNumber),
+}));
 
 /* User spot positions. A buy debits USD from the main account and opens a
    holding; a sell credits USD back at the live price. P&L is realised on

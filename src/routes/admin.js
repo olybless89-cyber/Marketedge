@@ -9,6 +9,9 @@ import { requireAdmin, createSession, hash } from '../lib/auth.js';
 import { render, eta } from '../lib/view.js';
 import { traderStats, portfolio, balance } from '../lib/stats.js';
 import {
+  normalizePlanConfig, simulateConfig, planPerformance, planPerformanceByPlan,
+} from '../lib/pl-engine.js';
+import {
   getWallets, setWallets, getSiteConfig, setSiteConfig,
   listPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, methodValues,
 } from '../lib/settings.js';
@@ -34,6 +37,8 @@ const NAV = [
     { href: '/admin/withdrawals', label: 'Withdrawals', icon: svg('<path d="M12 21V8M6 13l6-6 6 6M4 3h16"/>') },
     { href: '/admin/investments', label: 'Investments', icon: svg('<path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/>') },
     { href: '/admin/plans',       label: 'Plans',       icon: svg('<path d="M12 2v20M17 6H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>') },
+    { href: '/admin/performance', label: 'Performance', icon: svg('<path d="M3 3v18h18"/><path d="M6 15l4-5 3 3 5-7"/>') },
+    { href: '/admin/pl-results',  label: 'P/L results', icon: svg('<path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/>') },
     { href: '/admin/payment-methods', label: 'Payment methods', icon: svg('<rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M16 12h4M2 10h20"/>') },
   ]},
   { label: 'People', items: [
@@ -72,7 +77,11 @@ admin.get('/admin', async (c) => {
            (select coalesce(sum(amount),0) from transactions where status='pending')::text  pending_value,
            (select count(*) from investments where status='active')                         active_plans,
            (select coalesce(sum(principal),0) from investments where status='active')::text staked,
-           (select count(*) from trader_trades where status='open')                         open_trades`;
+           (select count(*) from trader_trades where status='open')                         open_trades,
+           (select count(*) from investment_results where mode='live')::int                 pl_total,
+           (select count(*) from investment_results where mode='live' and outcome='win')::int  pl_wins,
+           (select count(*) from investment_results where mode='live' and outcome='loss')::int pl_losses,
+           (select coalesce(sum(amount),0) from investment_results where mode='live')::text pl_net`;
 
   const queue = await sql`
     select t.*, u.first_name, u.last_name, u.email
@@ -325,13 +334,34 @@ admin.post('/admin/traders/:id/toggle', async (c) => {
 /* ---------------- plans ---------------- */
 admin.get('/admin/plans', async (c) => {
   const rows = await db.select().from(plansT).orderBy(plansT.sortOrder);
-  return shell(c, 'admin/plans', { rows, ok: c.req.query('ok') }, 'Plans');
+  const perf = await planPerformanceByPlan();
+  const perfById = Object.fromEntries(perf.map((p) => [p.id, p]));
+  return shell(c, 'admin/plans', { rows, perfById, ok: c.req.query('ok'), error: c.req.query('e') }, 'Plans');
 });
+
+/* Profit/loss configuration is shared by create and edit so the two forms
+   can never drift apart. normalizePlanConfig validates and orders ranges. */
+function planConfigFields(b) {
+  const { config } = normalizePlanConfig({
+    winProbability: b.winProbability,
+    profitMinPercent: b.profitMinPercent,
+    profitMaxPercent: b.profitMaxPercent,
+    lossMinPercent: b.lossMinPercent,
+    lossMaxPercent: b.lossMaxPercent,
+  });
+  return {
+    winProbability: String(config.winProbability),
+    profitMinPercent: String(config.profitMinPercent),
+    profitMaxPercent: String(config.profitMaxPercent),
+    lossMinPercent: String(config.lossMinPercent),
+    lossMaxPercent: String(config.lossMaxPercent),
+  };
+}
 
 admin.post('/admin/plans', async (c) => {
   const b = c.get('body');
   const name = String(b.name || '').trim();
-  if (!name) return c.redirect('/admin/plans');
+  if (!name) return c.redirect('/admin/plans?e=' + encodeURIComponent('Plan name is required.'));
   await db.insert(plansT).values({
     name,
     slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
@@ -340,6 +370,7 @@ admin.post('/admin/plans', async (c) => {
     durationPeriods: Number(b.durationPeriods) || 30,
     minAmount: String(Number(b.minAmount) || 100),
     maxAmount: String(Number(b.maxAmount) || 10000),
+    ...planConfigFields(b),
     features: ['Principal returned at maturity', 'Withdraw accrued returns anytime', 'Full charting access', '24/7 support'],
     sortOrder: Number(b.sortOrder) || 0,
   });
@@ -368,9 +399,76 @@ admin.post('/admin/plans/:id/edit', async (c) => {
     durationPeriods: Number(b.durationPeriods) || plan.durationPeriods,
     minAmount: String(Number(b.minAmount) || plan.minAmount),
     maxAmount: String(Number(b.maxAmount) || plan.maxAmount),
+    ...planConfigFields(b),
     sortOrder: Number(b.sortOrder ?? plan.sortOrder),
   }).where(eq(plansT.id, id));
   return c.redirect('/admin/plans?ok=edit');
+});
+
+/* ---------------- plan simulation (dry-run) ----------------
+   Runs the generator over the submitted config without touching the DB.
+   No investment_results rows are written (mode='sim' is reserved for the
+   optional persisted preview), so the audit table stays a record of real
+   outcomes only. */
+admin.get('/admin/plans/:id/simulate', async (c) => {
+  const id = Number(c.req.param('id'));
+  const [plan] = await db.select().from(plansT).where(eq(plansT.id, id)).limit(1);
+  if (!plan) return c.notFound();
+  return shell(c, 'admin/plan-simulate', {
+    plan, planId: plan.id, config: plan, errors: [], result: null,
+    runs: 1, periods: 200, principal: Number(plan.minAmount) || 1000,
+  }, 'Simulation');
+});
+
+admin.post('/admin/plans/simulate', async (c) => {
+  const b = c.get('body');
+  const planId = Number(b.planId) || null;
+  const { config, errors } = normalizePlanConfig({
+    winProbability: b.winProbability,
+    profitMinPercent: b.profitMinPercent,
+    profitMaxPercent: b.profitMaxPercent,
+    lossMinPercent: b.lossMinPercent,
+    lossMaxPercent: b.lossMaxPercent,
+  });
+  const runs = Number(b.runs) || 1;
+  const periods = Number(b.periods) || 100;
+  const principal = Number(b.principal) || 1000;
+  const result = simulateConfig(config, { runs, periods, principal });
+  let plan = null;
+  if (planId) [plan] = await db.select().from(plansT).where(eq(plansT.id, planId)).limit(1);
+  return shell(c, 'admin/plan-simulate', {
+    plan, planId, config, errors, result, runs, periods, principal,
+    name: String(b.name || (plan ? plan.name : '')),
+  }, 'Simulation');
+});
+
+/* ---------------- generated P/L results (audit) ---------------- */
+admin.get('/admin/pl-results', async (c) => {
+  const planId = Number(c.req.query('plan')) || null;
+  const outcome = ['win', 'loss'].includes(c.req.query('outcome')) ? c.req.query('outcome') : null;
+  const rows = await sql`
+    select ir.*, p.name plan_name, u.first_name, u.last_name, u.email
+    from investment_results ir
+    left join plans p on p.id = ir.plan_id
+    left join users u on u.id = ir.user_id
+    where ir.mode = 'live'
+      ${planId ? sql`and ir.plan_id = ${planId}` : sql``}
+      ${outcome ? sql`and ir.outcome = ${outcome}` : sql``}
+    order by ir.created_at desc limit 300`;
+  const [plans, perf] = await Promise.all([
+    db.select().from(plansT).orderBy(plansT.sortOrder),
+    planPerformance(planId),
+  ]);
+  return shell(c, 'admin/pl-results', { rows, plans, perf, planId, outcome }, 'P/L results');
+});
+
+/* ---------------- performance dashboard ---------------- */
+admin.get('/admin/performance', async (c) => {
+  const [overall, byPlan] = await Promise.all([
+    planPerformance(),
+    planPerformanceByPlan(),
+  ]);
+  return shell(c, 'admin/performance', { overall, byPlan }, 'Performance');
 });
 
 /* ---------------- user edit ---------------- */

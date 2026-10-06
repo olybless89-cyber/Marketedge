@@ -1,0 +1,84 @@
+<div class="page-head"><div><h1>Simulation<% if (it.plan) { %> — <%= it.plan.name %><% } %></h1>
+  <p class="small" style="margin:4px 0 0">Dry-run the generator over a configuration. Nothing is written and no real investment is affected — change the numbers and run it again as often as you like.</p></div>
+  <a class="btn btn-quiet btn-sm" href="/admin/plans">Back to plans</a></div>
+
+<% if (it.errors && it.errors.length) { %>
+  <div class="notice notice-err"><% it.errors.forEach(function(e){ %><div><%= e %></div><% }) %></div>
+<% } %>
+
+<div class="grid grid-admin-split">
+  <div class="card">
+    <div class="card-head"><h3>Configuration</h3></div>
+    <form method="post" action="/admin/plans/simulate">
+      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+      <% if (it.planId) { %><input type="hidden" name="planId" value="<%= it.planId %>"><% } %>
+      <% if (it.plan) { %><input type="hidden" name="name" value="<%= it.plan.name %>"><% } %>
+      <div class="field"><label for="wp">Win probability %</label>
+        <input class="input num" id="wp" name="winProbability" type="number" step="0.1" min="0" max="100" value="<%= Number(it.config.winProbability) %>" required></div>
+      <div class="row2">
+        <div class="field"><label for="pmin">Min profit %</label><input class="input num" id="pmin" name="profitMinPercent" type="number" step="0.01" value="<%= Number(it.config.profitMinPercent) %>"></div>
+        <div class="field"><label for="pmax">Max profit %</label><input class="input num" id="pmax" name="profitMaxPercent" type="number" step="0.01" value="<%= Number(it.config.profitMaxPercent) %>"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="lmin">Min loss %</label><input class="input num" id="lmin" name="lossMinPercent" type="number" step="0.01" value="<%= Number(it.config.lossMinPercent) %>"></div>
+        <div class="field"><label for="lmax">Max loss %</label><input class="input num" id="lmax" name="lossMaxPercent" type="number" step="0.01" value="<%= Number(it.config.lossMaxPercent) %>"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="periods">Periods per run</label><input class="input num" id="periods" name="periods" type="number" min="1" max="5000" value="<%= it.periods %>"></div>
+        <div class="field"><label for="runs">Runs</label><input class="input num" id="runs" name="runs" type="number" min="1" max="200" value="<%= it.runs %>"></div>
+      </div>
+      <div class="field"><label for="principal">Principal per investment</label><input class="input num" id="principal" name="principal" type="number" step="0.01" value="<%= Number(it.principal) %>">
+        <div class="hint">Amounts below are computed on this principal.</div></div>
+      <button class="btn btn-primary btn-block btn-sm">Run simulation</button>
+    </form>
+  </div>
+
+  <div>
+    <% if (!it.result) { %>
+      <div class="card"><div class="empty"><h4>No run yet</h4>
+        <p class="small">Set the values on the left and run the simulation to see the expected win rate and averages.</p></div></div>
+    <% } else { var r = it.result; %>
+      <div class="grid g4" style="margin-bottom:18px">
+        <div class="stat"><div class="stat-k">Wins</div><div class="stat-v up"><%= r.wins %></div>
+          <div class="stat-sub"><%= r.winRate.toFixed(1) %>% actual · <%= r.expectedWinRate %>% configured</div></div>
+        <div class="stat"><div class="stat-k">Losses</div><div class="stat-v down"><%= r.losses %></div>
+          <div class="stat-sub"><%= (100 - r.winRate).toFixed(1) %>% of outcomes</div></div>
+        <div class="stat"><div class="stat-k">Avg profit</div><div class="stat-v up"><%= it.usd(r.avgProfit) %></div>
+          <div class="stat-sub">per winning period</div></div>
+        <div class="stat"><div class="stat-k">Avg loss</div><div class="stat-v down"><%= it.usd(r.avgLoss) %></div>
+          <div class="stat-sub">per losing period</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Projection over <%= r.totalOutcomes %> outcomes</h3></div>
+        <dl class="kv">
+          <dt>Net result</dt><dd class="<%= r.net >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(r.net) %></dd>
+          <dt>Gross profit</dt><dd class="up"><%= it.signedUsd(r.grossProfit) %></dd>
+          <dt>Gross loss</dt><dd class="down">−<%= it.usd(r.grossLoss) %></dd>
+          <dt>Return per period</dt><dd class="<%= r.roi >= 0 ? 'up' : 'down' %>"><%= r.roi >= 0 ? '+' : '' %><%= r.roi.toFixed(3) %>%</dd>
+          <dt>Runs × periods</dt><dd class="muted"><%= r.runs %> × <%= r.periods %></dd>
+        </dl>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (it.result) { var r = it.result; %>
+  <div class="card" style="margin-top:20px">
+    <div class="card-head"><h3>Sample of drawn outcomes</h3></div>
+    <div class="table-wrap" style="border:0">
+      <table>
+        <thead><tr><th>Outcome</th><th class="num">Percent</th><th class="num">Amount</th><th>How it was drawn</th></tr></thead>
+        <tbody>
+          <% r.sample.forEach(function(s){ %>
+            <tr>
+              <td><span class="badge <%= s.outcome === 'win' ? 'badge-live' : 'badge-warn' %>"><%= s.outcome %></span></td>
+              <td class="num <%= s.percent >= 0 ? 'up' : 'down' %>"><%= s.percent >= 0 ? '+' : '' %><%= s.percent %>%</td>
+              <td class="num <%= s.amount >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(s.amount) %></td>
+              <td class="small muted"><%= s.reason %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>

@@ -1,0 +1,59 @@
+<div class="page-head"><div><h1>P/L results</h1>
+  <p class="small" style="margin:4px 0 0">Every automatically generated outcome, with the parameters and draw that produced it. This is the audit trail behind each period's profit or loss.</p></div></div>
+
+<% var pf = it.perf; %>
+<div class="grid g4" style="margin-bottom:22px">
+  <div class="stat"><div class="stat-k">Total outcomes</div><div class="stat-v"><%= pf.total %></div>
+    <div class="stat-sub"><%= pf.winRate.toFixed(1) %>% wins</div></div>
+  <div class="stat"><div class="stat-k">Wins</div><div class="stat-v up"><%= pf.wins %></div>
+    <div class="stat-sub">avg <%= it.usd(pf.avgProfit) %></div></div>
+  <div class="stat"><div class="stat-k">Losses</div><div class="stat-v down"><%= pf.losses %></div>
+    <div class="stat-sub">avg −<%= it.usd(pf.avgLoss) %></div></div>
+  <div class="stat"><div class="stat-k">Net result</div><div class="stat-v <%= pf.net >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(pf.net) %></div>
+    <div class="stat-sub">gross loss −<%= it.usd(pf.grossLoss) %></div></div>
+</div>
+
+<div class="tabs">
+  <a href="/admin/pl-results<%= it.planId ? '?plan=' + it.planId : '' %>" <%= !it.outcome ? 'aria-current=page' : '' %>>All</a>
+  <a href="/admin/pl-results?outcome=win<%= it.planId ? '&plan=' + it.planId : '' %>" <%= it.outcome === 'win' ? 'aria-current=page' : '' %>>Wins</a>
+  <a href="/admin/pl-results?outcome=loss<%= it.planId ? '&plan=' + it.planId : '' %>" <%= it.outcome === 'loss' ? 'aria-current=page' : '' %>>Losses</a>
+</div>
+
+<form method="get" action="/admin/pl-results" class="card" style="margin-bottom:16px">
+  <div class="row2" style="align-items:end">
+    <div class="field"><label for="plan">Plan</label>
+      <select class="input" id="plan" name="plan">
+        <option value="">All plans</option>
+        <% it.plans.forEach(function(p){ %>
+          <option value="<%= p.id %>" <%= it.planId === p.id ? 'selected' : '' %>><%= p.name %></option>
+        <% }) %>
+      </select></div>
+    <% if (it.outcome) { %><input type="hidden" name="outcome" value="<%= it.outcome %>"><% } %>
+    <div class="field"><button class="btn btn-quiet btn-sm">Filter</button></div>
+  </div>
+</form>
+
+<div class="card card--flush" style="overflow:hidden">
+  <div class="table-wrap" style="border:0">
+    <table>
+      <thead><tr><th>When</th><th>Client</th><th>Plan</th><th class="num">Period</th><th>Outcome</th><th class="num">Percent</th><th class="num">Amount</th><th class="num">Profit bal. after</th><th>Calculation</th></tr></thead>
+      <tbody>
+        <% if (!it.rows.length) { %><tr><td colspan="9"><div class="empty"><h4>No results generated yet</h4>
+          <p class="small">Outcomes appear here as investment periods complete.</p></div></td></tr><% } %>
+        <% it.rows.forEach(function(r){ %>
+          <tr>
+            <td class="small muted"><%= it.dt(r.created_at) %></td>
+            <td class="small"><% if (r.user_id) { %><a class="go" href="/admin/users/<%= r.user_id %>"><%= r.first_name ? (r.first_name + ' ' + r.last_name) : ('#' + r.user_id) %></a><% } else { %>—<% } %></td>
+            <td class="small"><%= r.plan_name || '—' %></td>
+            <td class="num small"><%= r.period_number %></td>
+            <td><span class="badge <%= r.outcome === 'win' ? 'badge-live' : 'badge-warn' %>"><%= r.outcome %></span></td>
+            <td class="num <%= Number(r.percent) >= 0 ? 'up' : 'down' %>"><%= Number(r.percent) >= 0 ? '+' : '' %><%= Number(r.percent) %>%</td>
+            <td class="num <%= Number(r.amount) >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(r.amount) %></td>
+            <td class="num muted"><%= it.usd(r.balance_after) %></td>
+            <td class="small muted" style="max-width:360px"><%= r.reason %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

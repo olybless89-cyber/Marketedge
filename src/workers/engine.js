@@ -1,6 +1,7 @@
 import { sql } from '../db/client.js';
 import { mailPlanClosed, mailAdminInvestmentEnded, mailProfitLossDigest } from '../lib/mail.js';
 import { getSetting, setSetting } from '../lib/settings.js';
+import { generateInvestmentResult } from '../lib/pl-engine.js';
 
 /* =================================================================
    Three loops, all writing rows. Nothing here touches the UI —
@@ -197,35 +198,56 @@ export async function runMarket() {
 }
 
 /* ---------- 3. investment accrual ---------- */
+/* Each completed period draws an automatic win or loss from the plan's
+   configured probability and ranges (see src/lib/pl-engine.js). The old
+   fixed `roi_percent` accrual is gone: a plan's per-period return is now
+   generated, recorded in investment_results, and posted to the `profit`
+   ledger bucket — a loss posts as a negative amount, so the Profit
+   bucket and the user's statement reflect it either way. */
 export async function runAccrual() {
   const due = await sql`
     select i.id, i.user_id, i.principal::text, i.periods_paid, p.roi_percent::text roi,
-           p.period_hours, p.duration_periods, p.name, p.principal_returned
+           p.period_hours, p.duration_periods, p.name, p.principal_returned, p.id plan_id,
+           p.win_probability::text win_probability,
+           p.profit_min_percent::text profit_min_percent,
+           p.profit_max_percent::text profit_max_percent,
+           p.loss_min_percent::text loss_min_percent,
+           p.loss_max_percent::text loss_max_percent
     from investments i join plans p on p.id = i.plan_id
     where i.status = 'active'
       and i.periods_paid < p.duration_periods
       and coalesce(i.last_accrual_at, i.started_at) < now() - (p.period_hours || ' hours')::interval`;
 
   for (const i of due) {
-    const payout = (Number(i.principal) * Number(i.roi)) / 100;
+    const periodNumber = i.periods_paid + 1;
+    const config = {
+      winProbability: Number(i.win_probability),
+      profitMinPercent: Number(i.profit_min_percent),
+      profitMaxPercent: Number(i.profit_max_percent),
+      lossMinPercent: Number(i.loss_min_percent),
+      lossMaxPercent: Number(i.loss_max_percent),
+    };
+
+    const result = await generateInvestmentResult({
+      investmentId: i.id, planId: i.plan_id, userId: i.user_id,
+      principal: Number(i.principal), periodNumber, config,
+      reasonPrefix: `Period ${periodNumber}/${i.duration_periods} of "${i.name}".`,
+    });
 
     await sql`update investments
-      set accrued = accrued + ${payout}, periods_paid = periods_paid + 1, last_accrual_at = now()
+      set accrued = accrued + ${String(result.amount)}, periods_paid = periods_paid + 1, last_accrual_at = now()
       where id = ${i.id}`;
 
-    await sql`insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo)
-      values (${i.user_id}, 'profit', 'investment_payout', ${payout}, 'investment', ${i.id},
-              ${`${i.name} return, period ${i.periods_paid + 1}/${i.duration_periods}`})`;
-
-    // In-app notification for every payout (not just the final one) — the
-    // once-daily email roll-up (runProfitLossDigest) is separate; emailing
-    // on every accrual would be far too frequent for short-period plans.
+    // In-app notification for every period — the once-daily email roll-up
+    // (runProfitLossDigest) is separate; emailing every accrual would be
+    // far too frequent for short-period plans.
+    const isWin = result.outcome === 'win';
     await sql`insert into notifications (user_id, kind, title, body)
-      values (${i.user_id}, 'success', 'Investment return credited',
-              ${`+$${payout.toFixed(2)} credited to your ${i.name} plan (period ${i.periods_paid + 1}/${i.duration_periods})`})`;
+      values (${i.user_id}, ${isWin ? 'success' : 'warn'}, ${isWin ? 'Profit credited' : 'Loss recorded'},
+              ${`${isWin ? '+' : '−'}$${Math.abs(result.amount).toFixed(2)} on ${i.name} (period ${periodNumber}/${i.duration_periods}, ${result.percent >= 0 ? '+' : ''}${result.percent}%)`})`;
 
     // Final period: release the principal and close the plan.
-    if (i.periods_paid + 1 >= i.duration_periods) {
+    if (periodNumber >= i.duration_periods) {
       await sql`update investments set status = 'matured' where id = ${i.id}`;
       if (i.principal_returned) {
         await sql`insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo) values
@@ -239,10 +261,11 @@ export async function runAccrual() {
       // Plan closing mail — fire-and-forget; never block the accrual loop.
       const [owner] = await sql`select email, first_name from users where id = ${i.user_id}`;
       if (owner) {
+        const [acc] = await sql`select accrued::text from investments where id = ${i.id}`;
         const ownerObj = { id: i.user_id, email: owner.email, firstName: owner.first_name };
-        mailPlanClosed(ownerObj, i.name, i.principal, i.accrued + payout)
+        mailPlanClosed(ownerObj, i.name, i.principal, acc.accrued)
           .catch((e) => console.error('[mail] plan closed failed:', e.message));
-        mailAdminInvestmentEnded(ownerObj, i.name, i.principal, i.accrued + payout, 'maturity')
+        mailAdminInvestmentEnded(ownerObj, i.name, i.principal, acc.accrued, 'maturity')
           .catch((e) => console.error('[mail] admin plan-closed alert failed:', e.message));
       }
     }
@@ -316,7 +339,17 @@ export function startEngine() {
 
   tick();
   setInterval(tick, every);
-  setInterval(() => runAccrual().catch((e) => console.error('[accrual]', e.message)), 60000);
+  // Guarded like `tick`: two overlapping accrual runs could otherwise both
+  // pick up the same due investment and draw two results for one period.
+  let accrualBusy = false;
+  const accrualTick = async () => {
+    if (accrualBusy) return;
+    accrualBusy = true;
+    try { await runAccrual(); }
+    catch (e) { console.error('[accrual]', e.message); }
+    finally { accrualBusy = false; }
+  };
+  setInterval(accrualTick, 60000);
   maybeRunDailyDigest().catch((e) => console.error('[digest] failed:', e.message));
   setInterval(() => maybeRunDailyDigest().catch((e) => console.error('[digest] failed:', e.message)), 30 * 60 * 1000);
   console.log(`[engine] running — prices every ${every / 1000}s, accrual every 60s, digest check every 30m`);
