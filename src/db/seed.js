@@ -8,12 +8,16 @@ import { pollPrices, runMarket } from '../workers/engine.js';
 
 const PLANS = [
   { name: 'Starter',  slug: 'starter',  roi: 0.85, hours: 24, periods: 30, min: 100,    max: 2999,    badge: null,
+    win: 62, pmin: 0.40, pmax: 1.80, lmin: 0.20, lmax: 1.40,
     features: ['Principal returned at maturity', 'Withdraw returns as they post', 'Full charting access', '24/7 support'] },
   { name: 'Standard', slug: 'standard', roi: 1.10, hours: 24, periods: 45, min: 3000,   max: 24999,   badge: 'Popular',
+    win: 65, pmin: 0.50, pmax: 2.20, lmin: 0.25, lmax: 1.60,
     features: ['Principal returned at maturity', 'Withdraw returns as they post', 'Priority withdrawals', 'Dedicated account manager'] },
   { name: 'Growth',   slug: 'growth',   roi: 1.35, hours: 24, periods: 60, min: 25000,  max: 99999,   badge: null,
+    win: 68, pmin: 0.60, pmax: 2.80, lmin: 0.30, lmax: 1.90,
     features: ['Principal returned at maturity', 'Withdraw returns as they post', 'Reduced spreads', 'Quarterly strategy review'] },
   { name: 'Private',  slug: 'private',  roi: 1.60, hours: 24, periods: 90, min: 100000, max: 1000000, badge: 'Invite',
+    win: 70, pmin: 0.70, pmax: 3.40, lmin: 0.35, lmax: 2.20,
     features: ['Principal returned at maturity', 'Custom mandate available', 'Institutional execution', 'Direct desk line'] },
 ];
 
@@ -46,9 +50,12 @@ async function main() {
   for (const [i, p] of PLANS.entries()) {
     await sql`
       insert into plans (name, slug, badge, roi_percent, period_hours, duration_periods,
-                         min_amount, max_amount, features, sort_order, active)
+                         min_amount, max_amount, win_probability, profit_min_percent,
+                         profit_max_percent, loss_min_percent, loss_max_percent,
+                         features, sort_order, active)
       values (${p.name}, ${p.slug}, ${p.badge}, ${p.roi}, ${p.hours}, ${p.periods},
-              ${p.min}, ${p.max}, ${JSON.stringify(p.features)}, ${i}, true)
+              ${p.min}, ${p.max}, ${p.win}, ${p.pmin}, ${p.pmax}, ${p.lmin}, ${p.lmax},
+              ${JSON.stringify(p.features)}, ${i}, true)
       on conflict (slug) do nothing`;
   }
   console.log(`[seed] plans: ${PLANS.length}`);

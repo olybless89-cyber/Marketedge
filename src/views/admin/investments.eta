@@ -22,7 +22,7 @@
           <td><b><%= i.first_name %> <%= i.last_name %></b><div class="small muted"><%= i.email %></div></td>
           <td><%= i.plan_name %><div class="small muted"><%= Number(i.roi).toFixed(2) %>% / period</div></td>
           <td class="num" style="font-family:var(--ff-mono)"><%= it.usd(i.principal) %></td>
-          <td class="num" style="font-family:var(--ff-mono)"><%= it.usd(i.accrued) %></td>
+          <td class="num" style="font-family:var(--f-mono)"><%= it.signedUsd(i.accrued) %></td>
           <td><span class="badge <%= i.status==='active'?'badge-live':i.status==='ended'?'badge-warn':'badge-idle' %>"><%= i.status %></span></td>
           <td class="small muted"><%= it.dt(i.started_at) %></td>
           <td style="text-align:right">

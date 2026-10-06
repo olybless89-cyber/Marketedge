@@ -249,15 +249,20 @@ dash.post('/dashboard/withdraw', async (c) => {
 /* ---------------- investment plans ---------------- */
 dash.get('/dashboard/invest', async (c) => {
   const u = c.get('user');
-  const [plans, mine, bal] = await Promise.all([
+  const [plans, mine, bal, results] = await Promise.all([
     db.select().from(plansT).where(eq(plansT.active, true)).orderBy(plansT.sortOrder),
     sql`select i.*, p.name plan_name, p.roi_percent::text roi, p.period_hours, p.duration_periods
         from investments i join plans p on p.id = i.plan_id
         where i.user_id = ${u.id} order by i.started_at desc limit 20`,
     balance(u.id),
+    sql`select ir.*, p.name plan_name
+        from investment_results ir join plans p on p.id = ir.plan_id
+        where ir.user_id = ${u.id} and ir.mode = 'live'
+        order by ir.created_at desc limit 15`,
   ]);
   return shell(c, 'dashboard/invest', {
-    plans, mine, bal, preset: c.req.query('plan'), error: c.req.query('e'), ok: c.req.query('ok'),
+    plans, mine, bal, results,
+    preset: c.req.query('plan'), error: c.req.query('e'), ok: c.req.query('ok'),
   }, 'Investment plans');
 });
 

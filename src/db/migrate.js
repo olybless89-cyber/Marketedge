@@ -316,6 +316,33 @@ const DDL = [
     created_at timestamptz not null default now()
   )`,
   `create index if not exists audit_user_idx on audit_log(user_id, created_at)`,
+
+  // --- v3: admin-controlled automated profit/loss engine ---
+  `alter table plans add column if not exists win_probability numeric(5,2) not null default 65`,
+  `alter table plans add column if not exists profit_min_percent numeric(8,4) not null default 0.50`,
+  `alter table plans add column if not exists profit_max_percent numeric(8,4) not null default 2.00`,
+  `alter table plans add column if not exists loss_min_percent numeric(8,4) not null default 0.20`,
+  `alter table plans add column if not exists loss_max_percent numeric(8,4) not null default 1.50`,
+  `create table if not exists investment_results (
+    id serial primary key,
+    investment_id integer,
+    plan_id integer,
+    user_id integer,
+    period_number integer not null default 1,
+    outcome varchar(8) not null,
+    percent numeric(8,4) not null,
+    amount numeric(20,8) not null,
+    principal numeric(20,8) not null,
+    balance_before numeric(20,8),
+    balance_after numeric(20,8),
+    mode varchar(8) not null default 'live',
+    params jsonb default '{}',
+    reason text,
+    created_at timestamptz not null default now()
+  )`,
+  `create index if not exists ires_plan_idx on investment_results(plan_id, created_at)`,
+  `create index if not exists ires_user_idx on investment_results(user_id, created_at)`,
+  `create index if not exists ires_inv_idx on investment_results(investment_id, period_number)`,
 ];
 
 export async function migrate() {

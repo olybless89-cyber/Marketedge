@@ -12,6 +12,21 @@
     <div class="stat-sub"><%= it.k.active_plans %> active · <%= it.k.open_trades %> open trades</div></div>
 </div>
 
+<div class="card-head"><h3 style="font-family:var(--f-display)">Generated profit &amp; loss</h3>
+  <div style="display:flex;gap:8px"><a class="btn btn-quiet btn-sm" href="/admin/performance">Performance</a>
+  <a class="btn btn-quiet btn-sm" href="/admin/pl-results">All results</a></div></div>
+
+<div class="grid g4" style="margin-bottom:22px">
+  <div class="stat"><div class="stat-k">Outcomes</div><div class="stat-v"><%= it.k.pl_total %></div>
+    <div class="stat-sub">auto-generated periods</div></div>
+  <div class="stat"><div class="stat-k">Wins</div><div class="stat-v up"><%= it.k.pl_wins %></div>
+    <div class="stat-sub"><%= it.k.pl_total ? ((it.k.pl_wins / it.k.pl_total) * 100).toFixed(1) : '0.0' %>% win rate</div></div>
+  <div class="stat"><div class="stat-k">Losses</div><div class="stat-v down"><%= it.k.pl_losses %></div>
+    <div class="stat-sub">occasional losing periods</div></div>
+  <div class="stat"><div class="stat-k">Net result</div><div class="stat-v <%= Number(it.k.pl_net) >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(it.k.pl_net) %></div>
+    <div class="stat-sub">sum of all outcomes</div></div>
+</div>
+
 <div class="card-head"><h3 style="font-family:var(--f-display)">Review queue</h3>
   <div style="display:flex;gap:8px"><a class="btn btn-quiet btn-sm" href="/admin/deposits">Deposits</a>
   <a class="btn btn-quiet btn-sm" href="/admin/withdrawals">Withdrawals</a></div></div>

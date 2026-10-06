@@ -57,13 +57,37 @@
         <tr>
           <td><b><%= i.plan_name %></b><div class="small muted num"><%= Number(i.roi).toFixed(2) %>% per period</div></td>
           <td class="num"><%= it.usd(i.principal) %></td>
-          <td class="num up"><%= it.signedUsd(i.accrued) %></td>
+          <td class="num <%= Number(i.accrued) >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(i.accrued) %></td>
           <td style="min-width:130px">
             <div class="small muted num"><%= i.periods_paid %>/<%= i.duration_periods %></div>
             <div class="meter"><i style="width:<%= Math.min(100,(i.periods_paid/i.duration_periods)*100) %>%"></i></div>
           </td>
           <td class="small muted"><%= it.dt(i.matures_at) %></td>
           <td><span class="badge <%= i.status==='active'?'badge-live':'badge-idle' %>"><%= i.status %></span></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<div class="card-head" style="margin-top:22px"><h3 style="font-family:var(--f-display)">Recent period results</h3></div>
+<div class="card card--flush" style="overflow:hidden">
+<div class="table-wrap" style="border:0">
+  <table>
+    <thead><tr><th>When</th><th>Plan</th><th class="num">Period</th><th>Result</th><th class="num">Percent</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+      <% if (!it.results || !it.results.length) { %>
+        <tr><td colspan="6"><div class="empty"><h4>No results yet</h4><p class="small">Each period's profit or loss posts here as it completes.</p></div></td></tr>
+      <% } %>
+      <% (it.results || []).forEach(function(r){ %>
+        <tr>
+          <td class="small muted"><%= it.dt(r.created_at) %></td>
+          <td class="small"><%= r.plan_name %></td>
+          <td class="num small"><%= r.period_number %></td>
+          <td><span class="badge <%= r.outcome === 'win' ? 'badge-live' : 'badge-warn' %>"><%= r.outcome %></span></td>
+          <td class="num <%= Number(r.percent) >= 0 ? 'up' : 'down' %>"><%= Number(r.percent) >= 0 ? '+' : '' %><%= Number(r.percent) %>%</td>
+          <td class="num <%= Number(r.amount) >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(r.amount) %></td>
         </tr>
       <% }) %>
     </tbody>

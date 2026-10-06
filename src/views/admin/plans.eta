@@ -1,73 +1,99 @@
-<div class="page-head"><h1>Investment plans</h1></div>
+<div class="page-head"><div><h1>Investment plans</h1>
+  <p class="small" style="margin:4px 0 0">Each plan draws its own win or loss every period from the ranges below. Win probability controls how often outcomes land on the profit side.</p></div></div>
 <% if (it.ok === '1') { %><div class="notice notice-ok">Plan created.</div><% } %>
-<% if (it.ok === 'edit') { %><div class="notice notice-ok">Plan updated.</div><% } %>
+<% if (it.ok === 'edit') { %><div class="notice notice-ok">Plan updated. New settings apply from the next period onward.</div><% } %>
 <% if (it.error) { %><div class="notice notice-err"><%= it.error %></div><% } %>
 
-<div class="grid grid-admin-split">
-  <div class="table-wrap" style="height:fit-content">
-    <table>
-      <thead><tr><th>Plan</th><th class="num">Rate</th><th>Term</th><th class="num">Range</th><th>Status</th><th></th></tr></thead>
-      <tbody>
-        <% if (!it.rows.length) { %><tr><td colspan="6"><div class="empty"><h4>No plans defined</h4></div></td></tr><% } %>
-        <% it.rows.forEach(function(p){ %>
-          <tr>
-            <td><b><%= p.name %></b><div class="small muted"><%= p.slug %></div></td>
-            <td class="num"><%= Number(p.roiPercent).toFixed(2) %>%</td>
-            <td class="small"><%= p.durationPeriods %> × <%= p.periodHours %>h</td>
-            <td class="num small"><%= it.usd(p.minAmount,0) %> – <%= it.usd(p.maxAmount,0) %></td>
-            <td><span class="badge <%= p.active?'badge-live':'badge-idle' %>"><%= p.active?'live':'hidden' %></span></td>
-            <td style="text-align:right;white-space:nowrap">
-              <a class="btn btn-quiet btn-sm" href="/admin/plans#edit-<%= p.id %>">Edit</a>
-              <form method="post" action="/admin/plans/<%= p.id %>/toggle" style="display:inline">
-                <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-                <button class="btn btn-quiet btn-sm"><%= p.active?'Hide':'Publish' %></button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Plan</th><th class="num">Headline</th><th>Term</th><th class="num">Profit range</th><th class="num">Loss range</th><th class="num">Win&nbsp;prob.</th><th class="num">Results</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% if (!it.rows.length) { %><tr><td colspan="9"><div class="empty"><h4>No plans defined</h4></div></td></tr><% } %>
+      <% it.rows.forEach(function(p){ var pf = it.perfById[p.id] || { total:0, wins:0, losses:0, winRate:0 }; %>
+        <tr>
+          <td><b><%= p.name %></b><div class="small muted"><%= p.slug %></div></td>
+          <td class="num"><%= Number(p.roiPercent).toFixed(2) %>%</td>
+          <td class="small"><%= p.durationPeriods %> × <%= p.periodHours %>h</td>
+          <td class="num small up">+<%= Number(p.profitMinPercent) %>–<%= Number(p.profitMaxPercent) %>%</td>
+          <td class="num small down">−<%= Number(p.lossMinPercent) %>–<%= Number(p.lossMaxPercent) %>%</td>
+          <td class="num"><b><%= Number(p.winProbability) %>%</b></td>
+          <td class="num small"><%= pf.total ? (pf.wins + 'W / ' + pf.losses + 'L') : '—' %>
+            <% if (pf.total) { %><div class="muted"><%= pf.winRate.toFixed(0) %>% actual</div><% } %></td>
+          <td><span class="badge <%= p.active?'badge-live':'badge-idle' %>"><%= p.active?'live':'hidden' %></span></td>
+          <td style="text-align:right;white-space:nowrap">
+            <a class="btn btn-quiet btn-sm" href="/admin/plans/<%= p.id %>/simulate">Simulate</a>
+            <a class="btn btn-quiet btn-sm" href="/admin/plans#edit-<%= p.id %>">Edit</a>
+            <form method="post" action="/admin/plans/<%= p.id %>/toggle" style="display:inline">
+              <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+              <button class="btn btn-quiet btn-sm"><%= p.active?'Hide':'Publish' %></button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
 
-  <div class="card">
-    <div class="card-head"><h3>Add a plan</h3></div>
-    <form method="post" action="/admin/plans">
-      <input type="hidden" name="_csrf" value="<%= it.csrf %>">
-      <div class="field"><label for="nm">Name</label><input class="input" id="nm" name="name" required placeholder="Standard"></div>
-      <div class="row2">
-        <div class="field"><label for="rp">Rate % per period</label><input class="input num" id="rp" name="roiPercent" type="number" step="0.01" value="1.20" required></div>
-        <div class="field"><label for="ph">Period (hours)</label><input class="input num" id="ph" name="periodHours" type="number" value="24" required></div>
-      </div>
-      <div class="field"><label for="dp">Number of periods</label><input class="input num" id="dp" name="durationPeriods" type="number" value="30" required>
-        <div class="hint">Rate × periods is the total return. Sanity-check it before publishing.</div></div>
-      <div class="row2">
-        <div class="field"><label for="mn">Minimum</label><input class="input num" id="mn" name="minAmount" type="number" value="100"></div>
-        <div class="field"><label for="mx">Maximum</label><input class="input num" id="mx" name="maxAmount" type="number" value="25000"></div>
-      </div>
-      <button class="btn btn-primary btn-block btn-sm">Create plan</button>
-    </form>
-  </div>
+<div class="card" style="margin-top:20px;max-width:820px">
+  <div class="card-head"><h3>Add a plan</h3></div>
+  <form method="post" action="/admin/plans">
+    <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+    <div class="field"><label for="nm">Name</label><input class="input" id="nm" name="name" required placeholder="Standard"></div>
+    <div class="row2">
+      <div class="field"><label for="rp">Headline rate %</label><input class="input num" id="rp" name="roiPercent" type="number" step="0.01" value="1.20" required>
+        <div class="hint">Shown to clients. Actual results come from the ranges below.</div></div>
+      <div class="field"><label for="wp">Win probability %</label><input class="input num" id="wp" name="winProbability" type="number" step="0.1" min="0" max="100" value="65" required>
+        <div class="hint">Share of periods that win. 70 ≈ 70 wins per 100 periods.</div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="ph">Period (hours)</label><input class="input num" id="ph" name="periodHours" type="number" value="24" required></div>
+      <div class="field"><label for="dp">Number of periods</label><input class="input num" id="dp" name="durationPeriods" type="number" value="30" required></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="pmin">Min profit %</label><input class="input num" id="pmin" name="profitMinPercent" type="number" step="0.01" min="0" value="0.50"></div>
+      <div class="field"><label for="pmax">Max profit %</label><input class="input num" id="pmax" name="profitMaxPercent" type="number" step="0.01" min="0" value="2.00"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="lmin">Min loss %</label><input class="input num" id="lmin" name="lossMinPercent" type="number" step="0.01" min="0" value="0.20"></div>
+      <div class="field"><label for="lmax">Max loss %</label><input class="input num" id="lmax" name="lossMaxPercent" type="number" step="0.01" min="0" value="1.50"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="mn">Minimum investment</label><input class="input num" id="mn" name="minAmount" type="number" value="100"></div>
+      <div class="field"><label for="mx">Maximum investment</label><input class="input num" id="mx" name="maxAmount" type="number" value="25000"></div>
+    </div>
+    <button class="btn btn-primary btn-block btn-sm">Create plan</button>
+  </form>
 </div>
 
 <% it.rows.forEach(function(p){ %>
-  <div class="card" id="edit-<%= p.id %>" style="margin-top:20px;max-width:680px">
+  <div class="card" id="edit-<%= p.id %>" style="margin-top:20px;max-width:820px">
     <div class="card-head"><h3>Edit — <%= p.name %></h3>
-      <a class="btn btn-quiet btn-sm" href="/admin/plans">Close</a></div>
+      <a class="btn btn-quiet btn-sm" href="/admin/plans/<%= p.id %>/simulate">Simulate</a></div>
     <form method="post" action="/admin/plans/<%= p.id %>/edit">
       <input type="hidden" name="_csrf" value="<%= it.csrf %>">
       <div class="field"><label for="enm-<%= p.id %>">Name</label><input class="input" id="enm-<%= p.id %>" name="name" value="<%= p.name %>" required></div>
       <div class="row2">
-        <div class="field"><label for="erp-<%= p.id %>">Rate % per period</label><input class="input num" id="erp-<%= p.id %>" name="roiPercent" type="number" step="0.01" value="<%= Number(p.roiPercent) %>" required></div>
-        <div class="field"><label for="eph-<%= p.id %>">Period (hours)</label><input class="input num" id="eph-<%= p.id %>" name="periodHours" type="number" value="<%= p.periodHours %>" required></div>
+        <div class="field"><label for="erp-<%= p.id %>">Headline rate %</label><input class="input num" id="erp-<%= p.id %>" name="roiPercent" type="number" step="0.01" value="<%= Number(p.roiPercent) %>" required></div>
+        <div class="field"><label for="ewp-<%= p.id %>">Win probability %</label><input class="input num" id="ewp-<%= p.id %>" name="winProbability" type="number" step="0.1" min="0" max="100" value="<%= Number(p.winProbability) %>" required></div>
       </div>
-      <div class="field"><label for="edp-<%= p.id %>">Number of periods</label><input class="input num" id="edp-<%= p.id %>" name="durationPeriods" type="number" value="<%= p.durationPeriods %>" required></div>
       <div class="row2">
-        <div class="field"><label for="emn-<%= p.id %>">Minimum</label><input class="input num" id="emn-<%= p.id %>" name="minAmount" type="number" value="<%= Number(p.minAmount) %>"></div>
-        <div class="field"><label for="emx-<%= p.id %>">Maximum</label><input class="input num" id="emx-<%= p.id %>" name="maxAmount" type="number" value="<%= Number(p.maxAmount) %>"></div>
+        <div class="field"><label for="eph-<%= p.id %>">Period (hours)</label><input class="input num" id="eph-<%= p.id %>" name="periodHours" type="number" value="<%= p.periodHours %>" required></div>
+        <div class="field"><label for="edp-<%= p.id %>">Number of periods</label><input class="input num" id="edp-<%= p.id %>" name="durationPeriods" type="number" value="<%= p.durationPeriods %>" required></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="epmin-<%= p.id %>">Min profit %</label><input class="input num" id="epmin-<%= p.id %>" name="profitMinPercent" type="number" step="0.01" min="0" value="<%= Number(p.profitMinPercent) %>"></div>
+        <div class="field"><label for="epmax-<%= p.id %>">Max profit %</label><input class="input num" id="epmax-<%= p.id %>" name="profitMaxPercent" type="number" step="0.01" min="0" value="<%= Number(p.profitMaxPercent) %>"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="elmin-<%= p.id %>">Min loss %</label><input class="input num" id="elmin-<%= p.id %>" name="lossMinPercent" type="number" step="0.01" min="0" value="<%= Number(p.lossMinPercent) %>"></div>
+        <div class="field"><label for="elmax-<%= p.id %>">Max loss %</label><input class="input num" id="elmax-<%= p.id %>" name="lossMaxPercent" type="number" step="0.01" min="0" value="<%= Number(p.lossMaxPercent) %>"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="emn-<%= p.id %>">Minimum investment</label><input class="input num" id="emn-<%= p.id %>" name="minAmount" type="number" value="<%= Number(p.minAmount) %>"></div>
+        <div class="field"><label for="emx-<%= p.id %>">Maximum investment</label><input class="input num" id="emx-<%= p.id %>" name="maxAmount" type="number" value="<%= Number(p.maxAmount) %>"></div>
       </div>
       <div class="field"><label for="eso-<%= p.id %>">Sort order</label><input class="input num" id="eso-<%= p.id %>" name="sortOrder" type="number" value="<%= p.sortOrder %>"></div>
       <button class="btn btn-primary btn-block btn-sm">Save plan</button>
     </form>
   </div>
 <% }) %>
-

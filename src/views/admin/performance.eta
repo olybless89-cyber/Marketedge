@@ -1,0 +1,48 @@
+<div class="page-head"><div><h1>Performance</h1>
+  <p class="small" style="margin:4px 0 0">Aggregate results across every plan, computed from the generated outcomes — never hand-entered.</p></div></div>
+
+<% var o = it.overall; %>
+<div class="grid g4" style="margin-bottom:22px">
+  <div class="stat"><div class="stat-k">Total outcomes</div><div class="stat-v"><%= o.total %></div>
+    <div class="stat-sub"><%= o.wins %> wins · <%= o.losses %> losses</div></div>
+  <div class="stat"><div class="stat-k">Win rate</div><div class="stat-v"><%= o.winRate.toFixed(1) %>%</div>
+    <div class="stat-sub">across all generated periods</div></div>
+  <div class="stat"><div class="stat-k">Avg profit</div><div class="stat-v up"><%= it.usd(o.avgProfit) %></div>
+    <div class="stat-sub"><%= o.avgWinPct.toFixed(2) %>% per win</div></div>
+  <div class="stat"><div class="stat-k">Avg loss</div><div class="stat-v down"><%= it.usd(o.avgLoss) %></div>
+    <div class="stat-sub"><%= o.avgLossPct.toFixed(2) %>% per loss</div></div>
+</div>
+
+<div class="card" style="margin-bottom:22px">
+  <div class="card-head"><h3>Overall</h3></div>
+  <dl class="kv">
+    <dt>Gross profit</dt><dd class="up"><%= it.signedUsd(o.grossProfit) %></dd>
+    <dt>Gross loss</dt><dd class="down">−<%= it.usd(o.grossLoss) %></dd>
+    <dt>Net result</dt><dd class="<%= o.net >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(o.net) %></dd>
+    <dt>Last outcome</dt><dd class="muted"><%= o.lastAt ? it.dt(o.lastAt) : '—' %></dd>
+  </dl>
+</div>
+
+<div class="card-head"><h3 style="font-family:var(--f-display)">By plan</h3></div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Plan</th><th class="num">Configured win %</th><th class="num">Outcomes</th><th class="num">Wins</th><th class="num">Losses</th><th class="num">Actual win %</th><th class="num">Avg profit</th><th class="num">Avg loss</th><th class="num">Net</th><th></th></tr></thead>
+    <tbody>
+      <% if (!it.byPlan.length) { %><tr><td colspan="10"><div class="empty"><h4>No plans yet</h4></div></td></tr><% } %>
+      <% it.byPlan.forEach(function(p){ %>
+        <tr>
+          <td><b><%= p.name %></b><div class="small muted"><%= p.active ? 'live' : 'hidden' %></div></td>
+          <td class="num"><%= p.configuredWinRate %>%</td>
+          <td class="num"><%= p.total %></td>
+          <td class="num up"><%= p.wins %></td>
+          <td class="num down"><%= p.losses %></td>
+          <td class="num"><%= p.total ? p.winRate.toFixed(1) + '%' : '—' %></td>
+          <td class="num up"><%= it.usd(p.avgProfit) %></td>
+          <td class="num down">−<%= it.usd(p.avgLoss) %></td>
+          <td class="num <%= p.net >= 0 ? 'up' : 'down' %>"><%= it.signedUsd(p.net) %></td>
+          <td style="text-align:right"><a class="btn btn-quiet btn-sm" href="/admin/pl-results?plan=<%= p.id %>">View results</a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
