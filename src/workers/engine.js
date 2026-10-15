@@ -133,7 +133,7 @@ async function closeTrade(tradeId) {
       pnl = case when side = 'buy'
                  then (${t.mark}::numeric - entry_price) / entry_price * size_usd
                  else (entry_price - ${t.mark}::numeric) / entry_price * size_usd end
-    where trader_trade_id = ${tradeId}and status = 'open'`;
+    where trader_trade_id = ${tradeId} and status = 'open'`;
 
   // Auto-post every follower's realised P&L to the ledger `profit` bucket —
   // copy gains/losses must show up in Profit & Loss automatically, without

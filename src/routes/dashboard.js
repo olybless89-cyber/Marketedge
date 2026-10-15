@@ -354,7 +354,7 @@ dash.post('/dashboard/copy/stop', async (c) => {
             else (c.entry_price - coalesce(p.price,c.entry_price)) / c.entry_price * c.size_usd end
       from prices p
       where p.symbol = c.symbol
-        and c.follow_id = ${id}and c.status = 'open'
+        and c.follow_id = ${id} and c.status = 'open'
       returning pnl
     )
     select coalesce(sum(pnl::numeric), 0)::text pnl from closed`;
