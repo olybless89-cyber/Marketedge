@@ -75,7 +75,7 @@
               <td class="small muted"><%= it.ago(r.createdAt) %></td>
               <td class="small"><%= (it.methodNames && it.methodNames[r.method]) || r.method.replace(/_/g,' ').toUpperCase() %></td>
               <td class="num"><%= it.usd(r.amount) %></td>
-              <td class="small"><% if (r.proofUrl) { %><a href="<%= r.proofUrl %>" target="_blank" rel="noopener" class="go">View</a><% } else { %><span class="muted">—</span><% } %></td>
+              <td class="small"><% if (r.proofUrl) { %><span class="muted">Submitted</span><% } else { %><span class="muted">—</span><% } %></td>
               <td><span class="badge <%= r.status==='approved'?'badge-live':r.status==='rejected'?'badge-warn':'badge-idle' %>"><%= r.status %></span></td>
             </tr>
           <% }) %>

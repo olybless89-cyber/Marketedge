@@ -15,7 +15,7 @@ import {
   getWallets, setWallets, getSiteConfig, setSiteConfig,
   listPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, methodValues,
 } from '../lib/settings.js';
-import { BUCKETS, creditDebit, clearAccount, setWithdrawalCode, clearWithdrawalCode } from '../lib/finance.js';
+import { BUCKETS, creditDebit, addManualTransaction, clearAccount, setWithdrawalCode, clearWithdrawalCode } from '../lib/finance.js';
 import {
   mailDepositConfirmed, mailDepositDeclined, mailWithdrawalSent, mailWithdrawalDeclined,
   mailKycApproved, mailKycRejected, mailAdminMessage, mailPlanEnded, retryMail,
@@ -480,13 +480,14 @@ admin.get('/admin/users/:id', async (c) => {
            u.withdrawal_code_hash is not null as has_withdrawal_code
     from users u where u.id = ${id}`;
   if (!u) return c.notFound();
-  const [pf, bal, recentTx, sessionsRows] = await Promise.all([
+  const [pf, bal, recentTx, sessionsRows, txMethods] = await Promise.all([
     portfolio(id),
     balance(id),
     sql`select id, type, method_name, method, amount::text, fee::text, net_amount::text, status, created_at
         from transactions where user_id = ${id} order by created_at desc limit 15`,
     sql`select ip, user_agent, created_at from sessions where user_id = ${id}
         order by created_at desc limit 10`,
+    listPaymentMethods(),
   ]);
   // Two-step credit/debit: ?cd=confirm carries the staged operation back in.
   let cdConfirm = null;
@@ -499,7 +500,7 @@ admin.get('/admin/users/:id', async (c) => {
     }
   }
   return shell(c, 'admin/user', {
-    u, pf, bal, recentTx, sessions: sessionsRows, buckets: BUCKETS,
+    u, pf, bal, recentTx, sessions: sessionsRows, buckets: BUCKETS, txMethods,
     cdConfirm,
     ok: c.req.query('ok'), error: c.req.query('e'),
     okMsg: c.req.query('m'),
@@ -578,6 +579,51 @@ admin.post('/admin/users/:id/credit-debit', async (c) => {
       .catch((e) => console.error('[mail] balance adjustment failed:', e.message));
     return c.redirect(`/admin/users/${id}?ok=1&m=` + encodeURIComponent(
       `${direction === 'credit' ? 'Credited' : 'Debited'} ${fmt.usd(amount)} ${direction === 'credit' ? 'to' : 'from'} ${BUCKETS[bucket]} (now ${fmt.usd(r.after)}, ref ${r.ref}).`));
+  } catch (e) {
+    return back(e.message);
+  }
+});
+
+/* ---------------- add transaction (manual deposit/withdrawal) -------- */
+admin.post('/admin/users/:id/transactions/add', async (c) => {
+  const id = Number(c.req.param('id'));
+  const me = c.get('user');
+  const b = c.get('body');
+  const back = (m) => c.redirect(`/admin/users/${id}?e=` + encodeURIComponent(m));
+
+  const [u] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  if (!u) return c.notFound();
+
+  const type = String(b.type || '');
+  const status = String(b.status || 'approved');
+  const amount = Math.round(Number(b.amount) * 100) / 100;
+  const methods = await listPaymentMethods();
+  const pm = methods.find((m) => m.slug === b.method);
+
+  try {
+    const t = await addManualTransaction({
+      admin: me, userId: id, type, status, amount,
+      method: b.method, methodName: pm ? pm.name : b.method,
+      note: b.note,
+      ip: c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || null,
+    });
+
+    await db.insert(notifications).values({
+      userId: id,
+      kind: status === 'approved' ? 'success' : 'info',
+      title: type === 'deposit' ? 'Deposit added' : 'Withdrawal recorded',
+      body: status === 'approved'
+        ? `${fmt.usd(amount)} ${type === 'deposit' ? 'was added to your account.' : 'was withdrawn from your account.'}`
+        : `A ${fmt.usd(amount)} ${type} was recorded on your account and is under review.`,
+    });
+
+    if (status === 'approved') {
+      (type === 'deposit' ? mailDepositConfirmed : mailWithdrawalSent)(u, t)
+        .catch((e) => console.error('[mail] admin-added transaction failed:', e.message));
+    }
+
+    return c.redirect(`/admin/users/${id}?ok=1&m=` + encodeURIComponent(
+      `Added ${fmt.usd(amount)} ${type} (${status}).`));
   } catch (e) {
     return back(e.message);
   }

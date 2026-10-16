@@ -86,3 +86,59 @@ export async function setWithdrawalCode(userId, code) {
 export async function clearWithdrawalCode(userId) {
   await db.update(users).set({ withdrawalCodeHash: null }).where(eq(users.id, userId));
 }
+
+/* Admin manually records a deposit or withdrawal for a user — e.g. a bank
+   wire or cash payment handled outside the site. Creates a real row in
+   `transactions` (so it shows in the client's deposit/withdrawal history,
+   exactly like a client-submitted one) rather than a silent ledger tweak.
+     - approved deposit   -> ledger credited immediately
+     - approved withdrawal -> ledger debited immediately (funds already left)
+     - pending withdrawal  -> funds held, same as a client-submitted request,
+                               so it can be approved/rejected later from the
+                               normal deposits/withdrawals queue
+     - pending deposit     -> no ledger entry yet, same as a client submission;
+                               posts to the ledger once approved
+   Returns the inserted transaction row. Throws Error with a user-safe
+   message on validation failure. */
+export async function addManualTransaction({
+  admin, userId, type, method, methodName, amount, status, note, ip,
+}) {
+  if (!['deposit', 'withdrawal'].includes(type)) throw new Error('Choose deposit or withdrawal.');
+  if (!['approved', 'pending'].includes(status)) throw new Error('Choose a status.');
+  amount = Math.round(Number(amount) * 1e8) / 1e8;
+  if (!(amount > 0)) throw new Error('Amount must be greater than zero.');
+  method = String(method || '').trim().slice(0, 40) || 'manual';
+  methodName = String(methodName || '').trim().slice(0, 80) || 'Manual entry';
+  note = String(note || '').trim().slice(0, 300);
+
+  const reviewedAt = status === 'approved' ? new Date() : null;
+
+  return sql.begin(async (tx) => {
+    const [t] = await tx`insert into transactions
+        (user_id, type, method, method_name, amount, net_amount, currency, status,
+         admin_note, reviewed_by, reviewed_at)
+      values (${userId}, ${type}, ${method}, ${methodName}, ${String(amount)}, ${String(amount)}, 'USD',
+              ${status}, ${note || null}, ${admin.id}, ${reviewedAt})
+      returning *`;
+
+    if (type === 'deposit' && status === 'approved') {
+      await tx`insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo)
+        values (${userId}, 'main', 'deposit', ${String(amount)}, 'transaction', ${t.id},
+                ${'Deposit via ' + methodName})`;
+    } else if (type === 'withdrawal' && status === 'approved') {
+      await tx`insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo)
+        values (${userId}, 'main', 'withdrawal', ${String(-amount)}, 'transaction', ${t.id},
+                ${'Withdrawal via ' + methodName})`;
+    } else if (type === 'withdrawal' && status === 'pending') {
+      await tx`insert into ledger (user_id, account, kind, amount, ref_type, ref_id, memo)
+        values (${userId}, 'main', 'withdrawal_hold', ${String(-amount)}, 'withdrawal', ${t.id},
+                ${'Held pending withdrawal review (' + methodName + ')'})`;
+    }
+
+    await tx`insert into audit_log (admin_id, user_id, action, category, amount, reason, reference, ip)
+      values (${admin.id}, ${userId}, ${'admin_' + type + '_add'}, ${method}, ${String(amount)},
+              ${note || null}, ${'tx-' + t.id}, ${ip})`;
+
+    return t;
+  });
+}

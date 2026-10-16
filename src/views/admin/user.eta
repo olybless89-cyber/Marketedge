@@ -85,6 +85,36 @@
     </details>
 
     <details class="action-box">
+      <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Add transaction</b><span class="muted">▾</span></summary>
+      <form method="post" action="/admin/users/<%= it.u.id %>/transactions/add" style="margin-top:8px">
+        <input type="hidden" name="_csrf" value="<%= it.csrf %>">
+        <div class="field"><label>Type</label>
+          <select class="input" name="type" required>
+            <option value="deposit">Deposit (adds funds)</option>
+            <option value="withdrawal">Withdrawal (removes funds)</option>
+          </select></div>
+        <div class="field"><label>Method</label>
+          <select class="input" name="method" required>
+            <% (it.txMethods || []).forEach(function(pm){ %>
+              <option value="<%= pm.slug %>"><%= pm.name %></option>
+            <% }) %>
+            <option value="manual">Manual / other</option>
+          </select></div>
+        <div class="field"><label>Amount (USD)</label>
+          <input class="input num" name="amount" type="number" min="0.01" step="0.01" required placeholder="500.00"></div>
+        <div class="field"><label>Status</label>
+          <select class="input" name="status" required>
+            <option value="approved">Approved (settles immediately)</option>
+            <option value="pending">Pending (appears in review queue)</option>
+          </select></div>
+        <div class="field"><label>Note (optional, admin-only)</label>
+          <input class="input" name="note" maxlength="300" placeholder="Bank wire received 10/16, ref #4471"></div>
+        <button class="btn btn-primary btn-block btn-sm">Add transaction</button>
+        <div class="hint">Records a real deposit/withdrawal on this account — shows in their history exactly like one they submitted themselves. An approved deposit credits the balance now; an approved withdrawal debits it now; a pending withdrawal holds the funds until you approve or reject it from the Withdrawals queue.</div>
+      </form>
+    </details>
+
+    <details class="action-box">
       <summary class="row" style="justify-content:space-between;cursor:pointer;padding:10px 0"><b>Set withdrawal code</b><span class="muted">▾</span></summary>
       <form method="post" action="/admin/users/<%= it.u.id %>/withdrawal-code" style="margin-top:8px">
         <input type="hidden" name="_csrf" value="<%= it.csrf %>">
